@@ -1,0 +1,332 @@
+'use client';
+
+import { useState, useCallback } from 'react';
+import type {
+  WizardState,
+  Step1Data,
+  Step2Data,
+  Step3Data,
+  Step4Data,
+  Step5Data,
+  Step7Data,
+  Step8Data,
+  Step9Data,
+  Step10Data,
+  PostConfig,
+} from '@/types';
+import {
+  defaultAccessories,
+  defaultBaseFunctions,
+  defaultExtraFunctions,
+  profiles,
+  defaultPostExtras,
+  defaultWashExtras,
+} from '@/data/mockData';
+import { StepNavigation } from './StepNavigation';
+import { CostPanel } from './CostPanel';
+import { Step1Transport } from './steps/Step1Transport';
+import { Step2BaseConfig } from './steps/Step2BaseConfig';
+import { Step3Terminals } from './steps/Step3Terminals';
+import { Step4Functions } from './steps/Step4Functions';
+import { Step5Equipment } from './steps/Step5Equipment';
+import { Step6Posts } from './steps/Step6Posts';
+import { Step7Water } from './steps/Step7Water';
+import { Step8PostExtras } from './steps/Step8PostExtras';
+import { Step9WashExtras } from './steps/Step9WashExtras';
+import { Step10Final } from './steps/Step10Final';
+
+function createInitialState(): WizardState {
+  return {
+    currentStep: 1,
+    step1: {
+      vehicleType: 'passenger',
+      objectType: 'self_service',
+      clientSearch: '',
+      manager: '',
+    },
+    step2: {
+      profile: 'standard',
+      accessories: defaultAccessories.map((a) => ({ ...a })),
+    },
+    step3: {
+      bumModel: 'model_13',
+      paymentSystems: [],
+      customDesign: false,
+    },
+    step4: {
+      functions: [
+        ...defaultBaseFunctions.map((f) => ({ ...f })),
+        ...defaultExtraFunctions.map((f) => ({ ...f })),
+      ],
+    },
+    step5: {
+      avdKit: 'hawk_15_25',
+      dosators: [
+        { id: '1', type: 'SEKO', quantity: 2 },
+        { id: '2', type: 'Ulka', quantity: 1 },
+      ],
+    },
+    posts: [],
+    currentPostIndex: -1,
+    step7: {
+      osmosOption: 'none',
+      arasModel: 'none',
+    },
+    step8: {
+      extras: defaultPostExtras.map((e) => ({ ...e })),
+    },
+    step9: {
+      vacuumOption: 'none',
+      vacuumQuantity: 0,
+      extras: defaultWashExtras.map((e) => ({ ...e })),
+      pipelines: { air: 0, water: 0, chemical: 0 },
+    },
+    step10: {
+      deliveryConditions: '',
+      paymentConditions: '',
+      region: 'moscow',
+      currency: 'RUB',
+      discount: 0,
+      vat: 20,
+      montage: 'none',
+      language: 'ru',
+      regionalCoefficient: 1.0,
+    },
+  };
+}
+
+export function Wizard() {
+  const [state, setState] = useState<WizardState>(createInitialState);
+
+  const setStep = (step: number) => setState((s) => ({ ...s, currentStep: step }));
+  const goNext = () => setState((s) => ({ ...s, currentStep: Math.min(s.currentStep + 1, 10) }));
+  const goBack = () => setState((s) => ({ ...s, currentStep: Math.max(s.currentStep - 1, 1) }));
+
+  const updateStep1 = useCallback((data: Step1Data) => setState((s) => ({ ...s, step1: data })), []);
+  const updateStep2 = useCallback((data: Step2Data) => {
+    setState((s) => {
+      const profile = profiles.find((p) => p.id === data.profile);
+      const prevProfile = profiles.find((p) => p.id === s.step2.profile);
+      let newStep5 = s.step5;
+      if (profile && data.profile !== s.step2.profile) {
+        newStep5 = {
+          avdKit: profile.defaultAvd,
+          dosators: profile.defaultDosators.map((d) => ({ ...d })),
+        };
+      }
+      return { ...s, step2: data, step5: newStep5 };
+    });
+  }, []);
+  const updateStep3 = useCallback((data: Step3Data) => setState((s) => ({ ...s, step3: data })), []);
+  const updateStep4 = useCallback((data: Step4Data) => setState((s) => ({ ...s, step4: data })), []);
+  const updateStep5 = useCallback((data: Step5Data) => setState((s) => ({ ...s, step5: data })), []);
+  const updateStep7 = useCallback((data: Step7Data) => setState((s) => ({ ...s, step7: data })), []);
+  const updateStep8 = useCallback((data: Step8Data) => setState((s) => ({ ...s, step8: data })), []);
+  const updateStep9 = useCallback((data: Step9Data) => setState((s) => ({ ...s, step9: data })), []);
+  const updateStep10 = useCallback((data: Step10Data) => setState((s) => ({ ...s, step10: data })), []);
+
+  const saveCurrentPostToList = useCallback(() => {
+    setState((s) => {
+      const newPost: PostConfig = {
+        id: String(Date.now()),
+        vehicleType: s.step1.vehicleType,
+        objectType: s.step1.objectType,
+        profile: s.step2.profile,
+        accessories: s.step2.accessories.map((a) => ({ ...a })),
+        bumModel: s.step3.bumModel,
+        paymentSystems: [...s.step3.paymentSystems],
+        customDesign: s.step3.customDesign,
+        functions: s.step4.functions.map((f) => ({ ...f })),
+        avdKit: s.step5.avdKit,
+        dosators: s.step5.dosators.map((d) => ({ ...d })),
+      };
+      return { ...s, posts: [...s.posts, newPost] };
+    });
+  }, []);
+
+  const handleCopyCurrent = useCallback((count: number) => {
+    setState((s) => {
+      const copies: PostConfig[] = [];
+      for (let i = 0; i < count; i++) {
+        copies.push({
+          id: String(Date.now() + i),
+          vehicleType: s.step1.vehicleType,
+          objectType: s.step1.objectType,
+          profile: s.step2.profile,
+          accessories: s.step2.accessories.map((a) => ({ ...a })),
+          bumModel: s.step3.bumModel,
+          paymentSystems: [...s.step3.paymentSystems],
+          customDesign: s.step3.customDesign,
+          functions: s.step4.functions.map((f) => ({ ...f })),
+          avdKit: s.step5.avdKit,
+          dosators: s.step5.dosators.map((d) => ({ ...d })),
+        });
+      }
+      return { ...s, posts: [...s.posts, ...copies] };
+    });
+  }, []);
+
+  const handleEditPost = useCallback((index: number) => {
+    setState((s) => {
+      const post = s.posts[index];
+      if (!post) return s;
+      return {
+        ...s,
+        currentStep: 1,
+        currentPostIndex: index,
+        step1: { ...s.step1, vehicleType: post.vehicleType, objectType: post.objectType },
+        step2: { profile: post.profile, accessories: post.accessories.map((a) => ({ ...a })) },
+        step3: { bumModel: post.bumModel, paymentSystems: [...post.paymentSystems], customDesign: post.customDesign },
+        step4: { functions: post.functions.map((f) => ({ ...f })) },
+        step5: { avdKit: post.avdKit, dosators: post.dosators.map((d) => ({ ...d })) },
+      };
+    });
+  }, []);
+
+  const handleDuplicatePost = useCallback((index: number) => {
+    setState((s) => {
+      const post = s.posts[index];
+      if (!post) return s;
+      const copy: PostConfig = {
+        ...post,
+        id: String(Date.now()),
+        accessories: post.accessories.map((a) => ({ ...a })),
+        paymentSystems: [...post.paymentSystems],
+        functions: post.functions.map((f) => ({ ...f })),
+        dosators: post.dosators.map((d) => ({ ...d })),
+      };
+      const newPosts = [...s.posts];
+      newPosts.splice(index + 1, 0, copy);
+      return { ...s, posts: newPosts };
+    });
+  }, []);
+
+  const handleDeletePost = useCallback((index: number) => {
+    setState((s) => ({
+      ...s,
+      posts: s.posts.filter((_, i) => i !== index),
+    }));
+  }, []);
+
+  const handleCreateNew = useCallback(() => {
+    saveCurrentPostToList();
+    setState((s) => ({
+      ...s,
+      currentStep: 1,
+      currentPostIndex: -1,
+      step2: { profile: 'standard', accessories: defaultAccessories.map((a) => ({ ...a })) },
+      step3: { bumModel: 'model_13', paymentSystems: [], customDesign: false },
+      step4: {
+        functions: [
+          ...defaultBaseFunctions.map((f) => ({ ...f })),
+          ...defaultExtraFunctions.map((f) => ({ ...f })),
+        ],
+      },
+      step5: {
+        avdKit: 'hawk_15_25',
+        dosators: [
+          { id: '1', type: 'SEKO', quantity: 2 },
+          { id: '2', type: 'Ulka', quantity: 1 },
+        ],
+      },
+    }));
+  }, [saveCurrentPostToList]);
+
+  const handleFinishPosts = useCallback(() => {
+    setStep(7);
+  }, []);
+
+  const renderStep = () => {
+    switch (state.currentStep) {
+      case 1:
+        return <Step1Transport data={state.step1} onChange={updateStep1} />;
+      case 2:
+        return <Step2BaseConfig data={state.step2} onChange={updateStep2} />;
+      case 3:
+        return <Step3Terminals data={state.step3} onChange={updateStep3} />;
+      case 4:
+        return <Step4Functions data={state.step4} bumModelId={state.step3.bumModel} onChange={updateStep4} />;
+      case 5:
+        return <Step5Equipment data={state.step5} profileId={state.step2.profile} onChange={updateStep5} />;
+      case 6:
+        return (
+          <Step6Posts
+            posts={state.posts}
+            onEdit={handleEditPost}
+            onDuplicate={handleDuplicatePost}
+            onDelete={handleDeletePost}
+            onCopyCurrent={handleCopyCurrent}
+            onCreateNew={handleCreateNew}
+            onFinish={handleFinishPosts}
+          />
+        );
+      case 7:
+        return <Step7Water data={state.step7} onChange={updateStep7} />;
+      case 8:
+        return <Step8PostExtras data={state.step8} onChange={updateStep8} />;
+      case 9:
+        return <Step9WashExtras data={state.step9} onChange={updateStep9} />;
+      case 10:
+        return (
+          <Step10Final
+            data={state.step10}
+            posts={state.posts}
+            onChange={updateStep10}
+            onEditPost={handleEditPost}
+            onDuplicatePost={handleDuplicatePost}
+            onDeletePost={handleDeletePost}
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
+  // On step 5→6 transition, auto-save current post if going forward
+  const handleNext = () => {
+    if (state.currentStep === 5) {
+      saveCurrentPostToList();
+      setStep(6);
+    } else {
+      goNext();
+    }
+  };
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      <StepNavigation currentStep={state.currentStep} onStepClick={setStep} />
+
+      <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 overflow-y-auto p-8">
+          {renderStep()}
+        </div>
+        <div className="shrink-0 p-4 border-t border-border bg-surface flex justify-between">
+          <button
+            onClick={goBack}
+            disabled={state.currentStep === 1}
+            className={`px-6 py-2.5 rounded font-medium text-sm transition-colors ${
+              state.currentStep === 1
+                ? 'bg-border/30 text-muted cursor-not-allowed'
+                : 'bg-surface-hover text-foreground hover:bg-border'
+            }`}
+          >
+            ← Назад
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={state.currentStep === 10}
+            className={`px-6 py-2.5 rounded font-medium text-sm transition-colors ${
+              state.currentStep === 10
+                ? 'bg-border/30 text-muted cursor-not-allowed'
+                : 'bg-accent text-white hover:bg-accent-hover'
+            }`}
+          >
+            Далее →
+          </button>
+        </div>
+      </div>
+
+      <CostPanel state={state} />
+    </div>
+  );
+}

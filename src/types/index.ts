@@ -1,0 +1,166 @@
+export type VehicleType = 'passenger' | 'truck';
+export type ObjectType = 'self_service' | 'robotic';
+export type ProfileType = 'start' | 'standard' | 'premium';
+
+export interface Accessory {
+  id: string;
+  name: string;
+  price: number;
+  selected: boolean;
+}
+
+export interface BumModel {
+  id: string;
+  name: string;
+  description: string;
+  maxButtons: number;
+  price: number;
+}
+
+export type PaymentSystem = 'bill_acceptor' | 'coin_acceptor' | 'acquiring' | 'loyalty_reader';
+
+export type FunctionOption = 'none' | 'button_only' | 'button_and_kit';
+export type VacuumType = 'in_post' | 'wall_mounted';
+
+export interface PostFunction {
+  id: string;
+  name: string;
+  isBase: boolean;
+  enabled: boolean;
+  option?: FunctionOption;
+  vacuumType?: VacuumType;
+  buttonPrice: number;
+  kitPrice: number;
+}
+
+export interface Dosator {
+  id: string;
+  type: 'SEKO' | 'Ulka' | 'Injector';
+  quantity: number;
+}
+
+export interface PostConfig {
+  id: string;
+  vehicleType: VehicleType;
+  objectType: ObjectType;
+  profile: ProfileType;
+  accessories: Accessory[];
+  bumModel: string;
+  paymentSystems: PaymentSystem[];
+  customDesign: boolean;
+  functions: PostFunction[];
+  avdKit: string;
+  dosators: Dosator[];
+}
+
+export type OsmosCapacity = '250' | '500' | '1000' | '2000';
+export type OsmosLevel = 'standard' | 'premium';
+
+export interface OsmosOption {
+  id: string;
+  capacity: OsmosCapacity;
+  level: OsmosLevel;
+  name: string;
+  price: number;
+}
+
+export interface PostExtra {
+  id: string;
+  name: string;
+  selected: boolean;
+  quantity: number;
+  price: number;
+}
+
+export interface VacuumOption {
+  id: string;
+  name: string;
+  price: number;
+}
+
+export interface WashExtra {
+  id: string;
+  name: string;
+  selected: boolean;
+  quantity: number;
+  price: number;
+}
+
+export type MontageType = 'none' | 'commissioning' | 'full';
+export type Language = 'ru' | 'en';
+export type Region = 'moscow' | 'spb' | 'regions';
+export type Currency = 'RUB' | 'USD' | 'EUR';
+
+export interface Step1Data {
+  vehicleType: VehicleType;
+  objectType: ObjectType;
+  clientSearch: string;
+  manager: string;
+}
+
+export interface Step2Data {
+  profile: ProfileType;
+  accessories: Accessory[];
+}
+
+export interface Step3Data {
+  bumModel: string;
+  paymentSystems: PaymentSystem[];
+  customDesign: boolean;
+}
+
+export interface Step4Data {
+  functions: PostFunction[];
+}
+
+export interface Step5Data {
+  avdKit: string;
+  dosators: Dosator[];
+}
+
+export interface Step7Data {
+  osmosOption: string;
+  arasModel: string;
+}
+
+export interface Step8Data {
+  extras: PostExtra[];
+}
+
+export interface Step9Data {
+  vacuumOption: string;
+  vacuumQuantity: number;
+  extras: WashExtra[];
+  pipelines: {
+    air: number;
+    water: number;
+    chemical: number;
+  };
+}
+
+export interface Step10Data {
+  deliveryConditions: string;
+  paymentConditions: string;
+  region: Region;
+  currency: Currency;
+  discount: number;
+  vat: number;
+  montage: MontageType;
+  language: Language;
+  regionalCoefficient: number;
+}
+
+export interface WizardState {
+  currentStep: number;
+  step1: Step1Data;
+  step2: Step2Data;
+  step3: Step3Data;
+  step4: Step4Data;
+  step5: Step5Data;
+  posts: PostConfig[];
+  currentPostIndex: number;
+  step7: Step7Data;
+  step8: Step8Data;
+  step9: Step9Data;
+  step10: Step10Data;
+}
