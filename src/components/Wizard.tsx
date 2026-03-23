@@ -326,7 +326,7 @@ export function Wizard() {
         </div>
       </div>
 
-      <CostPanel state={state} />
+      <CostPanel state={state} onUpdateStep10={updateStep10} />
     </div>
   );
 }
