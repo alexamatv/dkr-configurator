@@ -15,7 +15,7 @@ export function Step7Water({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Система осмоса</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
             onClick={() => onChange({ ...data, osmosOption: 'none' })}
             className={`radio-card text-center ${data.osmosOption === 'none' ? 'selected' : ''}`}

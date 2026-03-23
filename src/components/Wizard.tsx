@@ -106,7 +106,6 @@ export function Wizard() {
   const updateStep2 = useCallback((data: Step2Data) => {
     setState((s) => {
       const profile = profiles.find((p) => p.id === data.profile);
-      const prevProfile = profiles.find((p) => p.id === s.step2.profile);
       let newStep5 = s.step5;
       if (profile && data.profile !== s.step2.profile) {
         newStep5 = {
@@ -282,7 +281,6 @@ export function Wizard() {
     }
   };
 
-  // On step 5→6 transition, auto-save current post if going forward
   const handleNext = () => {
     if (state.currentStep === 5) {
       saveCurrentPostToList();
@@ -293,18 +291,21 @@ export function Wizard() {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
       <StepNavigation currentStep={state.currentStep} onStepClick={setStep} />
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="flex-1 overflow-y-auto p-8">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
+        {/* Scrollable content area — on mobile needs bottom padding for floating elements */}
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 pb-36 lg:pb-8">
           {renderStep()}
         </div>
-        <div className="shrink-0 p-4 border-t border-border bg-surface flex justify-between">
+
+        {/* Nav buttons: fixed at bottom on mobile, inline on desktop */}
+        <div className="shrink-0 p-3 lg:p-4 border-t border-border bg-surface flex justify-between fixed bottom-0 left-0 right-0 z-40 lg:static">
           <button
             onClick={goBack}
             disabled={state.currentStep === 1}
-            className={`px-6 py-2.5 rounded font-medium text-sm transition-colors ${
+            className={`px-5 lg:px-6 py-2.5 rounded font-medium text-sm transition-colors ${
               state.currentStep === 1
                 ? 'bg-border/30 text-muted cursor-not-allowed'
                 : 'bg-surface-hover text-foreground hover:bg-border'
@@ -315,7 +316,7 @@ export function Wizard() {
           <button
             onClick={handleNext}
             disabled={state.currentStep === 10}
-            className={`px-6 py-2.5 rounded font-medium text-sm transition-colors ${
+            className={`px-5 lg:px-6 py-2.5 rounded font-medium text-sm transition-colors ${
               state.currentStep === 10
                 ? 'bg-border/30 text-muted cursor-not-allowed'
                 : 'bg-accent text-white hover:bg-accent-hover'

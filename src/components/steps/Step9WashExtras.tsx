@@ -31,7 +31,7 @@ export function Step9WashExtras({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Уличные пылесосы</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {vacuumOptions.map((v) => (
             <button
               key={v.id}

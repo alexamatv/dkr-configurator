@@ -27,7 +27,7 @@ export function Step3Terminals({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Модель БУМа</label>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {bumModels.map((b) => (
             <button
               key={b.id}
@@ -48,7 +48,7 @@ export function Step3Terminals({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Система оплаты</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {paymentSystems.map((ps) => {
             const selected = data.paymentSystems.includes(ps);
             return (

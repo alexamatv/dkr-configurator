@@ -43,21 +43,23 @@ export function Step6Posts({
             return (
               <div
                 key={post.id}
-                className="flex items-center gap-4 p-4 bg-surface border border-border rounded-lg"
+                className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 bg-surface border border-border rounded-lg"
               >
-                <div className="w-10 h-10 rounded-full bg-accent/20 text-accent font-bold flex items-center justify-center shrink-0">
-                  {idx + 1}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium">
-                    Пост #{idx + 1} — {profile?.name ?? 'Без профиля'}
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-10 h-10 rounded-full bg-accent/20 text-accent font-bold flex items-center justify-center shrink-0">
+                    {idx + 1}
                   </div>
-                  <div className="text-xs text-muted mt-1">
-                    {post.vehicleType === 'passenger' ? 'Легковой' : 'Грузовой'} •{' '}
-                    {bum?.name ?? '—'} • {funcCount} функций
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">
+                      Пост #{idx + 1} — {profile?.name ?? 'Без профиля'}
+                    </div>
+                    <div className="text-xs text-muted mt-1">
+                      {post.vehicleType === 'passenger' ? 'Легковой' : 'Грузовой'} •{' '}
+                      {bum?.name ?? '—'} • {funcCount} функций
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 shrink-0 sm:ml-0 ml-[52px]">
                   <button
                     onClick={() => onEdit(idx)}
                     className="px-3 py-1.5 text-xs bg-accent/20 text-accent rounded hover:bg-accent/30 transition-colors"

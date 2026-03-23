@@ -24,7 +24,7 @@ export function Step2BaseConfig({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Профиль</label>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {profiles.map((p) => (
             <button
               key={p.id}
@@ -43,7 +43,7 @@ export function Step2BaseConfig({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Аксессуары</label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {data.accessories.map((acc) => (
             <label
               key={acc.id}

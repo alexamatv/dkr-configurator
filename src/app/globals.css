@@ -49,6 +49,15 @@ body {
   background: var(--muted);
 }
 
+/* Hide scrollbar for mobile nav */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Radio card styles */
 .radio-card {
   cursor: pointer;

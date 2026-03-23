@@ -1,5 +1,7 @@
 'use client';
 
+import { useRef, useEffect } from 'react';
+
 interface StepInfo {
   number: number;
   name: string;
@@ -26,54 +28,107 @@ interface StepNavigationProps {
 }
 
 export function StepNavigation({ currentStep, onStepClick }: StepNavigationProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const activeBtn = scrollRef.current.querySelector('[data-active="true"]');
+    if (activeBtn) {
+      activeBtn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  }, [currentStep]);
+
   return (
-    <div className="w-[250px] shrink-0 bg-surface border-r border-border overflow-y-auto">
-      <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-bold text-accent">Конфигуратор МСО</h2>
-        <p className="text-xs text-muted mt-1">DKR Group</p>
-      </div>
-      <nav className="py-2">
-        {steps.map((step) => {
-          const isActive = currentStep === step.number;
-          const isPast = currentStep > step.number;
-          return (
-            <button
-              key={step.number}
-              onClick={() => onStepClick(step.number)}
-              className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
-                isActive
-                  ? 'bg-accent/10 border-l-2 border-accent'
-                  : 'border-l-2 border-transparent hover:bg-surface-hover'
-              }`}
-            >
-              <span
-                className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex w-[250px] shrink-0 bg-surface border-r border-border overflow-y-auto flex-col">
+        <div className="p-4 border-b border-border">
+          <h2 className="text-lg font-bold text-accent">Конфигуратор МСО</h2>
+          <p className="text-xs text-muted mt-1">DKR Group</p>
+        </div>
+        <nav className="py-2">
+          {steps.map((step) => {
+            const isActive = currentStep === step.number;
+            const isPast = currentStep > step.number;
+            return (
+              <button
+                key={step.number}
+                onClick={() => onStepClick(step.number)}
+                className={`w-full text-left px-4 py-3 flex items-start gap-3 transition-colors ${
                   isActive
-                    ? 'bg-accent text-white'
-                    : isPast
-                      ? 'bg-success/20 text-success'
-                      : 'bg-border text-muted'
+                    ? 'bg-accent/10 border-l-2 border-accent'
+                    : 'border-l-2 border-transparent hover:bg-surface-hover'
                 }`}
               >
-                {isPast ? '✓' : step.number}
-              </span>
-              <div className="min-w-0">
-                <div className={`text-sm font-medium truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>
-                  {step.name}
+                <span
+                  className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    isActive
+                      ? 'bg-accent text-white'
+                      : isPast
+                        ? 'bg-success/20 text-success'
+                        : 'bg-border text-muted'
+                  }`}
+                >
+                  {isPast ? '✓' : step.number}
+                </span>
+                <div className="min-w-0">
+                  <div className={`text-sm font-medium truncate ${isActive ? 'text-accent' : 'text-foreground'}`}>
+                    {step.name}
+                  </div>
+                  <div className="text-xs text-muted truncate">{step.description}</div>
+                  {step.scope !== 'none' && (
+                    <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${
+                      step.scope === 'post' ? 'bg-accent/20 text-accent' : 'bg-success/20 text-success'
+                    }`}>
+                      {step.scope === 'post' ? 'на пост' : 'на мойку'}
+                    </span>
+                  )}
                 </div>
-                <div className="text-xs text-muted truncate">{step.description}</div>
-                {step.scope !== 'none' && (
-                  <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${
-                    step.scope === 'post' ? 'bg-accent/20 text-accent' : 'bg-success/20 text-success'
-                  }`}>
-                    {step.scope === 'post' ? 'на пост' : 'на мойку'}
+              </button>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Mobile horizontal strip */}
+      <div className="lg:hidden shrink-0 bg-surface border-b border-border">
+        <div
+          ref={scrollRef}
+          className="flex items-center gap-2 px-3 py-2.5 overflow-x-auto scrollbar-hide"
+        >
+          {steps.map((step) => {
+            const isActive = currentStep === step.number;
+            const isPast = currentStep > step.number;
+            return (
+              <button
+                key={step.number}
+                data-active={isActive}
+                onClick={() => onStepClick(step.number)}
+                className={`shrink-0 flex items-center gap-1.5 transition-colors ${
+                  isActive ? 'pr-3' : ''
+                }`}
+              >
+                <span
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                    isActive
+                      ? 'bg-accent text-white'
+                      : isPast
+                        ? 'bg-success/20 text-success'
+                        : 'bg-border text-muted'
+                  }`}
+                >
+                  {isPast ? '✓' : step.number}
+                </span>
+                {isActive && (
+                  <span className="text-xs font-medium text-accent whitespace-nowrap">
+                    {step.name}
                   </span>
                 )}
-              </div>
-            </button>
-          );
-        })}
-      </nav>
-    </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 }

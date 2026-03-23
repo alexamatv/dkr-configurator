@@ -27,14 +27,18 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
               const profile = profiles.find((p) => p.id === post.profile);
               const bum = bumModels.find((b) => b.id === post.bumModel);
               return (
-                <div key={post.id} className="flex items-center gap-3 p-3 bg-surface border border-border rounded-lg">
-                  <span className="text-sm font-bold text-accent">#{idx + 1}</span>
-                  <span className="text-sm flex-1">
-                    {profile?.name} • {bum?.name} • {post.functions.filter((f) => f.isBase ? f.enabled : f.option !== 'none').length} функций
-                  </span>
-                  <button onClick={() => onEditPost(idx)} className="text-xs text-accent hover:underline">Изменить</button>
-                  <button onClick={() => onDuplicatePost(idx)} className="text-xs text-muted hover:underline">Дублировать</button>
-                  <button onClick={() => onDeletePost(idx)} className="text-xs text-danger hover:underline">Удалить</button>
+                <div key={post.id} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 bg-surface border border-border rounded-lg">
+                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                    <span className="text-sm font-bold text-accent shrink-0">#{idx + 1}</span>
+                    <span className="text-sm truncate">
+                      {profile?.name} • {bum?.name} • {post.functions.filter((f) => f.isBase ? f.enabled : f.option !== 'none').length} функций
+                    </span>
+                  </div>
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => onEditPost(idx)} className="text-xs text-accent hover:underline">Изменить</button>
+                    <button onClick={() => onDuplicatePost(idx)} className="text-xs text-muted hover:underline">Дублировать</button>
+                    <button onClick={() => onDeletePost(idx)} className="text-xs text-danger hover:underline">Удалить</button>
+                  </div>
                 </div>
               );
             })}
@@ -42,7 +46,7 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Условия доставки</label>
           <textarea
@@ -65,7 +69,7 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Регион доставки</label>
           <select
@@ -103,7 +107,7 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-muted mb-2">НДС %</label>
           <input

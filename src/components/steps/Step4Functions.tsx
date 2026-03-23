@@ -41,7 +41,7 @@ export function Step4Functions({ data, bumModelId, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Базовые функции</label>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {baseFunctions.map((f) => (
             <label
               key={f.id}

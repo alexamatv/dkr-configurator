@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import type { WizardState, Step10Data, MontageType } from '@/types';
 import {
   profiles,
@@ -20,7 +21,7 @@ function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' ₽';
 }
 
-export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
+function useCostCalc(state: WizardState) {
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
@@ -91,9 +92,6 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
   const regionalCoeff = state.step10.regionalCoefficient;
   const total = (afterDiscount + vatAmount + montageAmount) * regionalCoeff;
 
-  const update10 = (patch: Partial<Step10Data>) =>
-    onUpdateStep10({ ...state.step10, ...patch });
-
   const lines: [string, number][] = [
     ['Базовая комплектация', profilePrice * postCount],
     ['Оборудование', (avdPrice + bumPrice) * postCount],
@@ -102,109 +100,184 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
     ['Доп. опции', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
   ];
 
-  const montageOptions: { value: MontageType; label: string }[] = [
-    { value: 'none', label: 'Нет' },
-    { value: 'commissioning', label: '5%' },
-    { value: 'full', label: '10%' },
-  ];
+  return {
+    postCount,
+    lines,
+    subtotal,
+    discountPct,
+    discountAmount,
+    vatPct,
+    vatAmount,
+    montage,
+    montageAmount,
+    regionalCoeff,
+    total,
+  };
+}
+
+const montageOptions: { value: MontageType; label: string }[] = [
+  { value: 'none', label: 'Нет' },
+  { value: 'commissioning', label: '5%' },
+  { value: 'full', label: '10%' },
+];
+
+function CostContent({
+  state,
+  onUpdateStep10,
+  calc,
+}: {
+  state: WizardState;
+  onUpdateStep10: (data: Step10Data) => void;
+  calc: ReturnType<typeof useCostCalc>;
+}) {
+  const {
+    postCount, lines, subtotal, discountPct, discountAmount,
+    vatPct, vatAmount, montage, montageAmount, regionalCoeff, total,
+  } = calc;
+
+  const update10 = (patch: Partial<Step10Data>) =>
+    onUpdateStep10({ ...state.step10, ...patch });
 
   return (
-    <div className="w-[300px] shrink-0 bg-surface border-l border-border overflow-y-auto">
-      <div className="p-4 border-b border-border">
-        <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
-        <p className="text-xs text-muted mt-1">{postCount} пост(ов)</p>
-      </div>
-      <div className="p-4 space-y-3 text-sm">
-        {lines.map(([label, value]) => (
-          <div key={label} className="flex justify-between">
-            <span className="text-muted">{label}</span>
-            <span className="font-medium">{fmt(value)}</span>
-          </div>
-        ))}
+    <div className="p-4 space-y-3 text-sm">
+      {lines.map(([label, value]) => (
+        <div key={label} className="flex justify-between">
+          <span className="text-muted">{label}</span>
+          <span className="font-medium">{fmt(value)}</span>
+        </div>
+      ))}
 
-        <div className="border-t border-border pt-3 space-y-3">
-          {/* Скидка — всегда видна, с инлайн-полем */}
+      <div className="border-t border-border pt-3 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="text-muted">Скидка</span>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={discountPct}
+              onChange={(e) => update10({ discount: parseFloat(e.target.value) || 0 })}
+              className="w-14 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-accent"
+            />
+            <span className="text-muted text-xs">%</span>
+          </div>
+          <span className={`font-medium ${discountAmount > 0 ? 'text-success' : ''}`}>
+            −{fmt(discountAmount)}
+          </span>
+        </div>
+
+        <div className="flex justify-between">
+          <span className="text-muted">НДС {vatPct}%</span>
+          <span className="font-medium">{fmt(vatAmount)}</span>
+        </div>
+
+        <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5">
-              <span className="text-muted">Скидка</span>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={discountPct}
-                onChange={(e) => update10({ discount: parseFloat(e.target.value) || 0 })}
-                className="w-14 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-accent"
-              />
-              <span className="text-muted text-xs">%</span>
-            </div>
-            <span className={`font-medium ${discountAmount > 0 ? 'text-success' : ''}`}>
-              −{fmt(discountAmount)}
-            </span>
+            <span className="text-muted">Монтаж</span>
+            <span className="font-medium">{fmt(montageAmount)}</span>
           </div>
-
-          {/* НДС */}
-          <div className="flex justify-between">
-            <span className="text-muted">НДС {vatPct}%</span>
-            <span className="font-medium">{fmt(vatAmount)}</span>
-          </div>
-
-          {/* Монтаж — всегда видна, инлайн-выбор */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-muted">Монтаж</span>
-              <span className="font-medium">{fmt(montageAmount)}</span>
-            </div>
-            <div className="flex gap-1">
-              {montageOptions.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => update10({ montage: opt.value })}
-                  className={`flex-1 text-[11px] py-1 rounded transition-colors ${
-                    montage === opt.value
-                      ? 'bg-accent text-white'
-                      : 'bg-background border border-border text-muted hover:border-accent/50'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Региональный коэффициент — всегда виден, с инлайн-полем */}
-          <div className="flex items-center justify-between">
-            <span className="text-muted">Рег. коэфф.</span>
-            <div className="flex items-center gap-1">
-              <span className="text-muted text-xs">×</span>
-              <input
-                type="number"
-                min={0}
-                step={0.1}
-                value={regionalCoeff}
-                onChange={(e) => update10({ regionalCoefficient: parseFloat(e.target.value) || 1 })}
-                className="w-16 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-accent"
-              />
-            </div>
+          <div className="flex gap-1">
+            {montageOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => update10({ montage: opt.value })}
+                className={`flex-1 text-[11px] py-1 rounded transition-colors ${
+                  montage === opt.value
+                    ? 'bg-accent text-white'
+                    : 'bg-background border border-border text-muted hover:border-accent/50'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="border-t border-border pt-3">
-          <div className="flex justify-between text-lg font-bold">
-            <span>ИТОГО</span>
-            <span className="text-accent">{fmt(total)}</span>
+        <div className="flex items-center justify-between">
+          <span className="text-muted">Рег. коэфф.</span>
+          <div className="flex items-center gap-1">
+            <span className="text-muted text-xs">×</span>
+            <input
+              type="number"
+              min={0}
+              step={0.1}
+              value={regionalCoeff}
+              onChange={(e) => update10({ regionalCoefficient: parseFloat(e.target.value) || 1 })}
+              className="w-16 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-accent"
+            />
           </div>
-          {postCount > 0 && (
-            <div className="flex justify-between text-xs text-muted mt-1">
-              <span>Цена на 1 пост</span>
-              <span>{fmt(total / postCount)}</span>
-            </div>
-          )}
         </div>
-
-        <button className="w-full mt-4 py-2 px-4 bg-accent/20 text-accent text-sm font-medium rounded hover:bg-accent/30 transition-colors">
-          Детальный расчёт
-        </button>
       </div>
+
+      <div className="border-t border-border pt-3">
+        <div className="flex justify-between text-lg font-bold">
+          <span>ИТОГО</span>
+          <span className="text-accent">{fmt(total)}</span>
+        </div>
+        {postCount > 0 && (
+          <div className="flex justify-between text-xs text-muted mt-1">
+            <span>Цена на 1 пост</span>
+            <span>{fmt(total / postCount)}</span>
+          </div>
+        )}
+      </div>
+
+      <button className="w-full mt-4 py-2 px-4 bg-accent/20 text-accent text-sm font-medium rounded hover:bg-accent/30 transition-colors">
+        Детальный расчёт
+      </button>
     </div>
+  );
+}
+
+export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const calc = useCostCalc(state);
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block w-[300px] shrink-0 bg-surface border-l border-border overflow-y-auto">
+        <div className="p-4 border-b border-border">
+          <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
+          <p className="text-xs text-muted mt-1">{calc.postCount} пост(ов)</p>
+        </div>
+        <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} />
+      </div>
+
+      {/* Mobile floating button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed bottom-[68px] left-0 right-0 z-30 mx-4 py-3 bg-accent text-white font-bold text-sm rounded-lg shadow-lg shadow-accent/30 flex items-center justify-center gap-2"
+      >
+        <span>ИТОГО:</span>
+        <span>{fmt(calc.total)}</span>
+      </button>
+
+      {/* Mobile bottom sheet */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col">
+          <div
+            className="flex-shrink-0 bg-black/60"
+            style={{ height: '60px' }}
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="flex-1 bg-surface rounded-t-2xl overflow-y-auto flex flex-col">
+            <div className="sticky top-0 bg-surface z-10 flex items-center justify-between p-4 border-b border-border rounded-t-2xl">
+              <div>
+                <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
+                <p className="text-xs text-muted mt-0.5">{calc.postCount} пост(ов)</p>
+              </div>
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="w-9 h-9 rounded-full bg-border/50 flex items-center justify-center text-muted hover:text-foreground transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

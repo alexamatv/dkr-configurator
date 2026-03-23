@@ -17,12 +17,12 @@ export function Step1Transport({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Тип транспортного средства</label>
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {([['passenger', 'Легковой'], ['truck', 'Грузовой']] as const).map(([value, label]) => (
             <button
               key={value}
               onClick={() => update({ vehicleType: value })}
-              className={`radio-card flex-1 text-center ${data.vehicleType === value ? 'selected' : ''}`}
+              className={`radio-card text-center ${data.vehicleType === value ? 'selected' : ''}`}
             >
               <div className="text-2xl mb-2">{value === 'passenger' ? '🚗' : '🚛'}</div>
               <div className="font-medium">{label}</div>
@@ -33,13 +33,13 @@ export function Step1Transport({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Тип объекта</label>
-        <div className="flex gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {([['self_service', 'Мойка самообслуживания'], ['robotic', 'Роботизированная мойка']] as const).map(
             ([value, label]) => (
               <button
                 key={value}
                 onClick={() => update({ objectType: value })}
-                className={`radio-card flex-1 text-center ${data.objectType === value ? 'selected' : ''}`}
+                className={`radio-card text-center ${data.objectType === value ? 'selected' : ''}`}
               >
                 <div className="font-medium">{label}</div>
               </button>
