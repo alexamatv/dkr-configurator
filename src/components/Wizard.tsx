@@ -101,7 +101,7 @@ function createInitialState(): WizardState {
       region: 'moscow',
       currency: 'RUB',
       discount: 0,
-      vat: 20,
+      vat: 22,
       montage: 'none',
       language: 'ru',
       regionalCoefficient: 1.0,
