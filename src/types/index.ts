@@ -17,6 +17,19 @@ export interface BumModel {
   price: number;
 }
 
+export interface ProfileConfig {
+  id: ProfileType;
+  name: string;
+  description: string;
+  price: number;
+  defaultAvd: string;
+  defaultDosators: Omit<Dosator, 'id'>[];
+  defaultTerminal: string;
+  defaultPayments: PaymentSystem[];
+  defaultAccessories: string[];
+  includedComponents: string[];
+}
+
 export type PaymentSystem = 'bill_acceptor' | 'coin_acceptor' | 'acquiring' | 'loyalty_reader';
 
 export type FunctionOption = 'none' | 'button_only' | 'button_and_kit';

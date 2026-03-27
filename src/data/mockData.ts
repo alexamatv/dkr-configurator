@@ -6,55 +6,128 @@ import type {
   PostExtra,
   VacuumOption,
   WashExtra,
-  Dosator,
+  ProfileConfig,
 } from '@/types';
 
-export const profiles = [
+export const profiles: ProfileConfig[] = [
   {
     id: 'start',
     name: 'Старт',
-    description: 'Горизонтальная рама',
-    price: 150000,
+    description: 'Рама из металла в порошковом окрасе',
+    price: 320000,
     defaultAvd: 'hawk_15_20',
-    defaultDosators: [
-      { id: '1', type: 'SEKO' as const, quantity: 2 },
+    defaultDosators: [{ type: 'Ulka', quantity: 2 }],
+    defaultTerminal: 'model_9',
+    defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
+    defaultAccessories: [
+      'foam_gun',
+      'water_gun',
+      'ceiling_consoles',
+      'mat_holders',
+      'gun_holders',
+      'hose_4m',
+    ],
+    includedComponents: [
+      'Терминал Модель №9 (до 5 кнопок)',
+      'Купюроприемник + монетоприемник + карта лояльности',
+      '2 дозатора Ulka',
+      '2 поворотные консоли',
+      'HAWK 15-20, мотор 5.5 кВт + bypass',
+      '4 держателя для ковриков',
+      '2 держателя для пистолетов',
+      '2 облегченных РВД-шланга 4 м',
+      'Рама из металла в порошковом окрасе',
+      'Плата реле на 8 контактов',
+      'Блок питания 12В',
+      'Пускатель',
+      'Клапан сброса воды по перегреву',
     ],
   },
   {
     id: 'standard',
     name: 'Стандарт',
     description: 'Вертикальная рама + клапаны НД',
-    price: 250000,
-    defaultAvd: 'hawk_15_25',
-    defaultDosators: [
-      { id: '1', type: 'SEKO' as const, quantity: 2 },
-      { id: '2', type: 'Ulka' as const, quantity: 1 },
+    price: 375000,
+    defaultAvd: 'hawk_15_20',
+    defaultDosators: [{ type: 'SEKO', quantity: 2 }],
+    defaultTerminal: 'model_9',
+    defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
+    defaultAccessories: [
+      'foam_gun',
+      'water_gun',
+      'ceiling_consoles',
+      'mat_holders',
+      'gun_holders',
+      'hose_4m',
+    ],
+    includedComponents: [
+      'Терминал Модель №9 (до 5 кнопок)',
+      'Купюроприемник + монетоприемник + карта лояльности',
+      '2 дозатора SEKO',
+      '2 поворотные консоли',
+      'HAWK 15-20, мотор 5.5 кВт + bypass',
+      '4 держателя для ковриков',
+      '2 держателя для пистолетов',
+      '2 облегченных РВД-шланга 4 м',
+      'Вертикальная рама + клапаны НД',
+      'Плата реле на 8 контактов',
+      'Блок питания 12В',
+      'Пускатель',
+      'Клапан сброса воды по перегреву',
+      'Электромагнитный клапан для входа воды',
+      'Аварийный клапан сброса низкого давления',
     ],
   },
   {
     id: 'premium',
     name: 'Премиум',
     description: 'Вертикальная нержавеющая рама',
-    price: 400000,
-    defaultAvd: 'mazzoni_15_20',
-    defaultDosators: [
-      { id: '1', type: 'SEKO' as const, quantity: 3 },
-      { id: '2', type: 'Ulka' as const, quantity: 2 },
+    price: 450000,
+    defaultAvd: 'hawk_15_20',
+    defaultDosators: [{ type: 'SEKO', quantity: 2 }],
+    defaultTerminal: 'model_9',
+    defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
+    defaultAccessories: [
+      'foam_gun',
+      'water_gun',
+      'ceiling_consoles',
+      'mat_holders',
+      'gun_holders',
+      'hose_4m',
+    ],
+    includedComponents: [
+      'Терминал Модель №9 (до 5 кнопок)',
+      'Купюроприемник + монетоприемник + карта лояльности',
+      '2 дозатора SEKO',
+      '2 поворотные консоли',
+      'HAWK 15-20, мотор 5.5 кВт + bypass',
+      '4 держателя для ковриков',
+      '2 держателя для пистолетов',
+      '2 облегченных РВД-шланга 4 м',
+      'Вертикальная нержавеющая рама',
+      'Плата реле на 8 контактов',
+      'Блок питания 12В',
+      'Пускатель',
+      'Клапан сброса воды по перегреву',
+      'Электромагнитный клапан для входа воды',
+      'Аварийный клапан сброса низкого давления',
     ],
   },
 ];
 
+// Аксессуары — цена 0, т.к. входят в комплект. Доплата только за апгрейды (5м вместо 4м).
 export const defaultAccessories: Accessory[] = [
-  { id: 'foam_gun', name: 'Пистолет пенный', price: 5000, selected: false },
-  { id: 'water_gun', name: 'Пистолет водяной', price: 4500, selected: false },
-  { id: 'ceiling_consoles', name: 'Потолочные консоли', price: 8000, selected: false },
-  { id: 'mat_holder', name: 'Держатель для ковриков', price: 3000, selected: false },
-  { id: 'gun_holder', name: 'Держатель для пистолетов', price: 2500, selected: false },
-  { id: 'hose_4m', name: 'РВД-шланги 4м', price: 6000, selected: false },
-  { id: 'hose_5m', name: 'РВД-шланги 5м', price: 7500, selected: false },
+  { id: 'foam_gun', name: 'Пистолет пенный', price: 0, selected: false },
+  { id: 'water_gun', name: 'Пистолет водяной', price: 0, selected: false },
+  { id: 'ceiling_consoles', name: 'Поворотные консоли (2 шт)', price: 0, selected: false },
+  { id: 'mat_holders', name: 'Держатели для ковриков (4 шт)', price: 0, selected: false },
+  { id: 'gun_holders', name: 'Держатели для пистолетов (2 шт)', price: 0, selected: false },
+  { id: 'hose_4m', name: 'РВД-шланги облегченные 4 м (2 шт)', price: 0, selected: false },
+  { id: 'hose_5m', name: 'РВД-шланги облегченные 5 м (2 шт) — апгрейд', price: 7500, selected: false },
 ];
 
 export const bumModels: BumModel[] = [
+  { id: 'model_9', name: 'Модель №9', description: 'Входит в комплект', maxButtons: 5, price: 0 },
   { id: 'model_6', name: 'Модель №6', description: 'Компактный терминал', maxButtons: 8, price: 45000 },
   { id: 'model_13', name: 'Модель №13', description: 'Стандартный терминал', maxButtons: 10, price: 55000 },
   { id: 'model_15', name: 'Модель №15', description: 'Расширенный терминал', maxButtons: 12, price: 65000 },
@@ -68,11 +141,12 @@ export const paymentSystemLabels: Record<string, string> = {
   loyalty_reader: 'Считыватель лояльности',
 };
 
+// Системы оплаты, входящие в комплект — 0 ₽, доп. — с ценой
 export const paymentSystemPrices: Record<string, number> = {
-  bill_acceptor: 25000,
-  coin_acceptor: 15000,
+  bill_acceptor: 0,
+  coin_acceptor: 0,
   acquiring: 20000,
-  loyalty_reader: 10000,
+  loyalty_reader: 0,
 };
 
 export const defaultBaseFunctions: PostFunction[] = [
@@ -93,10 +167,11 @@ export const defaultExtraFunctions: PostFunction[] = [
   { id: 'anti_bug', name: 'Антимошка', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 8000 },
 ];
 
+// АВД — базовый входит в комплект (0 ₽), остальные с доплатой
 export const avdKits = [
-  { id: 'hawk_15_20', name: 'HAWK 15-20, 5.5 кВт', price: 80000 },
-  { id: 'hawk_15_25', name: 'HAWK 15-25, 7.5 кВт', price: 95000 },
-  { id: 'mazzoni_15_20', name: 'MAZZONI 15-20, 5.5 кВт', price: 110000 },
+  { id: 'hawk_15_20', name: 'HAWK 15-20, мотор 5.5 кВт + bypass (входит в комплект)', price: 0 },
+  { id: 'hawk_15_25', name: 'HAWK 15-25, 7.5 кВт', price: 15000 },
+  { id: 'mazzoni_15_20', name: 'MAZZONI 15-20, 5.5 кВт', price: 30000 },
 ];
 
 export const osmosOptions: OsmosOption[] = [

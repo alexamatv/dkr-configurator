@@ -25,21 +25,26 @@ function useCostCalc(state: WizardState) {
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
+  // Profile price = full kit (АВД, БУМ, оплата, аксессуары — всё включено)
   const profile = profiles.find((p) => p.id === state.step2.profile);
   const profilePrice = profile?.price ?? 0;
 
-  const accessoriesPrice = state.step2.accessories
-    .filter((a) => a.selected)
+  // Доплата за аксессуары сверх комплекта (price > 0 = апгрейд/доп)
+  const accessoriesUpgrade = state.step2.accessories
+    .filter((a) => a.selected && a.price > 0)
     .reduce((sum, a) => sum + a.price, 0);
 
+  // Доплата за БУМ (0 если из комплекта, >0 если апгрейд)
   const bum = bumModels.find((b) => b.id === state.step3.bumModel);
-  const bumPrice = bum?.price ?? 0;
+  const bumUpgrade = bum?.price ?? 0;
 
-  const paymentPrice = state.step3.paymentSystems.reduce(
+  // Доплата за системы оплаты (0 если из комплекта, >0 если доп)
+  const paymentUpgrade = state.step3.paymentSystems.reduce(
     (sum, ps) => sum + (paymentSystemPrices[ps] ?? 0),
     0
   );
 
+  // Доп. функции — только не базовые
   const functionsPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
     .reduce((sum, f) => {
@@ -48,8 +53,9 @@ function useCostCalc(state: WizardState) {
       return sum;
     }, 0);
 
+  // Доплата за АВД (0 если из комплекта, >0 если апгрейд)
   const avd = avdKits.find((a) => a.id === state.step5.avdKit);
-  const avdPrice = avd?.price ?? 0;
+  const avdUpgrade = avd?.price ?? 0;
 
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
   const osmosPrice = osmos?.price ?? 0;
@@ -73,7 +79,8 @@ function useCostCalc(state: WizardState) {
     state.step9.pipelines.water * 700 +
     state.step9.pipelines.chemical * 900;
 
-  const equipmentTotal = (profilePrice + accessoriesPrice + bumPrice + paymentPrice + functionsPrice + avdPrice) * postCount;
+  const upgradesPerPost = accessoriesUpgrade + bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
+  const equipmentTotal = (profilePrice + upgradesPerPost) * postCount;
   const washTotal = osmosPrice + arasPrice + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
   const subtotal = equipmentTotal + washTotal;
 
@@ -94,10 +101,10 @@ function useCostCalc(state: WizardState) {
 
   const lines: [string, number][] = [
     ['Базовая комплектация', profilePrice * postCount],
-    ['Оборудование', (avdPrice + bumPrice) * postCount],
-    ['Функции', (functionsPrice + accessoriesPrice + paymentPrice) * postCount],
+    ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
+    ['Функции и опции', (functionsPrice + accessoriesUpgrade + paymentUpgrade) * postCount],
     ['Водоподготовка', osmosPrice + arasPrice],
-    ['Доп. опции', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
+    ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
   ];
 
   return {

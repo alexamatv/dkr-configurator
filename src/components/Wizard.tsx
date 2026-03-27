@@ -35,7 +35,34 @@ import { Step8PostExtras } from './steps/Step8PostExtras';
 import { Step9WashExtras } from './steps/Step9WashExtras';
 import { Step10Final } from './steps/Step10Final';
 
+function applyProfileDefaults(profileId: string) {
+  const profile = profiles.find((p) => p.id === profileId);
+  if (!profile) return null;
+  return {
+    step2: {
+      profile: profileId as WizardState['step2']['profile'],
+      accessories: defaultAccessories.map((a) => ({
+        ...a,
+        selected: profile.defaultAccessories.includes(a.id),
+      })),
+    },
+    step3: {
+      bumModel: profile.defaultTerminal,
+      paymentSystems: [...profile.defaultPayments],
+      customDesign: false,
+    },
+    step5: {
+      avdKit: profile.defaultAvd,
+      dosators: profile.defaultDosators.map((d, i) => ({
+        id: String(i + 1),
+        ...d,
+      })),
+    },
+  };
+}
+
 function createInitialState(): WizardState {
+  const defaults = applyProfileDefaults('standard')!;
   return {
     currentStep: 1,
     step1: {
@@ -44,28 +71,15 @@ function createInitialState(): WizardState {
       clientSearch: '',
       manager: '',
     },
-    step2: {
-      profile: 'standard',
-      accessories: defaultAccessories.map((a) => ({ ...a })),
-    },
-    step3: {
-      bumModel: 'model_13',
-      paymentSystems: [],
-      customDesign: false,
-    },
+    step2: defaults.step2,
+    step3: defaults.step3,
     step4: {
       functions: [
         ...defaultBaseFunctions.map((f) => ({ ...f })),
         ...defaultExtraFunctions.map((f) => ({ ...f })),
       ],
     },
-    step5: {
-      avdKit: 'hawk_15_25',
-      dosators: [
-        { id: '1', type: 'SEKO', quantity: 2 },
-        { id: '2', type: 'Ulka', quantity: 1 },
-      ],
-    },
+    step5: defaults.step5,
     posts: [],
     currentPostIndex: -1,
     step7: {
@@ -105,15 +119,18 @@ export function Wizard() {
   const updateStep1 = useCallback((data: Step1Data) => setState((s) => ({ ...s, step1: data })), []);
   const updateStep2 = useCallback((data: Step2Data) => {
     setState((s) => {
-      const profile = profiles.find((p) => p.id === data.profile);
-      let newStep5 = s.step5;
-      if (profile && data.profile !== s.step2.profile) {
-        newStep5 = {
-          avdKit: profile.defaultAvd,
-          dosators: profile.defaultDosators.map((d) => ({ ...d })),
-        };
+      if (data.profile !== s.step2.profile) {
+        const defaults = applyProfileDefaults(data.profile);
+        if (defaults) {
+          return {
+            ...s,
+            step2: defaults.step2,
+            step3: { ...defaults.step3, customDesign: s.step3.customDesign },
+            step5: defaults.step5,
+          };
+        }
       }
-      return { ...s, step2: data, step5: newStep5 };
+      return { ...s, step2: data };
     });
   }, []);
   const updateStep3 = useCallback((data: Step3Data) => setState((s) => ({ ...s, step3: data })), []);
@@ -209,25 +226,20 @@ export function Wizard() {
 
   const handleCreateNew = useCallback(() => {
     saveCurrentPostToList();
+    const defaults = applyProfileDefaults('standard')!;
     setState((s) => ({
       ...s,
       currentStep: 1,
       currentPostIndex: -1,
-      step2: { profile: 'standard', accessories: defaultAccessories.map((a) => ({ ...a })) },
-      step3: { bumModel: 'model_13', paymentSystems: [], customDesign: false },
+      step2: defaults.step2,
+      step3: defaults.step3,
       step4: {
         functions: [
           ...defaultBaseFunctions.map((f) => ({ ...f })),
           ...defaultExtraFunctions.map((f) => ({ ...f })),
         ],
       },
-      step5: {
-        avdKit: 'hawk_15_25',
-        dosators: [
-          { id: '1', type: 'SEKO', quantity: 2 },
-          { id: '2', type: 'Ulka', quantity: 1 },
-        ],
-      },
+      step5: defaults.step5,
     }));
   }, [saveCurrentPostToList]);
 
