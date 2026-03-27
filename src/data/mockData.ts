@@ -18,7 +18,7 @@ export const profiles: ProfileConfig[] = [
     price: 320000,
     basePrice: 250000,
     defaultAvd: 'hawk_15_20',
-    defaultDosators: [{ type: 'Ulka', quantity: 2 }],
+
     defaultTerminal: 'model_9',
     defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
     defaultAccessories: [
@@ -52,7 +52,7 @@ export const profiles: ProfileConfig[] = [
     price: 375000,
     basePrice: 305000,
     defaultAvd: 'hawk_15_20',
-    defaultDosators: [{ type: 'SEKO', quantity: 2 }],
+
     defaultTerminal: 'model_9',
     defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
     defaultAccessories: [
@@ -88,7 +88,7 @@ export const profiles: ProfileConfig[] = [
     price: 450000,
     basePrice: 380000,
     defaultAvd: 'hawk_15_20',
-    defaultDosators: [{ type: 'SEKO', quantity: 2 }],
+
     defaultTerminal: 'model_9',
     defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
     defaultAccessories: [

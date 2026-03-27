@@ -26,7 +26,6 @@ export interface ProfileConfig {
   price: number;
   basePrice: number;
   defaultAvd: string;
-  defaultDosators: Omit<Dosator, 'id'>[];
   defaultTerminal: string;
   defaultPayments: PaymentSystem[];
   defaultAccessories: string[];
@@ -69,8 +68,7 @@ export interface PostConfig {
   paymentSystems: PaymentSystem[];
   customDesign: boolean;
   functions: PostFunction[];
-  avdKit: string;
-  dosators: Dosator[];
+  avdSelections: AvdSelection[];
 }
 
 export type OsmosCapacity = '250' | '500' | '1000' | '2000';
@@ -133,9 +131,14 @@ export interface Step4Data {
   functions: PostFunction[];
 }
 
+export interface AvdSelection {
+  id: string;
+  avdId: string;
+  isDefault: boolean;
+}
+
 export interface Step5Data {
-  avdKit: string;
-  dosators: Dosator[];
+  avdSelections: AvdSelection[];
 }
 
 export interface Step7Data {

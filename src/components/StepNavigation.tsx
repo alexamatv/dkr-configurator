@@ -14,7 +14,7 @@ const steps: StepInfo[] = [
   { number: 2, name: 'Базовая комплектация', description: 'Профиль и аксессуары', scope: 'post' },
   { number: 3, name: 'Терминалы / БУМы', description: 'Модель и оплата', scope: 'post' },
   { number: 4, name: 'Функции на посту', description: 'Базовые и доп. функции', scope: 'post' },
-  { number: 5, name: 'Оборудование', description: 'АВД и дозаторы', scope: 'post' },
+  { number: 5, name: 'Выбор помпы', description: 'Помпы (АВД)', scope: 'post' },
   { number: 6, name: 'Формирование постов', description: 'Сборка мойки', scope: 'none' },
   { number: 7, name: 'Водоподготовка', description: 'Осмос и ARAS', scope: 'wash' },
   { number: 8, name: 'Доп. к посту', description: 'Доп. оборудование', scope: 'wash' },

@@ -52,11 +52,9 @@ function applyProfileDefaults(profileId: string) {
       customDesign: false,
     },
     step5: {
-      avdKit: profile.defaultAvd,
-      dosators: profile.defaultDosators.map((d, i) => ({
-        id: String(i + 1),
-        ...d,
-      })),
+      avdSelections: [
+        { id: '1', avdId: profile.defaultAvd, isDefault: true },
+      ],
     },
   };
 }
@@ -155,8 +153,7 @@ export function Wizard() {
         paymentSystems: [...s.step3.paymentSystems],
         customDesign: s.step3.customDesign,
         functions: s.step4.functions.map((f) => ({ ...f })),
-        avdKit: s.step5.avdKit,
-        dosators: s.step5.dosators.map((d) => ({ ...d })),
+        avdSelections: s.step5.avdSelections.map((a) => ({ ...a })),
       };
       return { ...s, posts: [...s.posts, newPost] };
     });
@@ -176,8 +173,7 @@ export function Wizard() {
           paymentSystems: [...s.step3.paymentSystems],
           customDesign: s.step3.customDesign,
           functions: s.step4.functions.map((f) => ({ ...f })),
-          avdKit: s.step5.avdKit,
-          dosators: s.step5.dosators.map((d) => ({ ...d })),
+          avdSelections: s.step5.avdSelections.map((a) => ({ ...a })),
         });
       }
       return { ...s, posts: [...s.posts, ...copies] };
@@ -196,7 +192,7 @@ export function Wizard() {
         step2: { profile: post.profile, accessories: post.accessories.map((a) => ({ ...a })) },
         step3: { bumModel: post.bumModel, paymentSystems: [...post.paymentSystems], customDesign: post.customDesign },
         step4: { functions: post.functions.map((f) => ({ ...f })) },
-        step5: { avdKit: post.avdKit, dosators: post.dosators.map((d) => ({ ...d })) },
+        step5: { avdSelections: post.avdSelections.map((a) => ({ ...a })) },
       };
     });
   }, []);
@@ -211,7 +207,7 @@ export function Wizard() {
         accessories: post.accessories.map((a) => ({ ...a })),
         paymentSystems: [...post.paymentSystems],
         functions: post.functions.map((f) => ({ ...f })),
-        dosators: post.dosators.map((d) => ({ ...d })),
+        avdSelections: post.avdSelections.map((a) => ({ ...a })),
       };
       const newPosts = [...s.posts];
       newPosts.splice(index + 1, 0, copy);

@@ -60,9 +60,11 @@ function useCostCalc(state: WizardState) {
       return sum + price;
     }, 0);
 
-  // Доплата за АВД (0 если из комплекта, >0 если апгрейд)
-  const avd = avdKits.find((a) => a.id === state.step5.avdKit);
-  const avdUpgrade = avd?.price ?? 0;
+  // Сумма всех помп (первая default с price=0 — в комплекте, остальные доплата)
+  const avdUpgrade = state.step5.avdSelections.reduce((sum, sel) => {
+    const kit = avdKits.find((a) => a.id === sel.avdId);
+    return sum + (kit?.price ?? 0);
+  }, 0);
 
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
   const osmosPrice = osmos?.price ?? 0;
