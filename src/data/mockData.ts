@@ -29,7 +29,7 @@ export const profiles: ProfileConfig[] = [
       'hose_4m',
     ],
     includedComponents: [
-      'Терминал Модель №9 (до 5 кнопок)',
+      'Терминал БУМ №9 (до 5 кнопок)',
       'Купюроприемник + монетоприемник + карта лояльности',
       '2 дозатора Ulka',
       '2 поворотные консоли',
@@ -63,7 +63,7 @@ export const profiles: ProfileConfig[] = [
       'hose_4m',
     ],
     includedComponents: [
-      'Терминал Модель №9 (до 5 кнопок)',
+      'Терминал БУМ №9 (до 5 кнопок)',
       'Купюроприемник + монетоприемник + карта лояльности',
       '2 дозатора SEKO',
       '2 поворотные консоли',
@@ -99,7 +99,7 @@ export const profiles: ProfileConfig[] = [
       'hose_4m',
     ],
     includedComponents: [
-      'Терминал Модель №9 (до 5 кнопок)',
+      'Терминал БУМ №9 (до 5 кнопок)',
       'Купюроприемник + монетоприемник + карта лояльности',
       '2 дозатора SEKO',
       '2 поворотные консоли',
@@ -130,26 +130,26 @@ export const defaultAccessories: Accessory[] = [
 ];
 
 export const bumModels: BumModel[] = [
-  { id: 'model_9', name: 'Модель №9', description: 'Входит в комплект', maxButtons: 5, price: 0 },
-  { id: 'model_6', name: 'Модель №6', description: 'Компактный терминал', maxButtons: 8, price: 45000 },
-  { id: 'model_13', name: 'Модель №13', description: 'Стандартный терминал', maxButtons: 10, price: 55000 },
-  { id: 'model_15', name: 'Модель №15', description: 'Расширенный терминал', maxButtons: 12, price: 65000 },
-  { id: 'model_3', name: 'Модель №3', description: 'Базовый терминал', maxButtons: 8, price: 40000 },
+  { id: 'model_9', name: 'БУМ №9', description: 'Входит в комплект', maxButtons: 5, price: 0 },
+  { id: 'model_6', name: 'БУМ №6', description: 'Компактный терминал', maxButtons: 8, price: 45000 },
+  { id: 'model_13', name: 'БУМ №13', description: 'Стандартный терминал', maxButtons: 10, price: 55000 },
+  { id: 'model_15', name: 'БУМ №15', description: 'Расширенный терминал', maxButtons: 12, price: 65000 },
+  { id: 'model_3', name: 'БУМ №3', description: 'Базовый терминал', maxButtons: 8, price: 40000 },
 ];
 
 export const paymentSystemLabels: Record<string, string> = {
   bill_acceptor: 'Купюроприемник',
   coin_acceptor: 'Монетоприемник',
   acquiring: 'Эквайринг',
-  loyalty_reader: 'Считыватель лояльности',
+  loyalty_reader: 'Считыватель карт лояльности',
 };
 
 // Системы оплаты, входящие в комплект — 0 ₽, доп. — с ценой
 export const paymentSystemPrices: Record<string, number> = {
   bill_acceptor: 0,
   coin_acceptor: 0,
-  acquiring: 20000,
-  loyalty_reader: 0,
+  acquiring: 40000,
+  loyalty_reader: 10000,
 };
 
 export const defaultBaseFunctions: PostFunction[] = [
