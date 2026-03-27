@@ -14,6 +14,22 @@ export function Step2BaseConfig({ data, onChange }: Props) {
   const selectedProfile = profiles.find((p) => p.id === data.profile);
 
   const toggleAccessory = (id: string) => {
+    const acc = data.accessories.find((a) => a.id === id);
+    if (!acc) return;
+
+    // Exclusive group logic: selecting one deselects others in the same group
+    if (acc.exclusiveGroup && !acc.selected) {
+      onChange({
+        ...data,
+        accessories: data.accessories.map((a) => {
+          if (a.id === id) return { ...a, selected: true };
+          if (a.exclusiveGroup === acc.exclusiveGroup && a.id !== id) return { ...a, selected: false };
+          return a;
+        }),
+      });
+      return;
+    }
+
     onChange({
       ...data,
       accessories: data.accessories.map((a) =>
@@ -21,6 +37,17 @@ export function Step2BaseConfig({ data, onChange }: Props) {
       ),
     });
   };
+
+  const setCustomPrice = (id: string, value: number) => {
+    onChange({
+      ...data,
+      accessories: data.accessories.map((a) =>
+        a.id === id ? { ...a, customPrice: value } : a
+      ),
+    });
+  };
+
+  const isHose = (id: string) => id === 'hose_4m' || id === 'hose_5m';
 
   return (
     <div className="space-y-8">
@@ -84,39 +111,54 @@ export function Step2BaseConfig({ data, onChange }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {data.accessories.map((acc) => {
             const inKit = selectedProfile?.defaultAccessories.includes(acc.id);
+            const effectivePrice = acc.customPrice !== undefined ? acc.customPrice : acc.price;
+            const showPriceInput = isHose(acc.id);
+
             return (
-              <label
+              <div
                 key={acc.id}
-                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
                   acc.selected
                     ? 'border-accent bg-accent/10'
                     : 'border-border bg-surface hover:border-accent/50'
                 }`}
               >
-                <input
-                  type="checkbox"
-                  checked={acc.selected}
-                  onChange={() => toggleAccessory(acc.id)}
-                  className="sr-only"
-                />
-                <div
-                  className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
-                    acc.selected ? 'border-accent bg-accent' : 'border-border'
-                  }`}
-                >
-                  {acc.selected && <span className="text-white text-xs">✓</span>}
-                </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-medium truncate">{acc.name}</div>
-                  <div className="text-xs text-muted">
-                    {acc.price === 0 && inKit
-                      ? 'Входит в комплект'
-                      : acc.price === 0
-                        ? '0 ₽'
-                        : `+${acc.price.toLocaleString('ru-RU')} ₽ (доплата)`}
+                <label className="flex items-center gap-3 flex-1 cursor-pointer min-w-0">
+                  <input
+                    type="checkbox"
+                    checked={acc.selected}
+                    onChange={() => toggleAccessory(acc.id)}
+                    className="sr-only"
+                  />
+                  <div
+                    className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                      acc.selected ? 'border-accent bg-accent' : 'border-border'
+                    }`}
+                  >
+                    {acc.selected && <span className="text-white text-xs">✓</span>}
                   </div>
-                </div>
-              </label>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium truncate">{acc.name}</div>
+                    <div className="text-xs text-muted">
+                      {effectivePrice.toLocaleString('ru-RU')} ₽
+                      {inKit && acc.selected ? ' (в комплекте)' : ''}
+                    </div>
+                  </div>
+                </label>
+                {showPriceInput && (
+                  <div className="shrink-0 flex items-center gap-1">
+                    <input
+                      type="number"
+                      min={0}
+                      step={500}
+                      value={acc.customPrice !== undefined ? acc.customPrice : acc.price}
+                      onChange={(e) => setCustomPrice(acc.id, parseFloat(e.target.value) || 0)}
+                      className="w-20 bg-background border border-border rounded px-1.5 py-1 text-xs text-right focus:outline-none focus:border-accent"
+                    />
+                    <span className="text-[10px] text-muted">₽</span>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>

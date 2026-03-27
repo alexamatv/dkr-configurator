@@ -7,6 +7,8 @@ export interface Accessory {
   name: string;
   price: number;
   selected: boolean;
+  exclusiveGroup?: string;
+  customPrice?: number;
 }
 
 export interface BumModel {
@@ -22,6 +24,7 @@ export interface ProfileConfig {
   name: string;
   description: string;
   price: number;
+  basePrice: number;
   defaultAvd: string;
   defaultDosators: Omit<Dosator, 'id'>[];
   defaultTerminal: string;
@@ -157,6 +160,7 @@ export interface Step10Data {
   region: Region;
   currency: Currency;
   discount: number;
+  vatEnabled: boolean;
   vat: number;
   montage: MontageType;
   language: Language;

@@ -25,14 +25,16 @@ function useCostCalc(state: WizardState) {
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
-  // Profile price = full kit (АВД, БУМ, оплата, аксессуары — всё включено)
   const profile = profiles.find((p) => p.id === state.step2.profile);
-  const profilePrice = profile?.price ?? 0;
+  const basePrice = profile?.basePrice ?? 0;
 
-  // Доплата за аксессуары сверх комплекта (price > 0 = апгрейд/доп)
-  const accessoriesUpgrade = state.step2.accessories
-    .filter((a) => a.selected && a.price > 0)
-    .reduce((sum, a) => sum + a.price, 0);
+  // Сумма выбранных аксессуаров (с учетом customPrice)
+  const accessoriesPrice = state.step2.accessories
+    .filter((a) => a.selected)
+    .reduce((sum, a) => sum + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
+
+  // Базовая комплектация = basePrice + выбранные аксессуары
+  const kitPrice = basePrice + accessoriesPrice;
 
   // Доплата за БУМ (0 если из комплекта, >0 если апгрейд)
   const bum = bumModels.find((b) => b.id === state.step3.bumModel);
@@ -79,8 +81,8 @@ function useCostCalc(state: WizardState) {
     state.step9.pipelines.water * 700 +
     state.step9.pipelines.chemical * 900;
 
-  const upgradesPerPost = accessoriesUpgrade + bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
-  const equipmentTotal = (profilePrice + upgradesPerPost) * postCount;
+  const upgradesPerPost = bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
+  const equipmentTotal = (kitPrice + upgradesPerPost) * postCount;
   const washTotal = osmosPrice + arasPrice + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
   const subtotal = equipmentTotal + washTotal;
 
@@ -89,8 +91,9 @@ function useCostCalc(state: WizardState) {
   const discountAmount = subtotal * discountFrac;
   const afterDiscount = subtotal - discountAmount;
 
+  const vatEnabled = state.step10.vatEnabled;
   const vatPct = state.step10.vat;
-  const vatAmount = afterDiscount * (vatPct / 100);
+  const vatAmount = vatEnabled ? afterDiscount * (vatPct / 100) : 0;
 
   const montage = state.step10.montage;
   const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
@@ -100,9 +103,9 @@ function useCostCalc(state: WizardState) {
   const total = (afterDiscount + vatAmount + montageAmount) * regionalCoeff;
 
   const lines: [string, number][] = [
-    ['Базовая комплектация', profilePrice * postCount],
+    ['Базовая комплектация', kitPrice * postCount],
     ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
-    ['Функции и опции', (functionsPrice + accessoriesUpgrade + paymentUpgrade) * postCount],
+    ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
     ['Водоподготовка', osmosPrice + arasPrice],
     ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
   ];
@@ -113,6 +116,7 @@ function useCostCalc(state: WizardState) {
     subtotal,
     discountPct,
     discountAmount,
+    vatEnabled,
     vatPct,
     vatAmount,
     montage,
@@ -138,8 +142,8 @@ function CostContent({
   calc: ReturnType<typeof useCostCalc>;
 }) {
   const {
-    postCount, lines, subtotal, discountPct, discountAmount,
-    vatPct, vatAmount, montage, montageAmount, regionalCoeff, total,
+    postCount, lines, discountPct, discountAmount,
+    vatEnabled, vatPct, vatAmount, montage, montageAmount, regionalCoeff, total,
   } = calc;
 
   const update10 = (patch: Partial<Step10Data>) =>
@@ -173,9 +177,35 @@ function CostContent({
           </span>
         </div>
 
-        <div className="flex justify-between">
-          <span className="text-muted">НДС {vatPct}%</span>
-          <span className="font-medium">{fmt(vatAmount)}</span>
+        {/* НДС — чекбокс + условное поле */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={vatEnabled}
+                onChange={(e) => update10({ vatEnabled: e.target.checked })}
+                className="w-3.5 h-3.5 accent-accent"
+              />
+              <span className="text-muted">НДС</span>
+              {vatEnabled && (
+                <>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={vatPct}
+                    onChange={(e) => update10({ vat: parseFloat(e.target.value) || 0 })}
+                    className="w-12 bg-background border border-border rounded px-1 py-0.5 text-xs text-center focus:outline-none focus:border-accent"
+                  />
+                  <span className="text-muted text-xs">%</span>
+                </>
+              )}
+            </label>
+            <span className="font-medium">
+              {vatEnabled ? fmt(vatAmount) : 'не применяется'}
+            </span>
+          </div>
         </div>
 
         <div className="space-y-1.5">

@@ -15,6 +15,7 @@ export const profiles: ProfileConfig[] = [
     name: 'Старт',
     description: 'Рама из металла в порошковом окрасе',
     price: 320000,
+    basePrice: 250000,
     defaultAvd: 'hawk_15_20',
     defaultDosators: [{ type: 'Ulka', quantity: 2 }],
     defaultTerminal: 'model_9',
@@ -48,6 +49,7 @@ export const profiles: ProfileConfig[] = [
     name: 'Стандарт',
     description: 'Вертикальная рама + клапаны НД',
     price: 375000,
+    basePrice: 305000,
     defaultAvd: 'hawk_15_20',
     defaultDosators: [{ type: 'SEKO', quantity: 2 }],
     defaultTerminal: 'model_9',
@@ -83,6 +85,7 @@ export const profiles: ProfileConfig[] = [
     name: 'Премиум',
     description: 'Вертикальная нержавеющая рама',
     price: 450000,
+    basePrice: 380000,
     defaultAvd: 'hawk_15_20',
     defaultDosators: [{ type: 'SEKO', quantity: 2 }],
     defaultTerminal: 'model_9',
@@ -115,15 +118,15 @@ export const profiles: ProfileConfig[] = [
   },
 ];
 
-// Аксессуары — цена 0, т.к. входят в комплект. Доплата только за апгрейды (5м вместо 4м).
+// Аксессуары с реальными ценами. Шланги 4м/5м — взаимоисключающие (exclusiveGroup: 'hose').
 export const defaultAccessories: Accessory[] = [
-  { id: 'foam_gun', name: 'Пистолет пенный', price: 0, selected: false },
-  { id: 'water_gun', name: 'Пистолет водяной', price: 0, selected: false },
-  { id: 'ceiling_consoles', name: 'Поворотные консоли (2 шт)', price: 0, selected: false },
-  { id: 'mat_holders', name: 'Держатели для ковриков (4 шт)', price: 0, selected: false },
-  { id: 'gun_holders', name: 'Держатели для пистолетов (2 шт)', price: 0, selected: false },
-  { id: 'hose_4m', name: 'РВД-шланги облегченные 4 м (2 шт)', price: 0, selected: false },
-  { id: 'hose_5m', name: 'РВД-шланги облегченные 5 м (2 шт) — апгрейд', price: 7500, selected: false },
+  { id: 'foam_gun', name: 'Пистолет пенный', price: 12000, selected: false },
+  { id: 'water_gun', name: 'Пистолет водяной', price: 12000, selected: false },
+  { id: 'ceiling_consoles', name: 'Поворотные консоли (2 шт)', price: 18000, selected: false },
+  { id: 'mat_holders', name: 'Держатели для ковриков (4 шт)', price: 8000, selected: false },
+  { id: 'gun_holders', name: 'Держатели для пистолетов (2 шт)', price: 6000, selected: false },
+  { id: 'hose_4m', name: 'РВД-шланги облегченные 4 м (2 шт)', price: 14000, selected: false, exclusiveGroup: 'hose' },
+  { id: 'hose_5m', name: 'РВД-шланги облегченные 5 м (2 шт)', price: 21500, selected: false, exclusiveGroup: 'hose' },
 ];
 
 export const bumModels: BumModel[] = [

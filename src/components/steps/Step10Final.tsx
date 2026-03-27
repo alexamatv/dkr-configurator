@@ -109,14 +109,28 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm font-medium text-muted mb-2">НДС %</label>
+          <label className="flex items-center gap-2 text-sm font-medium text-muted mb-2">
+            <input
+              type="checkbox"
+              checked={data.vatEnabled}
+              onChange={(e) => update({ vatEnabled: e.target.checked })}
+              className="w-4 h-4 accent-accent"
+            />
+            НДС %
+          </label>
           <input
             type="number"
             min={0}
             value={data.vat}
+            disabled={!data.vatEnabled}
             onChange={(e) => update({ vat: parseFloat(e.target.value) || 0 })}
-            className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
+            className={`w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent ${
+              !data.vatEnabled ? 'opacity-40 cursor-not-allowed' : ''
+            }`}
           />
+          {!data.vatEnabled && (
+            <p className="text-[11px] text-muted mt-1">Участник Сколково — НДС не применяется</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Рег. коэффициент</label>
