@@ -104,7 +104,6 @@ function createInitialState(): WizardState {
       vat: 22,
       montage: 'none',
       language: 'ru',
-      regionalCoefficient: 1.0,
     },
   };
 }

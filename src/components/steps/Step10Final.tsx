@@ -132,17 +132,6 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
             <p className="text-[11px] text-muted mt-1">Участник Сколково — НДС не применяется</p>
           )}
         </div>
-        <div>
-          <label className="block text-sm font-medium text-muted mb-2">Рег. коэффициент</label>
-          <input
-            type="number"
-            min={0}
-            step={0.1}
-            value={data.regionalCoefficient}
-            onChange={(e) => update({ regionalCoefficient: parseFloat(e.target.value) || 1 })}
-            className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
-          />
-        </div>
       </div>
 
       <div>

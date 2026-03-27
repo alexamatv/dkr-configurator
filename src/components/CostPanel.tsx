@@ -107,8 +107,7 @@ function useCostCalc(state: WizardState) {
   const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
   const montageAmount = afterDiscount * montageRate;
 
-  const regionalCoeff = state.step10.regionalCoefficient;
-  const total = (afterDiscount + vatAmount + montageAmount) * regionalCoeff;
+  const total = afterDiscount + vatAmount + montageAmount;
 
   const lines: [string, number][] = [
     ['Базовая комплектация', kitPrice * postCount],
@@ -129,7 +128,6 @@ function useCostCalc(state: WizardState) {
     vatAmount,
     montage,
     montageAmount,
-    regionalCoeff,
     total,
   };
 }
@@ -151,7 +149,7 @@ function CostContent({
 }) {
   const {
     postCount, lines, discountPct, discountAmount,
-    vatEnabled, vatPct, vatAmount, montage, montageAmount, regionalCoeff, total,
+    vatEnabled, vatPct, vatAmount, montage, montageAmount, total,
   } = calc;
 
   const update10 = (patch: Partial<Step10Data>) =>
@@ -238,20 +236,6 @@ function CostContent({
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-muted">Рег. коэфф.</span>
-          <div className="flex items-center gap-1">
-            <span className="text-muted text-xs">×</span>
-            <input
-              type="number"
-              min={0}
-              step={0.1}
-              value={regionalCoeff}
-              onChange={(e) => update10({ regionalCoefficient: parseFloat(e.target.value) || 1 })}
-              className="w-16 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-center focus:outline-none focus:border-accent"
-            />
-          </div>
-        </div>
       </div>
 
       <div className="border-t border-border pt-3">

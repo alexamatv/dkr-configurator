@@ -172,7 +172,6 @@ export interface Step10Data {
   vat: number;
   montage: MontageType;
   language: Language;
-  regionalCoefficient: number;
 }
 
 export interface WizardState {
