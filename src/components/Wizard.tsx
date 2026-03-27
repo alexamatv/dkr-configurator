@@ -299,8 +299,10 @@ export function Wizard() {
     }
   };
 
-  // Step 7 validation: at least one water option must be explicitly chosen
-  const step7Valid = state.currentStep !== 7 || (state.step7.osmosOption !== '' && state.step7.arasModel !== '');
+  // Step 7 validation: cards chosen OR custom price entered
+  const step7Valid = state.currentStep !== 7
+    || (state.step7.osmosOption !== '' && state.step7.arasModel !== '')
+    || (state.step7.customWaterPrice > 0);
   const nextDisabled = state.currentStep === 10 || !step7Valid;
 
   return (

@@ -10,7 +10,7 @@ interface Props {
 
 export function Step7Water({ data, onChange }: Props) {
   const update = (patch: Partial<Step7Data>) => onChange({ ...data, ...patch });
-  const notReady = data.osmosOption === '' || data.arasModel === '';
+  const notReady = (data.osmosOption === '' || data.arasModel === '') && !(data.customWaterPrice > 0);
 
   return (
     <div className="space-y-8">
