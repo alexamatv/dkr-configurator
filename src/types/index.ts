@@ -171,6 +171,7 @@ export interface Step10Data {
   vatEnabled: boolean;
   vat: number;
   montage: MontageType;
+  montageExtra: number;
   language: Language;
 }
 

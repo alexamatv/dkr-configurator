@@ -101,13 +101,19 @@ function useCostCalc(state: WizardState) {
 
   const vatEnabled = state.step10.vatEnabled;
   const vatPct = state.step10.vat;
-  const vatAmount = vatEnabled ? afterDiscount * (vatPct / 100) : 0;
 
+  // Монтаж считается от subtotal (до скидки)
   const montage = state.step10.montage;
   const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
-  const montageAmount = afterDiscount * montageRate;
+  const montagePct = subtotal * montageRate;
+  const montageExtra = montage === 'full' ? (state.step10.montageExtra || 0) : 0;
+  const montageAmount = montagePct + montageExtra;
 
-  const total = afterDiscount + vatAmount + montageAmount;
+  // НДС от (после скидки + монтаж)
+  const beforeVat = afterDiscount + montageAmount;
+  const vatAmount = vatEnabled ? beforeVat * (vatPct / 100) : 0;
+
+  const total = beforeVat + vatAmount;
 
   const lines: [string, number][] = [
     ['Базовая комплектация', kitPrice * postCount],
@@ -127,6 +133,8 @@ function useCostCalc(state: WizardState) {
     vatPct,
     vatAmount,
     montage,
+    montagePct,
+    montageExtra,
     montageAmount,
     total,
   };
@@ -134,8 +142,8 @@ function useCostCalc(state: WizardState) {
 
 const montageOptions: { value: MontageType; label: string }[] = [
   { value: 'none', label: 'Нет' },
-  { value: 'commissioning', label: '5%' },
-  { value: 'full', label: '10%' },
+  { value: 'full', label: 'Монтаж 10%' },
+  { value: 'commissioning', label: 'Шеф 5%' },
 ];
 
 function CostContent({
@@ -149,7 +157,7 @@ function CostContent({
 }) {
   const {
     postCount, lines, discountPct, discountAmount,
-    vatEnabled, vatPct, vatAmount, montage, montageAmount, total,
+    vatEnabled, vatPct, vatAmount, montage, montagePct, montageExtra, montageAmount, total,
   } = calc;
 
   const update10 = (patch: Partial<Step10Data>) =>
@@ -223,7 +231,7 @@ function CostContent({
             {montageOptions.map((opt) => (
               <button
                 key={opt.value}
-                onClick={() => update10({ montage: opt.value })}
+                onClick={() => update10({ montage: opt.value, montageExtra: opt.value !== 'full' ? 0 : state.step10.montageExtra })}
                 className={`flex-1 text-[11px] py-1 rounded transition-colors ${
                   montage === opt.value
                     ? 'bg-accent text-white'
@@ -234,6 +242,26 @@ function CostContent({
               </button>
             ))}
           </div>
+          {montage === 'full' && montageExtra > 0 && (
+            <div className="text-[10px] text-muted">
+              10%: {fmt(montagePct)} + доп. работы: {fmt(montageExtra)} = {fmt(montageAmount)}
+            </div>
+          )}
+          {montage === 'full' && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span className="text-[11px] text-muted whitespace-nowrap">Доп. работы</span>
+              <input
+                type="number"
+                min={0}
+                step={1000}
+                value={state.step10.montageExtra || ''}
+                onChange={(e) => update10({ montageExtra: parseFloat(e.target.value) || 0 })}
+                placeholder="0"
+                className="w-24 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-right focus:outline-none focus:border-accent"
+              />
+              <span className="text-[10px] text-muted">₽</span>
+            </div>
+          )}
         </div>
 
       </div>

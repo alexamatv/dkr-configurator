@@ -103,6 +103,7 @@ function createInitialState(): WizardState {
       vatEnabled: false,
       vat: 22,
       montage: 'none',
+      montageExtra: 0,
       language: 'ru',
     },
   };
