@@ -7,6 +7,7 @@ import type {
   VacuumOption,
   WashExtra,
   ProfileConfig,
+  DosatorChoice,
 } from '@/types';
 
 export const profiles: ProfileConfig[] = [
@@ -161,13 +162,22 @@ export const defaultBaseFunctions: PostFunction[] = [
 ];
 
 export const defaultExtraFunctions: PostFunction[] = [
-  { id: 'osmos', name: 'Осмос', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 15000 },
-  { id: 'vacuum', name: 'Пылесос', isBase: false, enabled: false, option: 'none', vacuumType: 'in_post', buttonPrice: 2000, kitPrice: 25000 },
-  { id: 'air', name: 'Воздух', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 12000 },
-  { id: 'turbo_dry', name: 'Турбосушка', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 35000 },
-  { id: 'tire_black', name: 'Чернение резины', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 10000 },
-  { id: 'warm_water', name: 'Тёплая вода', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 20000 },
-  { id: 'anti_bug', name: 'Антимошка', isBase: false, enabled: false, option: 'none', buttonPrice: 2000, kitPrice: 8000 },
+  { id: 'osmos', name: 'Осмос', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 25000 },
+  { id: 'vacuum', name: 'Пылесос', isBase: false, enabled: false, option: 'none', vacuumType: 'in_post', buttonPrice: 5000, kitPrice: 30000 },
+  { id: 'air', name: 'Воздух', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 20000 },
+  { id: 'turbo_dry', name: 'Турбосушка', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 35000 },
+  { id: 'tire_black', name: 'Чернение резины', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 15000 },
+  { id: 'warm_water', name: 'Тёплая вода', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 20000 },
+  { id: 'anti_bug', name: 'Антимошка', isBase: false, enabled: false, option: 'none', requiresDosator: true, selectedDosator: 'seko', buttonPrice: 5000, kitPrice: 15000 },
+  { id: 'active_chem', name: 'Активная химия', isBase: false, enabled: false, option: 'none', requiresDosator: true, selectedDosator: 'seko', buttonPrice: 5000, kitPrice: 18000 },
+  { id: 'call_operator', name: 'Вызов оператора', isBase: false, enabled: false, option: 'none', buttonPrice: 3000, kitPrice: 10000 },
+  { id: 'open_gates', name: 'Открытие ворот', isBase: false, enabled: false, option: 'none', buttonPrice: 3000, kitPrice: 12000 },
+];
+
+export const dosatorOptions: { id: DosatorChoice; name: string; price: number }[] = [
+  { id: 'seko', name: 'SEKO', price: 8000 },
+  { id: 'ulka', name: 'Ulka', price: 6000 },
+  { id: 'injector', name: 'Инжектор', price: 12000 },
 ];
 
 // АВД — базовый входит в комплект (0 ₽), остальные с доплатой

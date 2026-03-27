@@ -38,6 +38,8 @@ export type PaymentSystem = 'bill_acceptor' | 'coin_acceptor' | 'acquiring' | 'l
 export type FunctionOption = 'none' | 'button_only' | 'button_and_kit';
 export type VacuumType = 'in_post' | 'wall_mounted';
 
+export type DosatorChoice = 'seko' | 'ulka' | 'injector';
+
 export interface PostFunction {
   id: string;
   name: string;
@@ -45,6 +47,8 @@ export interface PostFunction {
   enabled: boolean;
   option?: FunctionOption;
   vacuumType?: VacuumType;
+  requiresDosator?: boolean;
+  selectedDosator?: DosatorChoice;
   buttonPrice: number;
   kitPrice: number;
 }

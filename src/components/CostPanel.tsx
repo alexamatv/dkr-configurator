@@ -10,6 +10,7 @@ import {
   osmosOptions,
   arasModels,
   vacuumOptions,
+  dosatorOptions,
 } from '@/data/mockData';
 
 interface CostPanelProps {
@@ -46,13 +47,17 @@ function useCostCalc(state: WizardState) {
     0
   );
 
-  // Доп. функции — только не базовые
+  // Доп. функции — только не базовые, включая дозаторы
   const functionsPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
     .reduce((sum, f) => {
-      if (f.option === 'button_only') return sum + f.buttonPrice;
-      if (f.option === 'button_and_kit') return sum + f.buttonPrice + f.kitPrice;
-      return sum;
+      let price = 0;
+      if (f.option === 'button_only') price = f.buttonPrice;
+      else if (f.option === 'button_and_kit') price = f.buttonPrice + f.kitPrice;
+      if (f.requiresDosator && f.selectedDosator) {
+        price += dosatorOptions.find((d) => d.id === f.selectedDosator)?.price ?? 0;
+      }
+      return sum + price;
     }, 0);
 
   // Доплата за АВД (0 если из комплекта, >0 если апгрейд)
