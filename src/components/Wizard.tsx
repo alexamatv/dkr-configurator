@@ -83,8 +83,9 @@ function createInitialState(): WizardState {
     posts: [],
     currentPostIndex: -1,
     step7: {
-      osmosOption: 'none',
-      arasModel: 'none',
+      osmosOption: '',
+      arasModel: '',
+      customWaterPrice: 0,
     },
     step8: {
       extras: defaultPostExtras.map((e) => ({ ...e })),
@@ -303,6 +304,10 @@ export function Wizard() {
     }
   };
 
+  // Step 7 validation: at least one water option must be explicitly chosen
+  const step7Valid = state.currentStep !== 7 || (state.step7.osmosOption !== '' && state.step7.arasModel !== '');
+  const nextDisabled = state.currentStep === 10 || !step7Valid;
+
   return (
     <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
       <StepNavigation currentStep={state.currentStep} onStepClick={setStep} />
@@ -328,9 +333,9 @@ export function Wizard() {
           </button>
           <button
             onClick={handleNext}
-            disabled={state.currentStep === 10}
+            disabled={nextDisabled}
             className={`px-5 lg:px-6 py-2.5 rounded font-medium text-sm transition-colors ${
-              state.currentStep === 10
+              nextDisabled
                 ? 'bg-border/30 text-muted cursor-not-allowed'
                 : 'bg-accent text-white hover:bg-accent-hover'
             }`}

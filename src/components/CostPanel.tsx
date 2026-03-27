@@ -88,7 +88,8 @@ function useCostCalc(state: WizardState) {
 
   const upgradesPerPost = bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
   const equipmentTotal = (kitPrice + upgradesPerPost) * postCount;
-  const washTotal = osmosPrice + arasPrice + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
+  const customWaterPrice = state.step7.customWaterPrice || 0;
+  const washTotal = osmosPrice + arasPrice + customWaterPrice + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
   const subtotal = equipmentTotal + washTotal;
 
   const discountPct = state.step10.discount;
@@ -111,7 +112,7 @@ function useCostCalc(state: WizardState) {
     ['Базовая комплектация', kitPrice * postCount],
     ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
     ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
-    ['Водоподготовка', osmosPrice + arasPrice],
+    ['Водоподготовка', osmosPrice + arasPrice + customWaterPrice],
     ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
   ];
 

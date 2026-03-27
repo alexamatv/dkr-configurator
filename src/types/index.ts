@@ -141,6 +141,7 @@ export interface Step5Data {
 export interface Step7Data {
   osmosOption: string;
   arasModel: string;
+  customWaterPrice: number;
 }
 
 export interface Step8Data {
