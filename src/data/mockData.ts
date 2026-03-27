@@ -126,7 +126,7 @@ export const defaultAccessories: Accessory[] = [
   { id: 'mat_holders', name: 'Держатели для ковриков (4 шт)', price: 8000, selected: false },
   { id: 'gun_holders', name: 'Держатели для пистолетов (2 шт)', price: 6000, selected: false },
   { id: 'hose_4m', name: 'РВД-шланги облегченные 4 м (2 шт)', price: 14000, selected: false, exclusiveGroup: 'hose' },
-  { id: 'hose_5m', name: 'РВД-шланги облегченные 5 м (2 шт)', price: 21500, selected: false, exclusiveGroup: 'hose' },
+  { id: 'hose_5m', name: 'РВД-шланги облегченные 5 м (2 шт)', price: 14000, selected: false, exclusiveGroup: 'hose' },
 ];
 
 export const bumModels: BumModel[] = [
