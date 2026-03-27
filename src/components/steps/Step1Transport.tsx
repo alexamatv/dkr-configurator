@@ -18,7 +18,7 @@ export function Step1Transport({ data, onChange }: Props) {
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Тип транспортного средства</label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {([['passenger', 'Легковой'], ['truck', 'Грузовой']] as const).map(([value, label]) => (
+          {([['passenger', 'Легковой (коммерческий)'], ['truck', 'Грузовой']] as const).map(([value, label]) => (
             <button
               key={value}
               onClick={() => update({ vehicleType: value })}
