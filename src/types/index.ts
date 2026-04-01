@@ -32,7 +32,7 @@ export interface ProfileConfig {
   includedComponents: string[];
 }
 
-export type PaymentSystem = 'bill_acceptor' | 'coin_acceptor' | 'acquiring' | 'loyalty_reader';
+export type PaymentSystem = 'bill_acceptor' | 'coin_acceptor' | 'acquiring' | 'loyalty_reader' | 'qr_payment';
 
 export type FunctionOption = 'none' | 'button_only' | 'button_and_kit';
 export type VacuumType = 'in_post' | 'wall_mounted';

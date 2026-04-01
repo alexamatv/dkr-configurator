@@ -5,9 +5,9 @@ import type { PostConfig } from '@/types';
 import {
   profiles,
   bumModels,
-  paymentSystemPrices,
   avdKits,
   dosatorOptions,
+  calcPaymentCost,
 } from '@/data/mockData';
 
 interface Props {
@@ -35,10 +35,7 @@ function calcPostPrice(post: PostConfig): number {
 
   const bumUpgrade = bumModels.find((b) => b.id === post.bumModel)?.price ?? 0;
 
-  const paymentUpgrade = post.paymentSystems.reduce(
-    (sum, ps) => sum + (paymentSystemPrices[ps] ?? 0),
-    0
-  );
+  const paymentUpgrade = calcPaymentCost(post.paymentSystems);
 
   const functionsPrice = post.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')

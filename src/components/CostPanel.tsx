@@ -5,7 +5,6 @@ import type { WizardState, Step10Data, MontageType } from '@/types';
 import {
   profiles,
   bumModels,
-  paymentSystemPrices,
   avdKits,
   osmosOptions,
   arasModels,
@@ -13,6 +12,7 @@ import {
   dosatorOptions,
   robotModels,
   burModels,
+  calcPaymentCost,
 } from '@/data/mockData';
 
 interface CostPanelProps {
@@ -57,10 +57,7 @@ function useMsoCalc(state: WizardState): CalcResult {
   const bum = bumModels.find((b) => b.id === state.step3.bumModel);
   const bumUpgrade = bum?.price ?? 0;
 
-  const paymentUpgrade = state.step3.paymentSystems.reduce(
-    (sum, ps) => sum + (paymentSystemPrices[ps] ?? 0),
-    0
-  );
+  const paymentUpgrade = calcPaymentCost(state.step3.paymentSystems);
 
   const functionsPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
@@ -265,6 +262,11 @@ function CostContent({
             −{fmt(discountAmount)}
           </span>
         </div>
+        {discountPct > 3 && (
+          <p className="text-[10px] text-red-500 leading-tight">
+            Скидка требует согласования у руководства. Максимальный размер скидки без согласования 3%
+          </p>
+        )}
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">

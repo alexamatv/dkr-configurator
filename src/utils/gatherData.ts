@@ -1,9 +1,8 @@
-import type { WizardState, PostConfig } from '@/types';
+import type { WizardState, PostConfig, PaymentSystem } from '@/types';
 import {
   profiles,
   bumModels,
   paymentSystemLabels,
-  paymentSystemPrices,
   avdKits,
   osmosOptions,
   arasModels,
@@ -12,6 +11,10 @@ import {
   managers,
   robotModels,
   burModels,
+  calcPaymentCost,
+  paymentSystemPrices,
+  basePaymentSystems,
+  paymentSystemRemovalDiscounts,
 } from '@/data/mockData';
 
 export interface PostRow {
@@ -109,6 +112,15 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
     name: paymentSystemLabels[ps] ?? ps,
     price: paymentSystemPrices[ps] ?? 0,
   }));
+  // Add removal discounts for base items that were deselected
+  basePaymentSystems
+    .filter((ps) => !post.paymentSystems.includes(ps as PaymentSystem))
+    .forEach((ps) => {
+      const discount = paymentSystemRemovalDiscounts[ps] ?? 0;
+      if (discount > 0) {
+        payments.push({ name: `${paymentSystemLabels[ps] ?? ps} (снято)`, price: -discount });
+      }
+    });
 
   const accessories: PostRow[] = post.accessories
     .filter((a) => a.selected)
@@ -363,7 +375,7 @@ export function gatherDocData(state: WizardState): DocData {
     .reduce((s, a) => s + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
   const cpKitPrice = cpBasePrice + cpAccPrice;
   const cpBumUpgrade = bumModels.find((b) => b.id === state.step3.bumModel)?.price ?? 0;
-  const cpPayUpgrade = state.step3.paymentSystems.reduce((s, ps) => s + (paymentSystemPrices[ps] ?? 0), 0);
+  const cpPayUpgrade = calcPaymentCost(state.step3.paymentSystems);
   const cpFuncPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
     .reduce((s, f) => {

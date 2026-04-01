@@ -33,7 +33,7 @@ export const profiles: ProfileConfig[] = [
     ],
     includedComponents: [
       'Терминал БУМ №20 (до 5 кнопок)',
-      'Купюроприемник + монетоприемник + карта лояльности',
+      'Купюроприемник ICT A7 + монетоприемник VNTECVN-5 + карта лояльности',
       '2 дозатора Ulka',
       '2 поворотные консоли',
       'HAWK 15-20, мотор 5.5 кВт + bypass',
@@ -67,7 +67,7 @@ export const profiles: ProfileConfig[] = [
     ],
     includedComponents: [
       'Терминал БУМ №20 (до 5 кнопок)',
-      'Купюроприемник + монетоприемник + карта лояльности',
+      'Купюроприемник ICT A7 + монетоприемник VNTECVN-5 + карта лояльности',
       '2 дозатора SEKO',
       '2 поворотные консоли',
       'HAWK 15-20, мотор 5.5 кВт + bypass',
@@ -136,27 +136,70 @@ export const defaultAccessories: Accessory[] = [
 ];
 
 export const bumModels: BumModel[] = [
-  { id: 'model_20', name: 'БУМ №20', description: 'Входит в комплект', maxButtons: 5, price: 0 },
-  { id: 'model_6', name: 'БУМ №6', description: 'Компактный терминал', maxButtons: 8, price: 45000 },
-  { id: 'model_13', name: 'БУМ №13', description: 'Стандартный терминал', maxButtons: 10, price: 55000 },
-  { id: 'model_15', name: 'БУМ №15', description: 'Расширенный терминал', maxButtons: 12, price: 65000 },
-  { id: 'model_3', name: 'БУМ №3', description: 'Базовый терминал', maxButtons: 8, price: 40000 },
+  { id: 'model_20', name: 'БУМ №20', description: 'Входит в комплект (145 000 ₽)', maxButtons: 5, price: 0 },
+  { id: 'model_3', name: 'БУМ №3', description: 'Базовый терминал (170 000 ₽)', maxButtons: 8, price: 25000 },
+  { id: 'model_4', name: 'БУМ №4', description: 'Терминал (182 000 ₽)', maxButtons: 8, price: 37000 },
+  { id: 'model_6', name: 'БУМ №6', description: 'Компактный терминал (192 000 ₽)', maxButtons: 8, price: 47000 },
+  { id: 'model_7', name: 'БУМ №7', description: 'Терминал (352 000 ₽)', maxButtons: 12, price: 207000 },
+  { id: 'model_11', name: 'БУМ №11', description: 'Терминал (182 000 ₽)', maxButtons: 8, price: 37000 },
+  { id: 'model_12', name: 'БУМ №12', description: 'Терминал (215 000 ₽)', maxButtons: 10, price: 70000 },
+  { id: 'model_13', name: 'БУМ №13', description: 'Сенсорный терминал (395 000 ₽)', maxButtons: 10, price: 250000 },
+  { id: 'model_15_buttons', name: 'БУМ №15 (кнопки)', description: 'С кнопками, экран не сенсорный (330 000 ₽)', maxButtons: 12, price: 185000 },
+  { id: 'model_15_screen', name: 'БУМ №15 (строчный экран)', description: 'Строчный экран (220 000 ₽)', maxButtons: 12, price: 75000 },
+  { id: 'model_27', name: 'БУМ №27', description: 'Терминал (215 000 ₽)', maxButtons: 10, price: 70000 },
 ];
 
 export const paymentSystemLabels: Record<string, string> = {
-  bill_acceptor: 'Купюроприемник',
-  coin_acceptor: 'Монетоприемник',
-  acquiring: 'Эквайринг',
+  bill_acceptor: 'Купюроприемник ICT A7',
+  coin_acceptor: 'Монетоприемник VNTECVN-5',
+  acquiring: 'Эквайринг (бесконтактная оплата)',
   loyalty_reader: 'Считыватель карт лояльности',
+  qr_payment: 'Оплата QR кодом',
 };
 
-// Системы оплаты, входящие в комплект — 0 ₽, доп. — с ценой
+// Цена при ДОБАВЛЕНИИ. Базовые (входят в комплект) = 0, доп. опции = цена.
 export const paymentSystemPrices: Record<string, number> = {
   bill_acceptor: 0,
   coin_acceptor: 0,
-  acquiring: 40000,
-  loyalty_reader: 10000,
+  loyalty_reader: 0,
+  acquiring: 44000,
+  qr_payment: 11000,
 };
+
+// Системы оплаты, входящие в базовую комплектацию.
+// При снятии — вычитается removalDiscount из стоимости.
+export const basePaymentSystems: string[] = ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'];
+
+export const paymentSystemRemovalDiscounts: Record<string, number> = {
+  bill_acceptor: 28000,
+  coin_acceptor: 6000,
+  loyalty_reader: 6000,
+};
+
+// Полные цены систем оплаты (для справки в UI)
+export const paymentSystemFullPrices: Record<string, number> = {
+  bill_acceptor: 50000,
+  coin_acceptor: 11000,
+  loyalty_reader: 11000,
+  acquiring: 44000,
+  qr_payment: 11000,
+};
+
+// Вычисление стоимости систем оплаты: добавляет цену доп. опций, вычитает скидку за снятие базовых
+export function calcPaymentCost(selectedSystems: string[]): number {
+  const addCost = selectedSystems.reduce((sum, ps) => sum + (paymentSystemPrices[ps] ?? 0), 0);
+  const removalDiscount = basePaymentSystems
+    .filter((ps) => !selectedSystems.includes(ps))
+    .reduce((sum, ps) => sum + (paymentSystemRemovalDiscounts[ps] ?? 0), 0);
+  return addCost - removalDiscount;
+}
+
+// Типы кнопок (для будущего использования)
+export const buttonTypes = [
+  { id: 'mechanical_led', name: 'Механические антивандальные с LED подсветкой', price: 1100 },
+  { id: 'piezo', name: 'Сенсорные пьезо кнопки', price: 2200 },
+  { id: 'touch', name: 'Наши сенсорные кнопки', price: 3300 },
+];
 
 export const defaultBaseFunctions: PostFunction[] = [
   { id: 'shampoo', name: 'Шампунь', isBase: true, enabled: true, buttonPrice: 0, kitPrice: 0 },

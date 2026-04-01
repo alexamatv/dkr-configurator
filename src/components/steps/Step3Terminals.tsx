@@ -1,14 +1,14 @@
 'use client';
 
 import type { Step3Data, PaymentSystem } from '@/types';
-import { bumModels, paymentSystemLabels, paymentSystemPrices } from '@/data/mockData';
+import { bumModels, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
 
 interface Props {
   data: Step3Data;
   onChange: (data: Step3Data) => void;
 }
 
-const paymentSystems: PaymentSystem[] = ['bill_acceptor', 'coin_acceptor', 'acquiring', 'loyalty_reader'];
+const paymentSystems: PaymentSystem[] = ['bill_acceptor', 'coin_acceptor', 'loyalty_reader', 'acquiring', 'qr_payment'];
 
 export function Step3Terminals({ data, onChange }: Props) {
   const togglePayment = (ps: PaymentSystem) => {
@@ -51,6 +51,10 @@ export function Step3Terminals({ data, onChange }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {paymentSystems.map((ps) => {
             const selected = data.paymentSystems.includes(ps);
+            const isBase = basePaymentSystems.includes(ps);
+            const removalDiscount = paymentSystemRemovalDiscounts[ps] ?? 0;
+            const addPrice = paymentSystemPrices[ps] ?? 0;
+            const fullPrice = paymentSystemFullPrices[ps] ?? 0;
             return (
               <label
                 key={ps}
@@ -75,7 +79,16 @@ export function Step3Terminals({ data, onChange }: Props) {
                 </div>
                 <div>
                   <div className="text-sm font-medium">{paymentSystemLabels[ps]}</div>
-                  <div className="text-xs text-muted">{paymentSystemPrices[ps].toLocaleString('ru-RU')} ₽</div>
+                  {isBase ? (
+                    <>
+                      <div className="text-xs text-success">В комплекте ({fullPrice.toLocaleString('ru-RU')} ₽)</div>
+                      {!selected && (
+                        <div className="text-xs text-danger">−{removalDiscount.toLocaleString('ru-RU')} ₽ при снятии</div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-xs text-muted">+{addPrice.toLocaleString('ru-RU')} ₽</div>
+                  )}
                 </div>
               </label>
             );
