@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import type { ObjectType } from '@/types';
 
 interface StepInfo {
   number: number;
@@ -9,7 +10,7 @@ interface StepInfo {
   scope: 'post' | 'wash' | 'none';
 }
 
-const steps: StepInfo[] = [
+const msoSteps: StepInfo[] = [
   { number: 1, name: 'Тип транспорта', description: 'Тип ТС и объекта', scope: 'post' },
   { number: 2, name: 'Базовая комплектация', description: 'Профиль и аксессуары', scope: 'post' },
   { number: 3, name: 'Терминалы / БУМы', description: 'Модель и оплата', scope: 'post' },
@@ -22,13 +23,26 @@ const steps: StepInfo[] = [
   { number: 10, name: 'Финализация', description: 'Сводка и условия', scope: 'wash' },
 ];
 
+const robotSteps: StepInfo[] = [
+  { number: 1, name: 'Тип транспорта', description: 'Тип ТС и объекта', scope: 'post' },
+  { number: 2, name: 'Модель робота', description: 'Smartbot DKR 360', scope: 'post' },
+  { number: 3, name: 'Выбор БУР', description: 'Блок управления', scope: 'post' },
+  { number: 4, name: 'Опции робота', description: 'Доп. оборудование', scope: 'post' },
+  { number: 5, name: 'Водоподготовка', description: 'Осмос и ARAS', scope: 'wash' },
+  { number: 6, name: 'Доп. на мойку', description: 'Пылесосы, магистрали', scope: 'wash' },
+  { number: 7, name: 'Финализация', description: 'Сводка и условия', scope: 'wash' },
+];
+
 interface StepNavigationProps {
   currentStep: number;
+  objectType: ObjectType;
   onStepClick: (step: number) => void;
 }
 
-export function StepNavigation({ currentStep, onStepClick }: StepNavigationProps) {
+export function StepNavigation({ currentStep, objectType, onStepClick }: StepNavigationProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const steps = objectType === 'robotic' ? robotSteps : msoSteps;
+  const title = objectType === 'robotic' ? 'Конфигуратор Робот' : 'Конфигуратор МСО';
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -43,7 +57,7 @@ export function StepNavigation({ currentStep, onStepClick }: StepNavigationProps
       {/* Desktop sidebar */}
       <div className="hidden lg:flex w-[250px] shrink-0 bg-surface border-r border-border overflow-y-auto flex-col">
         <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-bold text-accent">Конфигуратор МСО</h2>
+          <h2 className="text-lg font-bold text-accent">{title}</h2>
           <p className="text-xs text-muted mt-1">DKR Group</p>
         </div>
         <nav className="py-2">
@@ -80,7 +94,7 @@ export function StepNavigation({ currentStep, onStepClick }: StepNavigationProps
                     <span className={`inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded ${
                       step.scope === 'post' ? 'bg-accent/20 text-accent' : 'bg-success/20 text-success'
                     }`}>
-                      {step.scope === 'post' ? 'на пост' : 'на мойку'}
+                      {step.scope === 'post' ? (objectType === 'robotic' ? 'робот' : 'на пост') : 'на мойку'}
                     </span>
                   )}
                 </div>

@@ -10,6 +10,8 @@ import {
   vacuumOptions,
   dosatorOptions,
   managers,
+  robotModels,
+  burModels,
 } from '@/data/mockData';
 
 export interface PostRow {
@@ -68,9 +70,21 @@ export interface HeaderData {
   currency: string;
 }
 
+export interface RobotBlock {
+  modelName: string;
+  modelPrice: number;
+  burName: string;
+  burPrice: number;
+  options: PostRow[];
+  optionsTotal: number;
+  robotTotal: number;
+}
+
 export interface DocData {
+  isRobot: boolean;
   header: HeaderData;
   posts: PostBlock[];
+  robot: RobotBlock | null;
   wash: WashBlock;
   totals: TotalsBlock;
   deliveryConditions: string;
@@ -168,23 +182,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
   };
 }
 
-export function gatherDocData(state: WizardState): DocData {
-  const mgr = managers.find((m) => m.id === state.step1.manager);
-
-  const header: HeaderData = {
-    date: new Date().toLocaleDateString('ru-RU'),
-    manager: mgr?.name ?? (state.step1.manager || '—'),
-    client: state.step1.clientSearch || '—',
-    vehicleType: state.step1.vehicleType === 'passenger' ? 'Легковой (коммерческий)' : 'Грузовой',
-    objectType: state.step1.objectType === 'self_service' ? 'Мойка самообслуживания' : 'Роботизированная мойка',
-    region: state.step10.region || '—',
-    currency: state.step10.currency,
-  };
-
-  const postsData = state.posts.length > 0 ? state.posts : [];
-  const postBlocks = postsData.map((p, i) => calcPostBlock(p, i, state));
-
-  // Wash block
+function calcWashBlock(state: WizardState): WashBlock {
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
   const aras = arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
@@ -226,7 +224,7 @@ export function gatherDocData(state: WizardState): DocData {
     + washExtras.reduce((s, r) => s + r.price, 0)
     + pipAir + pipWater + pipChem;
 
-  const wash: WashBlock = {
+  return {
     waterLabel,
     waterPrice,
     vacuumLabel: vacLabel,
@@ -235,15 +233,129 @@ export function gatherDocData(state: WizardState): DocData {
     pipelines: { air: pipAir, water: pipWater, chem: pipChem },
     washTotal,
   };
+}
+
+function calcSharedTotals(state: WizardState, subtotal: number): TotalsBlock {
+  const discountPct = state.step10.discount;
+  const discountAmount = subtotal * (discountPct / 100);
+  const afterDiscount = subtotal - discountAmount;
+
+  const montage = state.step10.montage;
+  const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
+  const montageFromSubtotal = subtotal * montageRate;
+  const montageExtra = montage === 'full' ? (state.step10.montageExtra || 0) : 0;
+  const montageAmount = montageFromSubtotal + montageExtra;
+  const montageTypeLabel = montage === 'full' ? 'Монтаж 10%' : montage === 'commissioning' ? 'Шеф-монтаж 5%' : 'Нет';
+
+  const vatEnabled = state.step10.vatEnabled;
+  const vatPct = state.step10.vat;
+  const vatBase = afterDiscount + montageAmount;
+  const vatAmount = vatEnabled ? vatBase * (vatPct / 100) : 0;
+  const total = vatBase + vatAmount;
+
+  return {
+    subtotal,
+    discountPct,
+    discountAmount,
+    afterDiscount,
+    montageType: montageTypeLabel,
+    montageFromSubtotal,
+    montageExtra,
+    montageAmount,
+    vatEnabled,
+    vatPct,
+    vatBase,
+    vatAmount,
+    total,
+  };
+}
+
+function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
+  const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
+  const robotPrice = robot?.price ?? 0;
+
+  const bur = burModels.find((b) => b.id === state.robotStep3.burModel);
+  const burPrice = bur?.price ?? 0;
+
+  const guidesIncluded = ['premium_360', 'cosmo_360'].includes(state.robotStep2.robotModel);
+  const options: PostRow[] = [];
+  if (state.robotStep4.sideBlowerEnabled && (state.robotStep4.sideBlowerPrice || 0) > 0) {
+    options.push({ name: 'Боковой обдув', price: state.robotStep4.sideBlowerPrice || 0 });
+  }
+  if (state.robotStep4.guidesEnabled && !guidesIncluded && (state.robotStep4.guidesPrice || 0) > 0) {
+    options.push({ name: 'Направляющие', price: state.robotStep4.guidesPrice || 0 });
+  }
+  const optionsTotal = options.reduce((s, r) => s + r.price, 0);
+  const robotTotal = robotPrice + burPrice + optionsTotal;
+
+  const robotBlock: RobotBlock = {
+    modelName: robot?.name ?? '—',
+    modelPrice: robotPrice,
+    burName: bur?.name ?? '—',
+    burPrice,
+    options,
+    optionsTotal,
+    robotTotal,
+  };
+
+  const wash = calcWashBlock(state);
+
+  // Wash extras for robot (no post extras / second pump)
+  const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
+  const aras = arasModels.find((a) => a.id === state.step7.arasModel);
+  const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
+  const customWater = state.step7.customWaterPrice || 0;
+  const osmosPrice = osmos?.price ?? 0;
+
+  const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
+  const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
+  const washExtrasPrice = state.step9.extras.filter((e) => e.selected).reduce((s, e) => s + e.price * e.quantity, 0);
+  const pipelinesPrice = (state.step9.pipelinesAirPrice || 0) + (state.step9.pipelinesWaterPrice || 0) + (state.step9.pipelinesChemPrice || 0);
+  const equipTotal = vacuumPrice + washExtrasPrice + pipelinesPrice;
+
+  const subtotal = robotPrice + burPrice + optionsTotal + osmosPrice + arasPrice + customWater + equipTotal;
+  const totals = calcSharedTotals(state, subtotal);
+
+  return {
+    isRobot: true,
+    header,
+    posts: [],
+    robot: robotBlock,
+    wash,
+    totals,
+    deliveryConditions: state.step10.deliveryConditions || '—',
+    paymentConditions: state.step10.paymentConditions || '—',
+  };
+}
+
+export function gatherDocData(state: WizardState): DocData {
+  const mgr = managers.find((m) => m.id === state.step1.manager);
+
+  const header: HeaderData = {
+    date: new Date().toLocaleDateString('ru-RU'),
+    manager: mgr?.name ?? (state.step1.manager || '—'),
+    client: state.step1.clientSearch || '—',
+    vehicleType: state.step1.vehicleType === 'passenger' ? 'Легковой (коммерческий)' : 'Грузовой',
+    objectType: state.step1.objectType === 'self_service' ? 'Мойка самообслуживания' : 'Роботизированная мойка',
+    region: state.step10.region || '—',
+    currency: state.step10.currency,
+  };
+
+  const isRobot = state.step1.objectType === 'robotic';
+  if (isRobot) return gatherRobotDocData(state, header);
+
+  const postsData = state.posts.length > 0 ? state.posts : [];
+  const postBlocks = postsData.map((p, i) => calcPostBlock(p, i, state));
+
+  const wash = calcWashBlock(state);
 
   // Totals — mirror CostPanel logic
   const postCount = Math.max(postBlocks.length, 1);
-  const equipmentTotal = postBlocks.reduce((s, p) => s + p.postTotal, 0);
-  // secondPump and postExtras are already in postTotal above,
-  // but CostPanel adds them to washTotal. Let's match CostPanel exactly:
-  // CostPanel: subtotal = equipmentTotal(kitPrice+upgradesPerPost)*postCount + washTotal
-  // Our postBlocks include postExtras+secondPump per-post but CostPanel puts them in washTotal.
-  // To match CostPanel, recalculate subtotal the same way.
+
+  const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
+  const aras = arasModels.find((a) => a.id === state.step7.arasModel);
+  const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
+  const customWater = state.step7.customWaterPrice || 0;
 
   const profileObj = profiles.find((p) => p.id === state.step2.profile);
   const cpBasePrice = profileObj?.basePrice ?? 0;
@@ -279,49 +391,23 @@ export function gatherDocData(state: WizardState): DocData {
   }, 0) + cpSecondPumpPrice;
   const cpOsmosPrice = osmos?.price ?? 0;
   const cpWashExtras = state.step9.extras.filter((e) => e.selected).reduce((s, e) => s + e.price * e.quantity, 0);
+  const pipAir = state.step9.pipelinesAirPrice || 0;
+  const pipWater = state.step9.pipelinesWaterPrice || 0;
+  const pipChem = state.step9.pipelinesChemPrice || 0;
   const cpPipelines = pipAir + pipWater + pipChem;
 
   const cpUpgradesPerPost = cpBumUpgrade + cpPayUpgrade + cpFuncPrice + cpAvdUpgrade;
   const cpEquipmentTotal = (cpKitPrice + cpUpgradesPerPost) * postCount;
-  const cpWashTotal = cpOsmosPrice + arasPrice + customWater + cpPostExtras + vacPrice + cpWashExtras + cpPipelines;
+  const cpWashTotal = cpOsmosPrice + arasPrice + customWater + cpPostExtras + (wash.vacuumPrice) + cpWashExtras + cpPipelines;
   const subtotal = cpEquipmentTotal + cpWashTotal;
 
-  const discountPct = state.step10.discount;
-  const discountAmount = subtotal * (discountPct / 100);
-  const afterDiscount = subtotal - discountAmount;
-
-  const montage = state.step10.montage;
-  const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
-  const montageFromSubtotal = subtotal * montageRate;
-  const montageExtra = montage === 'full' ? (state.step10.montageExtra || 0) : 0;
-  const montageAmount = montageFromSubtotal + montageExtra;
-  const montageTypeLabel = montage === 'full' ? 'Монтаж 10%' : montage === 'commissioning' ? 'Шеф-монтаж 5%' : 'Нет';
-
-  const vatEnabled = state.step10.vatEnabled;
-  const vatPct = state.step10.vat;
-  const vatBase = afterDiscount + montageAmount;
-  const vatAmount = vatEnabled ? vatBase * (vatPct / 100) : 0;
-  const total = vatBase + vatAmount;
-
-  const totals: TotalsBlock = {
-    subtotal,
-    discountPct,
-    discountAmount,
-    afterDiscount,
-    montageType: montageTypeLabel,
-    montageFromSubtotal,
-    montageExtra,
-    montageAmount,
-    vatEnabled,
-    vatPct,
-    vatBase,
-    vatAmount,
-    total,
-  };
+  const totals = calcSharedTotals(state, subtotal);
 
   return {
+    isRobot: false,
     header,
     posts: postBlocks,
+    robot: null,
     wash,
     totals,
     deliveryConditions: state.step10.deliveryConditions || '—',

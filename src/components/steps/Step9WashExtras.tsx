@@ -6,9 +6,10 @@ import { vacuumOptions } from '@/data/mockData';
 interface Props {
   data: Step9Data;
   onChange: (data: Step9Data) => void;
+  title?: string;
 }
 
-export function Step9WashExtras({ data, onChange }: Props) {
+export function Step9WashExtras({ data, onChange, title }: Props) {
   const update = (patch: Partial<Step9Data>) => onChange({ ...data, ...patch });
 
   const toggleExtra = (id: string) => {
@@ -27,7 +28,7 @@ export function Step9WashExtras({ data, onChange }: Props) {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-bold">Шаг 9. Доп. оборудование на мойку</h2>
+      <h2 className="text-xl font-bold">{title ?? 'Шаг 9. Доп. оборудование на мойку'}</h2>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Уличные пылесосы</label>

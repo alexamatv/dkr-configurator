@@ -6,15 +6,16 @@ import { osmosOptions, arasModels } from '@/data/mockData';
 interface Props {
   data: Step7Data;
   onChange: (data: Step7Data) => void;
+  title?: string;
 }
 
-export function Step7Water({ data, onChange }: Props) {
+export function Step7Water({ data, onChange, title }: Props) {
   const update = (patch: Partial<Step7Data>) => onChange({ ...data, ...patch });
   const notReady = (data.osmosOption === '' || data.arasModel === '') && !(data.customWaterPrice > 0);
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-bold">Шаг 7. Водоподготовка</h2>
+      <h2 className="text-xl font-bold">{title ?? 'Шаг 7. Водоподготовка'}</h2>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Система осмоса</label>

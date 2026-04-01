@@ -11,6 +11,8 @@ import {
   arasModels,
   vacuumOptions,
   dosatorOptions,
+  robotModels,
+  burModels,
 } from '@/data/mockData';
 
 interface CostPanelProps {
@@ -22,32 +24,44 @@ function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' ₽';
 }
 
-function useCostCalc(state: WizardState) {
+interface CalcResult {
+  postCount: number;
+  unitLabel: string;
+  lines: [string, number][];
+  subtotal: number;
+  discountPct: number;
+  discountAmount: number;
+  vatEnabled: boolean;
+  vatPct: number;
+  vatAmount: number;
+  montage: MontageType;
+  montagePct: number;
+  montageExtra: number;
+  montageAmount: number;
+  total: number;
+}
+
+function useMsoCalc(state: WizardState): CalcResult {
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
   const profile = profiles.find((p) => p.id === state.step2.profile);
   const basePrice = profile?.basePrice ?? 0;
 
-  // Сумма выбранных аксессуаров (с учетом customPrice)
   const accessoriesPrice = state.step2.accessories
     .filter((a) => a.selected)
     .reduce((sum, a) => sum + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
 
-  // Базовая комплектация = basePrice + выбранные аксессуары
   const kitPrice = basePrice + accessoriesPrice;
 
-  // Доплата за БУМ (0 если из комплекта, >0 если апгрейд)
   const bum = bumModels.find((b) => b.id === state.step3.bumModel);
   const bumUpgrade = bum?.price ?? 0;
 
-  // Доплата за системы оплаты (0 если из комплекта, >0 если доп)
   const paymentUpgrade = state.step3.paymentSystems.reduce(
     (sum, ps) => sum + (paymentSystemPrices[ps] ?? 0),
     0
   );
 
-  // Доп. функции — только не базовые, включая дозаторы
   const functionsPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
     .reduce((sum, f) => {
@@ -60,7 +74,6 @@ function useCostCalc(state: WizardState) {
       return sum + price;
     }, 0);
 
-  // Сумма всех помп (первая default с price=0 — в комплекте, остальные доплата)
   const avdUpgrade = state.step5.avdSelections.reduce((sum, sel) => {
     const kit = avdKits.find((a) => a.id === sel.avdId);
     return sum + (kit?.price ?? 0);
@@ -72,7 +85,6 @@ function useCostCalc(state: WizardState) {
   const aras = arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
 
-  // Вторая помпа (step8) — цена основной помпы из step5
   let secondPumpPrice = 0;
   if (state.step8.secondPumpEnabled) {
     const defaultSel = state.step5.avdSelections.find((s) => s.isDefault);
@@ -107,37 +119,87 @@ function useCostCalc(state: WizardState) {
   const washTotal = osmosPrice + arasPrice + customWaterPrice + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
   const subtotal = equipmentTotal + washTotal;
 
+  return calcTotals(state, subtotal, postCount, 'пост(ов)', [
+    ['Базовая комплектация', kitPrice * postCount],
+    ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
+    ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
+    ['Водоподготовка', osmosPrice + arasPrice + customWaterPrice],
+    ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
+  ]);
+}
+
+function useRobotCalc(state: WizardState): CalcResult {
+  const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
+  const robotPrice = robot?.price ?? 0;
+
+  const bur = burModels.find((b) => b.id === state.robotStep3.burModel);
+  const burPrice = bur?.price ?? 0;
+
+  // Robot options
+  const guidesIncluded = ['premium_360', 'cosmo_360'].includes(state.robotStep2.robotModel);
+  const sideBlowerCost = state.robotStep4.sideBlowerEnabled ? (state.robotStep4.sideBlowerPrice || 0) : 0;
+  const guidesCost = (!guidesIncluded && state.robotStep4.guidesEnabled) ? (state.robotStep4.guidesPrice || 0) : 0;
+  const optionsTotal = sideBlowerCost + guidesCost;
+
+  // Water (reuses step7)
+  const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
+  const osmosPrice = osmos?.price ?? 0;
+  const aras = arasModels.find((a) => a.id === state.step7.arasModel);
+  const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
+  const customWaterPrice = state.step7.customWaterPrice || 0;
+  const waterTotal = osmosPrice + arasPrice + customWaterPrice;
+
+  // Wash extras (reuses step9)
+  const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
+  const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
+  const washExtrasPrice = state.step9.extras
+    .filter((e) => e.selected)
+    .reduce((sum, e) => sum + e.price * e.quantity, 0);
+  const pipelinesPrice =
+    (state.step9.pipelinesAirPrice || 0) +
+    (state.step9.pipelinesWaterPrice || 0) +
+    (state.step9.pipelinesChemPrice || 0);
+  const equipTotal = vacuumPrice + washExtrasPrice + pipelinesPrice;
+
+  const subtotal = robotPrice + burPrice + optionsTotal + waterTotal + equipTotal;
+
+  return calcTotals(state, subtotal, 1, 'робот', [
+    ['Модель робота', robotPrice],
+    ['БУР', burPrice],
+    ['Опции робота', optionsTotal],
+    ['Водоподготовка', waterTotal],
+    ['Доп. оборудование', equipTotal],
+  ]);
+}
+
+function calcTotals(
+  state: WizardState,
+  subtotal: number,
+  postCount: number,
+  unitLabel: string,
+  lines: [string, number][],
+): CalcResult {
   const discountPct = state.step10.discount;
-  const discountFrac = discountPct / 100;
-  const discountAmount = subtotal * discountFrac;
+  const discountAmount = subtotal * (discountPct / 100);
   const afterDiscount = subtotal - discountAmount;
 
   const vatEnabled = state.step10.vatEnabled;
   const vatPct = state.step10.vat;
 
-  // Монтаж считается от subtotal (до скидки)
   const montage = state.step10.montage;
   const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
   const montagePct = subtotal * montageRate;
   const montageExtra = montage === 'full' ? (state.step10.montageExtra || 0) : 0;
   const montageAmount = montagePct + montageExtra;
 
-  // НДС от (после скидки + монтаж)
   const beforeVat = afterDiscount + montageAmount;
   const vatAmount = vatEnabled ? beforeVat * (vatPct / 100) : 0;
 
   const total = beforeVat + vatAmount;
 
-  const lines: [string, number][] = [
-    ['Базовая комплектация', kitPrice * postCount],
-    ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
-    ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
-    ['Водоподготовка', osmosPrice + arasPrice + customWaterPrice],
-    ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
-  ];
-
   return {
     postCount,
+    unitLabel,
     lines,
     subtotal,
     discountPct,
@@ -166,10 +228,10 @@ function CostContent({
 }: {
   state: WizardState;
   onUpdateStep10: (data: Step10Data) => void;
-  calc: ReturnType<typeof useCostCalc>;
+  calc: CalcResult;
 }) {
   const {
-    postCount, lines, discountPct, discountAmount,
+    postCount, unitLabel, lines, discountPct, discountAmount,
     vatEnabled, vatPct, vatAmount, montage, montagePct, montageExtra, montageAmount, total,
   } = calc;
 
@@ -204,7 +266,6 @@ function CostContent({
           </span>
         </div>
 
-        {/* НДС — чекбокс + условное поле */}
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-1.5 cursor-pointer">
@@ -286,8 +347,8 @@ function CostContent({
         </div>
         {postCount > 0 && (
           <div className="flex justify-between text-xs text-muted mt-1">
-            <span>Цена на 1 пост</span>
-            <span>{fmt(total / postCount)}</span>
+            <span>{postCount > 1 ? `Цена на 1 ${unitLabel}` : ''}</span>
+            <span>{postCount > 1 ? fmt(total / postCount) : ''}</span>
           </div>
         )}
       </div>
@@ -301,7 +362,8 @@ function CostContent({
 
 export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const calc = useCostCalc(state);
+  const isRobot = state.step1.objectType === 'robotic';
+  const calc = isRobot ? useRobotCalc(state) : useMsoCalc(state);
 
   return (
     <>
@@ -309,7 +371,9 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
       <div className="hidden lg:block w-[300px] shrink-0 bg-surface border-l border-border overflow-y-auto">
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
-          <p className="text-xs text-muted mt-1">{calc.postCount} пост(ов)</p>
+          <p className="text-xs text-muted mt-1">
+            {isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
+          </p>
         </div>
         <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} />
       </div>
@@ -335,7 +399,9 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
             <div className="sticky top-0 bg-surface z-10 flex items-center justify-between p-4 border-b border-border rounded-t-2xl">
               <div>
                 <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
-                <p className="text-xs text-muted mt-0.5">{calc.postCount} пост(ов)</p>
+                <p className="text-xs text-muted mt-0.5">
+                  {isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
+                </p>
               </div>
               <button
                 onClick={() => setMobileOpen(false)}

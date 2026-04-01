@@ -176,9 +176,52 @@ export interface Step10Data {
   language: Language;
 }
 
+// ─── Robot types ───
+
+export interface RobotModel {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  includedComponents: string[];
+}
+
+export interface RobotBurModel {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+}
+
+export interface RobotOption {
+  id: string;
+  name: string;
+  enabled: boolean;
+  price: number;
+  includedIn?: string[]; // robot model ids where this is included (price=0)
+}
+
+export interface RobotStep2Data {
+  robotModel: string;
+}
+
+export interface RobotStep3Data {
+  burModel: string;
+}
+
+export interface RobotStep4Data {
+  sideBlowerEnabled: boolean;
+  sideBlowerPrice: number;
+  guidesEnabled: boolean;
+  guidesPrice: number;
+}
+
+// ─── Wizard state ───
+
 export interface WizardState {
   currentStep: number;
   step1: Step1Data;
+  // MSO branch
   step2: Step2Data;
   step3: Step3Data;
   step4: Step4Data;
@@ -189,4 +232,8 @@ export interface WizardState {
   step8: Step8Data;
   step9: Step9Data;
   step10: Step10Data;
+  // Robot branch
+  robotStep2: RobotStep2Data;
+  robotStep3: RobotStep3Data;
+  robotStep4: RobotStep4Data;
 }

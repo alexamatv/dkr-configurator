@@ -94,35 +94,54 @@ export function generatePdf(state: WizardState): void {
     ['Валюта', d.header.currency],
   ]);
 
-  // ─── POSTS ───
-  d.posts.forEach((post) => {
-    sectionTitle(post.title);
-
-    checkPage(12);
+  // ─── ROBOT or POSTS ───
+  if (d.isRobot && d.robot) {
+    sectionTitle('Робот');
+    checkPage(20);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Профиль: ${post.profileName}`, marginL + 2, y);
+    doc.text(`Модель: ${d.robot.modelName} — ${fmt(d.robot.modelPrice)}`, marginL + 2, y);
     y += 5;
-    doc.text(`Базовая комплектация: ${fmt(post.basePrice)}`, marginL + 2, y);
-    y += 5;
-    doc.text(`Терминал: ${post.bumName}${post.bumPrice > 0 ? ' — доплата ' + fmt(post.bumPrice) : ' (в комплекте)'}`, marginL + 2, y);
+    doc.text(`БУР: ${d.robot.burName} — ${fmt(d.robot.burPrice)}`, marginL + 2, y);
     y += 4;
 
-    priceTable('Системы оплаты', post.payments.filter((p) => p.price > 0));
-    priceTable('Аксессуары', post.accessories);
-    priceTable('Функции', post.functions);
-    priceTable('Помпы (АВД)', post.pumps);
-
-    const extrasWithPump = [...post.postExtras];
-    if (post.secondPump) extrasWithPump.push(post.secondPump);
-    priceTable('Доп. оборудование к посту', extrasWithPump);
+    priceTable('Опции робота', d.robot.options);
 
     checkPage(8);
     doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(`Итого по посту: ${fmt(post.postTotal)}`, marginL, y);
+    doc.text(`Итого робот: ${fmt(d.robot.robotTotal)}`, marginL, y);
     y += 6;
-  });
+  } else {
+    d.posts.forEach((post) => {
+      sectionTitle(post.title);
+
+      checkPage(12);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Профиль: ${post.profileName}`, marginL + 2, y);
+      y += 5;
+      doc.text(`Базовая комплектация: ${fmt(post.basePrice)}`, marginL + 2, y);
+      y += 5;
+      doc.text(`Терминал: ${post.bumName}${post.bumPrice > 0 ? ' — доплата ' + fmt(post.bumPrice) : ' (в комплекте)'}`, marginL + 2, y);
+      y += 4;
+
+      priceTable('Системы оплаты', post.payments.filter((p) => p.price > 0));
+      priceTable('Аксессуары', post.accessories);
+      priceTable('Функции', post.functions);
+      priceTable('Помпы (АВД)', post.pumps);
+
+      const extrasWithPump = [...post.postExtras];
+      if (post.secondPump) extrasWithPump.push(post.secondPump);
+      priceTable('Доп. оборудование к посту', extrasWithPump);
+
+      checkPage(8);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(`Итого по посту: ${fmt(post.postTotal)}`, marginL, y);
+      y += 6;
+    });
+  }
 
   // ─── WASH ───
   sectionTitle('Оборудование на мойку');

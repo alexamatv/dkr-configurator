@@ -13,6 +13,9 @@ import type {
   Step9Data,
   Step10Data,
   PostConfig,
+  RobotStep2Data,
+  RobotStep3Data,
+  RobotStep4Data,
 } from '@/types';
 import {
   defaultAccessories,
@@ -34,6 +37,9 @@ import { Step7Water } from './steps/Step7Water';
 import { Step8PostExtras } from './steps/Step8PostExtras';
 import { Step9WashExtras } from './steps/Step9WashExtras';
 import { Step10Final } from './steps/Step10Final';
+import { RobotStep2Model } from './steps/RobotStep2Model';
+import { RobotStep3Bur } from './steps/RobotStep3Bur';
+import { RobotStep4Options } from './steps/RobotStep4Options';
 
 // Функции, которые входят в комплект Премиум (становятся isBase + enabled)
 const premiumIncludedFunctions = [
@@ -89,6 +95,7 @@ function createInitialState(): WizardState {
       clientSearch: '',
       manager: '',
     },
+    // MSO
     step2: defaults.step2,
     step3: defaults.step3,
     step4: defaults.step4,
@@ -123,17 +130,28 @@ function createInitialState(): WizardState {
       montageExtra: 0,
       language: 'ru',
     },
+    // Robot
+    robotStep2: { robotModel: '' },
+    robotStep3: { burModel: '' },
+    robotStep4: { sideBlowerEnabled: false, sideBlowerPrice: 0, guidesEnabled: false, guidesPrice: 0 },
   };
 }
 
 export function Wizard() {
   const [state, setState] = useState<WizardState>(createInitialState);
 
-  const setStep = (step: number) => setState((s) => ({ ...s, currentStep: step }));
-  const goNext = () => setState((s) => ({ ...s, currentStep: Math.min(s.currentStep + 1, 10) }));
-  const goBack = () => setState((s) => ({ ...s, currentStep: Math.max(s.currentStep - 1, 1) }));
+  const isRobot = state.step1.objectType === 'robotic';
+  const maxStep = isRobot ? 7 : 10;
 
-  const updateStep1 = useCallback((data: Step1Data) => setState((s) => ({ ...s, step1: data })), []);
+  const setStep = (step: number) => setState((s) => ({ ...s, currentStep: Math.min(step, maxStep) }));
+
+  const updateStep1 = useCallback((data: Step1Data) => {
+    setState((s) => {
+      // Reset step to 1 when switching objectType to avoid being on an invalid step
+      const switched = data.objectType !== s.step1.objectType;
+      return { ...s, step1: data, ...(switched ? { currentStep: 1 } : {}) };
+    });
+  }, []);
   const updateStep2 = useCallback((data: Step2Data) => {
     setState((s) => {
       if (data.profile !== s.step2.profile) {
@@ -159,6 +177,12 @@ export function Wizard() {
   const updateStep9 = useCallback((data: Step9Data) => setState((s) => ({ ...s, step9: data })), []);
   const updateStep10 = useCallback((data: Step10Data) => setState((s) => ({ ...s, step10: data })), []);
 
+  // Robot updaters
+  const updateRobotStep2 = useCallback((data: RobotStep2Data) => setState((s) => ({ ...s, robotStep2: data })), []);
+  const updateRobotStep3 = useCallback((data: RobotStep3Data) => setState((s) => ({ ...s, robotStep3: data })), []);
+  const updateRobotStep4 = useCallback((data: RobotStep4Data) => setState((s) => ({ ...s, robotStep4: data })), []);
+
+  // ─── MSO post operations ───
   const saveCurrentPostToList = useCallback(() => {
     setState((s) => {
       const newPost: PostConfig = {
@@ -265,10 +289,9 @@ export function Wizard() {
     setStep(7);
   }, []);
 
-  const renderStep = () => {
+  // ─── Step rendering ───
+  const renderMsoStep = () => {
     switch (state.currentStep) {
-      case 1:
-        return <Step1Transport data={state.step1} onChange={updateStep1} />;
       case 2:
         return <Step2BaseConfig data={state.step2} onChange={updateStep2} />;
       case 3:
@@ -313,35 +336,71 @@ export function Wizard() {
     }
   };
 
-  const handleNext = () => {
-    if (state.currentStep === 5) {
-      saveCurrentPostToList();
-      setStep(6);
-    } else {
-      goNext();
+  const renderRobotStep = () => {
+    switch (state.currentStep) {
+      case 2:
+        return <RobotStep2Model data={state.robotStep2} onChange={updateRobotStep2} />;
+      case 3:
+        return <RobotStep3Bur data={state.robotStep3} onChange={updateRobotStep3} />;
+      case 4:
+        return <RobotStep4Options data={state.robotStep4} robotModelId={state.robotStep2.robotModel} onChange={updateRobotStep4} />;
+      case 5:
+        return <Step7Water data={state.step7} onChange={updateStep7} title="Шаг 5. Водоподготовка" />;
+      case 6:
+        return <Step9WashExtras data={state.step9} onChange={updateStep9} title="Шаг 6. Доп. оборудование на мойку" />;
+      case 7:
+        return (
+          <Step10Final
+            data={state.step10}
+            posts={[]}
+            wizardState={state}
+            onChange={updateStep10}
+            onEditPost={() => {}}
+            onDuplicatePost={() => {}}
+            onDeletePost={() => {}}
+            title="Шаг 7. Финализация"
+          />
+        );
+      default:
+        return null;
     }
   };
 
-  // Step 7 validation: cards chosen OR custom price entered
-  const step7Valid = state.currentStep !== 7
+  const renderStep = () => {
+    if (state.currentStep === 1) {
+      return <Step1Transport data={state.step1} onChange={updateStep1} />;
+    }
+    return isRobot ? renderRobotStep() : renderMsoStep();
+  };
+
+  const handleNext = () => {
+    if (!isRobot && state.currentStep === 5) {
+      saveCurrentPostToList();
+      setStep(6);
+    } else {
+      setState((s) => ({ ...s, currentStep: Math.min(s.currentStep + 1, maxStep) }));
+    }
+  };
+
+  // Water validation: for MSO on step 7, for Robot on step 5
+  const waterStep = isRobot ? 5 : 7;
+  const waterValid = state.currentStep !== waterStep
     || (state.step7.osmosOption !== '' && state.step7.arasModel !== '')
     || (state.step7.customWaterPrice > 0);
-  const nextDisabled = state.currentStep === 10 || !step7Valid;
+  const nextDisabled = state.currentStep === maxStep || !waterValid;
 
   return (
     <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
-      <StepNavigation currentStep={state.currentStep} onStepClick={setStep} />
+      <StepNavigation currentStep={state.currentStep} objectType={state.step1.objectType} onStepClick={setStep} />
 
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
-        {/* Scrollable content area — on mobile needs bottom padding for floating elements */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 pb-36 lg:pb-8">
           {renderStep()}
         </div>
 
-        {/* Nav buttons: fixed at bottom on mobile, inline on desktop */}
         <div className="shrink-0 p-3 lg:p-4 border-t border-border bg-surface flex justify-between fixed bottom-0 left-0 right-0 z-40 lg:static">
           <button
-            onClick={goBack}
+            onClick={() => setState((s) => ({ ...s, currentStep: Math.max(s.currentStep - 1, 1) }))}
             disabled={state.currentStep === 1}
             className={`px-5 lg:px-6 py-2.5 rounded font-medium text-sm transition-colors ${
               state.currentStep === 1

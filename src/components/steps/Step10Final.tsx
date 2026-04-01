@@ -13,14 +13,15 @@ interface Props {
   onEditPost: (index: number) => void;
   onDuplicatePost: (index: number) => void;
   onDeletePost: (index: number) => void;
+  title?: string;
 }
 
-export function Step10Final({ data, posts, wizardState, onChange, onEditPost, onDuplicatePost, onDeletePost }: Props) {
+export function Step10Final({ data, posts, wizardState, onChange, onEditPost, onDuplicatePost, onDeletePost, title }: Props) {
   const update = (patch: Partial<Step10Data>) => onChange({ ...data, ...patch });
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-bold">Шаг 10. Финализация</h2>
+      <h2 className="text-xl font-bold">{title ?? 'Шаг 10. Финализация'}</h2>
 
       {posts.length > 0 && (
         <div>

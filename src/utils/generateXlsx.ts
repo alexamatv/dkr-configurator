@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx';
 import type { WizardState } from '@/types';
-import { gatherDocData, makeFileName, type DocData, type PostBlock, type PostRow } from './gatherData';
+import { gatherDocData, makeFileName, type DocData, type PostRow } from './gatherData';
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU');
@@ -45,51 +45,60 @@ export function generateXlsx(state: WizardState): void {
   addRow('Регион доставки', d.header.region);
   addRow('Валюта', d.header.currency);
 
-  // ─── POSTS ───
-  d.posts.forEach((post, postIdx) => {
-    addSection(post.title);
-    addRow('Профиль', post.profileName);
-    addRow('Базовая комплектация', '', post.basePrice);
-
-    if (post.bumPrice > 0) {
-      addRow('Терминал (доплата)', post.bumName, post.bumPrice);
-    } else {
-      addRow('Терминал', post.bumName + ' (в комплекте)', 0);
+  // ─── ROBOT or POSTS ───
+  if (d.isRobot && d.robot) {
+    addSection('Робот');
+    addRow('Модель', d.robot.modelName, d.robot.modelPrice);
+    addRow('БУР', d.robot.burName, d.robot.burPrice);
+    if (d.robot.options.length > 0) {
+      addRow('Опции');
+      d.robot.options.forEach((r) => addRow('', r.name, r.price));
     }
+    addBold('Итого робот', '', d.robot.robotTotal);
+  } else {
+    d.posts.forEach((post) => {
+      addSection(post.title);
+      addRow('Профиль', post.profileName);
+      addRow('Базовая комплектация', '', post.basePrice);
 
-    if (post.payments.length > 0) {
-      addRow('Системы оплаты');
-      post.payments.forEach((r) => addRow('', r.name, r.price));
-    }
+      if (post.bumPrice > 0) {
+        addRow('Терминал (доплата)', post.bumName, post.bumPrice);
+      } else {
+        addRow('Терминал', post.bumName + ' (в комплекте)', 0);
+      }
 
-    if (post.accessories.length > 0) {
-      addRow('Аксессуары');
-      post.accessories.forEach((r) => addRow('', r.name, r.price));
-    }
+      if (post.payments.length > 0) {
+        addRow('Системы оплаты');
+        post.payments.forEach((r) => addRow('', r.name, r.price));
+      }
 
-    if (post.functions.length > 0) {
-      addRow('Функции');
-      post.functions.forEach((r) => addRow('', r.name, r.price));
-    }
+      if (post.accessories.length > 0) {
+        addRow('Аксессуары');
+        post.accessories.forEach((r) => addRow('', r.name, r.price));
+      }
 
-    if (post.pumps.length > 0) {
-      addRow('Помпы (АВД)');
-      post.pumps.forEach((r) => addRow('', r.name, r.price));
-    }
+      if (post.functions.length > 0) {
+        addRow('Функции');
+        post.functions.forEach((r) => addRow('', r.name, r.price));
+      }
 
-    if (post.postExtras.length > 0) {
-      addRow('Доп. оборудование к посту');
-      post.postExtras.forEach((r) => addRow('', r.name, r.price));
-    }
+      if (post.pumps.length > 0) {
+        addRow('Помпы (АВД)');
+        post.pumps.forEach((r) => addRow('', r.name, r.price));
+      }
 
-    if (post.secondPump) {
-      addRow('', post.secondPump.name, post.secondPump.price);
-    }
+      if (post.postExtras.length > 0) {
+        addRow('Доп. оборудование к посту');
+        post.postExtras.forEach((r) => addRow('', r.name, r.price));
+      }
 
-    // Post subtotal with SUM formula
-    const firstPriceRow = rows.findIndex((_, i) => i > rows.length - 30 && rows[i]?.[PRICE] !== null && typeof rows[i]?.[PRICE] === 'number');
-    addBold('Итого по посту', '', post.postTotal);
-  });
+      if (post.secondPump) {
+        addRow('', post.secondPump.name, post.secondPump.price);
+      }
+
+      addBold('Итого по посту', '', post.postTotal);
+    });
+  }
 
   // ─── WASH BLOCK ───
   addSection('Оборудование на мойку');
