@@ -1,200 +1,258 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import type { WizardState } from '@/types';
-import { gatherDocData, makeFileName, type DocData, type PostRow } from './gatherData';
+import { gatherDocData, makeFileName, type PostRow } from './gatherData';
+
+// ─── Brand colors ───
+const BLUE = '0EA5E9';
+const DARK = '1E293B';
+const STRIPE = 'F8FAFC';
+const WHITE = 'FFFFFF';
+const BLUE_TEXT = '0EA5E9';
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU');
 }
 
-export function generateXlsx(state: WizardState): void {
+export async function generateXlsx(state: WizardState): Promise<void> {
   const d = gatherDocData(state);
-  const wb = XLSX.utils.book_new();
-  const rows: (string | number | null)[][] = [];
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('КП', {
+    properties: { defaultColWidth: 20 },
+  });
 
-  const LABEL = 0; // col A
-  const VALUE = 1; // col B
-  const PRICE = 2; // col C
+  // Column widths
+  ws.getColumn(1).width = 35;
+  ws.getColumn(2).width = 45;
+  ws.getColumn(3).width = 22;
 
-  const boldRows: number[] = [];
-  const sectionRows: number[] = [];
+  const headerFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK } };
+  const headerFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: WHITE }, size: 14, name: 'Calibri' };
+  const sectionFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE } };
+  const sectionFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: WHITE }, size: 11, name: 'Calibri' };
+  const boldFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri' };
+  const normalFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri' };
+  const labelFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri', color: { argb: '64748B' } };
+  const subtotalFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: BLUE_TEXT } };
+  const totalFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE } };
+  const totalFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: WHITE }, size: 13, name: 'Calibri' };
+  const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: STRIPE } };
+  const priceFormat = '#,##0" ₽"';
 
-  function addRow(a?: string | number | null, b?: string | number | null, c?: string | number | null) {
-    rows.push([a ?? null, b ?? null, c ?? null]);
-    return rows.length - 1;
+  let rowNum = 0;
+
+  function addRow(a?: string | number | null, b?: string | number | null, c?: string | number | null): ExcelJS.Row {
+    rowNum++;
+    const row = ws.getRow(rowNum);
+    row.getCell(1).value = a ?? null;
+    row.getCell(2).value = b ?? null;
+    row.getCell(3).value = c ?? null;
+    row.font = normalFont;
+    return row;
   }
-  function addBold(a?: string | number | null, b?: string | number | null, c?: string | number | null) {
-    const r = addRow(a, b, c);
-    boldRows.push(r);
-    return r;
+
+  function addHeaderRow(text: string): ExcelJS.Row {
+    const row = addRow(text);
+    ws.mergeCells(rowNum, 1, rowNum, 3);
+    row.getCell(1).fill = headerFill;
+    row.getCell(1).font = headerFont;
+    row.getCell(1).alignment = { vertical: 'middle' };
+    row.height = 30;
+    return row;
   }
-  function addSection(title: string) {
-    addRow();
-    const r = addBold(title);
-    sectionRows.push(r);
-    return r;
+
+  function addSectionRow(text: string): ExcelJS.Row {
+    addRow(); // spacer
+    const row = addRow(text);
+    ws.mergeCells(rowNum, 1, rowNum, 3);
+    row.getCell(1).fill = sectionFill;
+    row.getCell(1).font = sectionFont;
+    row.getCell(1).alignment = { vertical: 'middle' };
+    row.height = 24;
+    return row;
   }
 
-  // ─── HEADER ───
-  addBold('Коммерческое предложение — DKR Group');
-  addRow();
-  addRow('Дата', d.header.date);
-  addRow('Менеджер', d.header.manager);
-  addRow('Клиент', d.header.client);
-  addRow('Тип транспорта', d.header.vehicleType);
-  addRow('Тип объекта', d.header.objectType);
-  addRow('Регион доставки', d.header.region);
+  function addInfoRow(label: string, value: string | number) {
+    const row = addRow(label, value);
+    row.getCell(1).font = labelFont;
+    row.getCell(2).font = boldFont;
+    return row;
+  }
 
-  // ─── TRUCK, ROBOT, or POSTS ───
-  if (d.isTruck && d.truck) {
-    addSection('Грузовая мойка');
-    addRow('Тип мойки', d.truck.typeName, d.truck.typePrice);
-    if (d.truck.options.length > 0) {
-      addRow('Опции');
-      d.truck.options.forEach((r) => addRow('', r.name, r.price));
+  function addPriceRow(label: string, name: string, price: number, stripe = false) {
+    const row = addRow(label, name, price);
+    row.getCell(1).font = labelFont;
+    row.getCell(2).font = normalFont;
+    row.getCell(3).font = normalFont;
+    row.getCell(3).numFmt = priceFormat;
+    if (stripe) {
+      row.getCell(1).fill = stripeFill;
+      row.getCell(2).fill = stripeFill;
+      row.getCell(3).fill = stripeFill;
     }
-    if (d.truck.manualPost.length > 0) {
-      addRow('Ручной пост');
-      d.truck.manualPost.forEach((r) => addRow('', r.name, r.price));
-      if (d.truck.manualPostMontage > 0) {
-        addRow('', 'Монтаж ручного поста', d.truck.manualPostMontage);
-      }
-    }
-    if (d.truck.waterPrice > 0) {
-      addRow('Водоочистка', d.truck.waterLabel, d.truck.waterPrice);
-    }
-    addBold('Итого грузовая мойка', '', d.truck.truckTotal);
-  } else if (d.isRobot && d.robot) {
-    addSection('Робот');
-    addRow('Модель', d.robot.modelName, d.robot.modelPrice);
-    addRow('БУР', d.robot.burName, d.robot.burPrice);
-    if (d.robot.options.length > 0) {
-      addRow('Опции');
-      d.robot.options.forEach((r) => addRow('', r.name, r.price));
-    }
-    addBold('Итого робот', '', d.robot.robotTotal);
-  } else {
-    d.posts.forEach((post) => {
-      addSection(post.title);
-      addRow('Профиль', post.profileName);
-      addRow('Базовая комплектация', '', post.basePrice);
+    return row;
+  }
 
-      if (post.bumPrice > 0) {
-        addRow('Терминал (доплата)', post.bumName, post.bumPrice);
-      } else {
-        addRow('Терминал', post.bumName + ' (в комплекте)', 0);
-      }
+  function addSubtotalRow(label: string, price: number) {
+    const row = addRow(label, '', price);
+    row.getCell(1).font = subtotalFont;
+    row.getCell(3).font = subtotalFont;
+    row.getCell(3).numFmt = priceFormat;
+    return row;
+  }
 
-      if (post.payments.length > 0) {
-        addRow('Системы оплаты');
-        post.payments.forEach((r) => addRow('', r.name, r.price));
-      }
-
-      if (post.accessories.length > 0) {
-        addRow('Аксессуары');
-        post.accessories.forEach((r) => addRow('', r.name, r.price));
-      }
-
-      if (post.functions.length > 0) {
-        addRow('Функции');
-        post.functions.forEach((r) => addRow('', r.name, r.price));
-      }
-
-      if (post.pumps.length > 0) {
-        addRow('Помпы (АВД)');
-        post.pumps.forEach((r) => addRow('', r.name, r.price));
-      }
-
-      if (post.postExtras.length > 0) {
-        addRow('Доп. оборудование к посту');
-        post.postExtras.forEach((r) => addRow('', r.name, r.price));
-      }
-
-      if (post.secondPump) {
-        addRow('', post.secondPump.name, post.secondPump.price);
-      }
-
-      addBold('Итого по посту', '', post.postTotal);
+  function addPriceBlock(heading: string, items: PostRow[]) {
+    if (items.length === 0) return;
+    // Table header
+    const headRow = addRow('', heading, 'Цена');
+    headRow.getCell(2).font = { ...sectionFont, size: 9 };
+    headRow.getCell(3).font = { ...sectionFont, size: 9 };
+    headRow.getCell(2).fill = sectionFill;
+    headRow.getCell(3).fill = sectionFill;
+    headRow.getCell(3).alignment = { horizontal: 'right' };
+    // Items
+    items.forEach((r, i) => {
+      addPriceRow('', r.name, r.price, i % 2 === 1);
     });
   }
 
-  // ─── WASH BLOCK (skip for truck — water is in truck block) ───
+  // ═══════════════════════════════════════
+  // DOCUMENT
+  // ═══════════════════════════════════════
+
+  // Header
+  addHeaderRow('DKR GROUP — Коммерческое предложение');
+
+  addRow(); // spacer
+  addInfoRow('Дата', d.header.date);
+  addInfoRow('Менеджер', d.header.manager);
+  addInfoRow('Клиент', d.header.client);
+  addInfoRow('Тип транспорта', d.header.vehicleType);
+  addInfoRow('Тип объекта', d.header.objectType);
+  addInfoRow('Регион доставки', d.header.region);
+
+  // ─── TRUCK, ROBOT, or POSTS ───
+  if (d.isTruck && d.truck) {
+    addSectionRow('Грузовая мойка');
+    addPriceRow('Тип мойки', d.truck.typeName, d.truck.typePrice);
+    addPriceBlock('Опции', d.truck.options);
+    if (d.truck.manualPost.length > 0) {
+      addPriceBlock('Ручной пост', d.truck.manualPost);
+      if (d.truck.manualPostMontage > 0) {
+        addPriceRow('', 'Монтаж ручного поста', d.truck.manualPostMontage);
+      }
+    }
+    if (d.truck.waterPrice > 0) {
+      addPriceRow('Водоочистка', d.truck.waterLabel, d.truck.waterPrice);
+    }
+    addSubtotalRow('Итого грузовая мойка', d.truck.truckTotal);
+  } else if (d.isRobot && d.robot) {
+    addSectionRow('Робот');
+    addPriceRow('Модель', d.robot.modelName, d.robot.modelPrice);
+    addPriceRow('БУР', d.robot.burName, d.robot.burPrice);
+    addPriceBlock('Опции робота', d.robot.options);
+    addSubtotalRow('Итого робот', d.robot.robotTotal);
+  } else {
+    d.posts.forEach((post) => {
+      addSectionRow(post.title);
+      addInfoRow('Профиль', post.profileName);
+      addPriceRow('Базовая комплектация', '', post.basePrice);
+
+      if (post.bumPrice > 0) {
+        addPriceRow('Терминал (доплата)', post.bumName, post.bumPrice);
+      } else {
+        addPriceRow('Терминал', post.bumName + ' (в комплекте)', 0);
+      }
+
+      addPriceBlock('Системы оплаты', post.payments);
+      addPriceBlock('Аксессуары', post.accessories);
+      addPriceBlock('Функции', post.functions);
+      addPriceBlock('Помпы (АВД)', post.pumps);
+
+      const extrasWithPump = [...post.postExtras];
+      if (post.secondPump) extrasWithPump.push(post.secondPump);
+      addPriceBlock('Доп. оборудование к посту', extrasWithPump);
+
+      addSubtotalRow('Итого по посту', post.postTotal);
+    });
+  }
+
+  // ─── WASH BLOCK ───
   if (!d.isTruck) {
-  addSection('Оборудование на мойку');
-  addRow('Водоподготовка', d.wash.waterLabel, d.wash.waterPrice);
+    addSectionRow('Оборудование на мойку');
+    addPriceRow('Водоподготовка', d.wash.waterLabel, d.wash.waterPrice);
 
-  if (d.wash.vacuumPrice > 0) {
-    addRow('Пылесосы', d.wash.vacuumLabel, d.wash.vacuumPrice);
+    if (d.wash.vacuumPrice > 0) {
+      addPriceRow('Пылесосы', d.wash.vacuumLabel, d.wash.vacuumPrice);
+    }
+
+    if (d.wash.extras.length > 0) {
+      addPriceBlock('Другое оборудование', d.wash.extras);
+    }
+
+    if (d.wash.pipelines.air > 0 || d.wash.pipelines.water > 0 || d.wash.pipelines.chem > 0) {
+      const pipRows: PostRow[] = [];
+      if (d.wash.pipelines.air > 0) pipRows.push({ name: 'Воздушные', price: d.wash.pipelines.air });
+      if (d.wash.pipelines.water > 0) pipRows.push({ name: 'Водные', price: d.wash.pipelines.water });
+      if (d.wash.pipelines.chem > 0) pipRows.push({ name: 'Химические', price: d.wash.pipelines.chem });
+      addPriceBlock('Магистрали', pipRows);
+    }
+
+    addSubtotalRow('Итого на мойку', d.wash.washTotal);
   }
-
-  if (d.wash.extras.length > 0) {
-    addRow('Другое оборудование');
-    d.wash.extras.forEach((r) => addRow('', r.name, r.price));
-  }
-
-  if (d.wash.pipelines.air > 0 || d.wash.pipelines.water > 0 || d.wash.pipelines.chem > 0) {
-    addRow('Магистрали');
-    if (d.wash.pipelines.air > 0) addRow('', 'Воздушные', d.wash.pipelines.air);
-    if (d.wash.pipelines.water > 0) addRow('', 'Водные', d.wash.pipelines.water);
-    if (d.wash.pipelines.chem > 0) addRow('', 'Химические', d.wash.pipelines.chem);
-  }
-
-  addBold('Итого на мойку', '', d.wash.washTotal);
-  } // end if !isTruck
 
   // ─── TOTALS ───
-  addSection('Итоговый расчёт');
-  addRow('Стоимость оборудования', '', d.totals.subtotal);
-  addRow(`Скидка (${d.totals.discountPct}%)`, '', -d.totals.discountAmount);
-  addRow('После скидки', '', d.totals.afterDiscount);
+  addSectionRow('Итоговый расчёт');
+  addPriceRow('Стоимость оборудования', '', d.totals.subtotal);
+  addPriceRow(`Скидка (${d.totals.discountPct}%)`, '', -d.totals.discountAmount);
+  addPriceRow('После скидки', '', d.totals.afterDiscount);
 
   if (d.totals.montageAmount > 0) {
-    addRow(`Монтаж (${d.totals.montageType})`, '', d.totals.montageFromSubtotal);
+    addPriceRow(`Монтаж (${d.totals.montageType})`, '', d.totals.montageFromSubtotal);
     if (d.totals.montageExtra > 0) {
-      addRow('Доп. работы по монтажу', '', d.totals.montageExtra);
+      addPriceRow('Доп. работы по монтажу', '', d.totals.montageExtra);
     }
   } else {
-    addRow('Монтаж', 'Нет', 0);
+    addPriceRow('Монтаж', 'Нет', 0);
   }
 
   if (d.totals.vatEnabled) {
-    addRow(`НДС (${d.totals.vatPct}%)`, '', d.totals.vatAmount);
+    addPriceRow(`НДС (${d.totals.vatPct}%)`, '', d.totals.vatAmount);
   } else {
-    addRow('НДС', 'Участник Сколково — не применяется', 0);
+    addInfoRow('НДС', 'Участник Сколково — не применяется');
   }
 
-  addRow();
-  addBold('ИТОГО', '', d.totals.total);
+  addRow(); // spacer
+
+  // TOTAL row with blue background
+  const totalRow = addRow('ИТОГО', '', d.totals.total);
+  ws.mergeCells(rowNum, 1, rowNum, 2);
+  totalRow.getCell(1).fill = totalFill;
+  totalRow.getCell(1).font = totalFont;
+  totalRow.getCell(3).fill = totalFill;
+  totalRow.getCell(3).font = totalFont;
+  totalRow.getCell(3).numFmt = priceFormat;
+  totalRow.getCell(3).alignment = { horizontal: 'right' };
+  totalRow.height = 28;
 
   // ─── CONDITIONS ───
-  addSection('Условия');
-  addRow('Условия доставки', d.deliveryConditions);
-  addRow('Условия оплаты', d.paymentConditions);
+  addSectionRow('Условия');
+  addInfoRow('Условия доставки', d.deliveryConditions);
+  addInfoRow('Условия оплаты', d.paymentConditions);
 
-  // Build worksheet
-  const ws = XLSX.utils.aoa_to_sheet(rows);
+  // ─── FOOTER ───
+  addRow();
+  const footerRow = addRow('DKR Group  |  dkrgroup.ru  |  Конфиденциально');
+  ws.mergeCells(rowNum, 1, rowNum, 3);
+  footerRow.getCell(1).font = { ...labelFont, italic: true, size: 8 };
+  footerRow.getCell(1).alignment = { horizontal: 'center' };
 
-  // Column widths
-  ws['!cols'] = [
-    { wch: 30 },
-    { wch: 40 },
-    { wch: 18 },
-  ];
-
-  // Number format for price column — apply #,##0 to all numeric cells in col C
-  const range = XLSX.utils.decode_range(ws['!ref'] ?? 'A1:C1');
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    const addr = XLSX.utils.encode_cell({ r, c: PRICE });
-    const cell = ws[addr];
-    if (cell && typeof cell.v === 'number') {
-      cell.z = '#,##0" ₽"';
-    }
-  }
-
-  // Bold styling (SheetJS community edition has limited style support,
-  // but we set cell types correctly so Excel renders numbers properly)
-
-  XLSX.utils.book_append_sheet(wb, ws, 'КП');
-
-  const fileName = makeFileName(state, 'xlsx');
-  XLSX.writeFile(wb, fileName);
+  // Write file
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = makeFileName(state, 'xlsx');
+  a.click();
+  URL.revokeObjectURL(url);
 }

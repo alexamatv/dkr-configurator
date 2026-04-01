@@ -175,7 +175,7 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
           Скачать PDF
         </button>
         <button
-          onClick={() => generateXlsx(wizardState)}
+          onClick={() => { generateXlsx(wizardState); }}
           className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors"
         >
           Скачать Excel
