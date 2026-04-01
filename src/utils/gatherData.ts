@@ -15,6 +15,7 @@ import {
   paymentSystemPrices,
   basePaymentSystems,
   paymentSystemRemovalDiscounts,
+  boosterPumpPrice,
 } from '@/data/mockData';
 
 export interface PostRow {
@@ -214,7 +215,19 @@ function calcWashBlock(state: WizardState): WashBlock {
     waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Ручной ввод';
     waterPrice += customWater;
   }
-  if (!osmos && (!aras || aras.id === 'none') && customWater === 0) {
+  if (state.step7.boosterPump) {
+    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Станция повышающая давление';
+    waterPrice += boosterPumpPrice;
+  }
+  if (state.step7.softeningAll && state.step7.softeningAllPrice > 0) {
+    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Умягчение (все)';
+    waterPrice += state.step7.softeningAllPrice;
+  }
+  if (state.step7.softeningOsmos && state.step7.softeningOsmosPrice > 0) {
+    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Умягчение (осмос)';
+    waterPrice += state.step7.softeningOsmosPrice;
+  }
+  if (!osmos && (!aras || aras.id === 'none') && customWater === 0 && !state.step7.boosterPump) {
     waterLabel = 'Клиент докупит самостоятельно';
   }
 
@@ -325,7 +338,10 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
   const pipelinesPrice = (state.step9.pipelinesAirPrice || 0) + (state.step9.pipelinesWaterPrice || 0) + (state.step9.pipelinesChemPrice || 0);
   const equipTotal = vacuumPrice + washExtrasPrice + pipelinesPrice;
 
-  const subtotal = robotPrice + burPrice + optionsTotal + osmosPrice + arasPrice + customWater + equipTotal;
+  const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
+  const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
+    + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
+  const subtotal = robotPrice + burPrice + optionsTotal + osmosPrice + arasPrice + customWater + boosterCost + softeningCost + equipTotal;
   const totals = calcSharedTotals(state, subtotal);
 
   return {
@@ -410,7 +426,10 @@ export function gatherDocData(state: WizardState): DocData {
 
   const cpUpgradesPerPost = cpBumUpgrade + cpPayUpgrade + cpFuncPrice + cpAvdUpgrade;
   const cpEquipmentTotal = (cpKitPrice + cpUpgradesPerPost) * postCount;
-  const cpWashTotal = cpOsmosPrice + arasPrice + customWater + cpPostExtras + (wash.vacuumPrice) + cpWashExtras + cpPipelines;
+  const cpBooster = state.step7.boosterPump ? boosterPumpPrice : 0;
+  const cpSoftening = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
+    + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
+  const cpWashTotal = cpOsmosPrice + arasPrice + customWater + cpBooster + cpSoftening + cpPostExtras + (wash.vacuumPrice) + cpWashExtras + cpPipelines;
   const subtotal = cpEquipmentTotal + cpWashTotal;
 
   const totals = calcSharedTotals(state, subtotal);

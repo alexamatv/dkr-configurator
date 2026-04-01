@@ -18,7 +18,7 @@ export const profiles: ProfileConfig[] = [
     name: 'Старт',
     description: 'Рама из металла в порошковом окрасе',
     price: 320000,
-    basePrice: 250000,
+    basePrice: 257900,
     defaultAvd: 'hawk_15_20',
 
     defaultTerminal: 'model_20',
@@ -52,7 +52,7 @@ export const profiles: ProfileConfig[] = [
     name: 'Стандарт',
     description: 'Вертикальная рама + клапаны НД',
     price: 375000,
-    basePrice: 305000,
+    basePrice: 312900,
     defaultAvd: 'hawk_15_20',
 
     defaultTerminal: 'model_20',
@@ -88,7 +88,7 @@ export const profiles: ProfileConfig[] = [
     name: 'Премиум',
     description: 'Полная комплектация, сенсорный терминал, эквайринг',
     price: 818000,
-    basePrice: 800000,
+    basePrice: 807900,
     defaultAvd: 'hawk_25_200',
 
     defaultTerminal: 'model_13',
@@ -126,11 +126,11 @@ export const profiles: ProfileConfig[] = [
 
 // Аксессуары с реальными ценами. Шланги 4м/5м — взаимоисключающие (exclusiveGroup: 'hose').
 export const defaultAccessories: Accessory[] = [
-  { id: 'foam_gun', name: 'Пистолет пенный', price: 12000, selected: false },
-  { id: 'water_gun', name: 'Пистолет водяной', price: 12000, selected: false },
-  { id: 'ceiling_consoles', name: 'Поворотные консоли (2 шт)', price: 18000, selected: false },
-  { id: 'mat_holders', name: 'Держатели для ковриков (4 шт)', price: 8000, selected: false },
-  { id: 'gun_holders', name: 'Держатели для пистолетов (2 шт)', price: 6000, selected: false },
+  { id: 'foam_gun', name: 'Пистолет пенный с пенонасадкой', price: 10500, selected: false },
+  { id: 'water_gun', name: 'Пистолет ВД копье 600мм', price: 9500, selected: false },
+  { id: 'ceiling_consoles', name: 'Консоль поворотная (нерж. сталь, 2 шт)', price: 22000, selected: false },
+  { id: 'mat_holders', name: 'Держатели ковриков (нерж. сталь, 4 шт)', price: 1500, selected: false },
+  { id: 'gun_holders', name: 'Пистолетодержатели (нерж. сталь, 2 шт)', price: 4600, selected: false },
   { id: 'hose_4m', name: 'РВД-шланги облегченные 4 м (2 шт)', price: 14000, selected: false, exclusiveGroup: 'hose' },
   { id: 'hose_5m', name: 'РВД-шланги облегченные 5 м (2 шт)', price: 14000, selected: false, exclusiveGroup: 'hose' },
 ];
@@ -202,7 +202,7 @@ export const buttonTypes = [
 ];
 
 export const defaultBaseFunctions: PostFunction[] = [
-  { id: 'shampoo', name: 'Шампунь', isBase: true, enabled: true, buttonPrice: 0, kitPrice: 0 },
+  { id: 'water_foam', name: 'Вода с пеной', isBase: true, enabled: true, buttonPrice: 0, kitPrice: 0 },
   { id: 'water', name: 'Вода', isBase: true, enabled: true, buttonPrice: 0, kitPrice: 0 },
   { id: 'foam', name: 'Пена', isBase: true, enabled: true, buttonPrice: 0, kitPrice: 0 },
   { id: 'wax', name: 'Воск', isBase: true, enabled: true, buttonPrice: 0, kitPrice: 0 },
@@ -210,17 +210,34 @@ export const defaultBaseFunctions: PostFunction[] = [
 ];
 
 export const defaultExtraFunctions: PostFunction[] = [
-  { id: 'osmos', name: 'Осмос', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 25000 },
-  { id: 'vacuum', name: 'Пылесос', isBase: false, enabled: false, option: 'none', vacuumType: 'in_post', buttonPrice: 5000, kitPrice: 30000 },
-  { id: 'air', name: 'Воздух', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 20000 },
-  { id: 'turbo_dry', name: 'Турбосушка', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 35000 },
-  { id: 'turbo_water', name: 'Турбо вода', isBase: false, enabled: false, option: 'none', premiumOnly: true, buttonPrice: 5000, kitPrice: 20000 },
-  { id: 'tire_black', name: 'Чернение резины', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 15000 },
-  { id: 'warm_water', name: 'Тёплая вода', isBase: false, enabled: false, option: 'none', buttonPrice: 5000, kitPrice: 20000 },
-  { id: 'anti_bug', name: 'Антимошка', isBase: false, enabled: false, option: 'none', requiresDosator: true, selectedDosator: 'seko', buttonPrice: 5000, kitPrice: 15000 },
-  { id: 'active_chem', name: 'Активная химия', isBase: false, enabled: false, option: 'none', requiresDosator: true, selectedDosator: 'seko', buttonPrice: 5000, kitPrice: 18000 },
-  { id: 'call_operator', name: 'Вызов оператора', isBase: false, enabled: false, option: 'none', buttonPrice: 3000, kitPrice: 10000 },
-  { id: 'open_gates', name: 'Открытие ворот', isBase: false, enabled: false, option: 'none', buttonPrice: 3000, kitPrice: 12000 },
+  { id: 'active_chem_seko', name: 'Активная химия (SEKO)', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 38000 },
+  { id: 'active_chem_ulka', name: 'Активная химия (ULKA)', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 28000 },
+  { id: 'osmos', name: 'Осмос', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 30000 },
+  { id: 'air', name: 'Воздух', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 20000 },
+  { id: 'vacuum', name: 'Пылесос (кнопка + силовая на БУМ)', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 20000 },
+  { id: 'warm_water', name: 'Тёплая вода', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 20000 },
+  { id: 'turbo_water', name: 'Турбо вода', isBase: false, enabled: false, option: 'none', premiumOnly: true, buttonPrice: 0, kitPrice: 11000 },
+  { id: 'turbo_dry', name: 'Турбосушка 3,3 кВт', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 160000 },
+  { id: 'tire_black', name: 'Чернение резины', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 28000 },
+  { id: 'call_operator', name: 'Вызов оператора', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 9000 },
+  { id: 'degreaser_seko', name: 'Обезжиреватель (SEKO)', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 38000 },
+  { id: 'degreaser_ulka', name: 'Обезжиреватель (ULKA)', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 28000 },
+  { id: 'turbo_foam', name: 'Турбо пена / коллекторный подмес', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 132000 },
+  { id: 'collector_chem', name: 'Коллекторная подача химии', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 99000 },
+  { id: 'bottom_wash', name: 'Мойка днища', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 94000 },
+  { id: 'foam_brush', name: 'Пена-Щетка', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 93000 },
+  { id: 'tire_pump', name: 'Подкачка шин', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 20000 },
+  { id: 'turbo_dry_dog', name: 'Турбосушка 3,3 кВт (собачья)', isBase: false, enabled: false, option: 'none', buttonPrice: 0, kitPrice: 100000 },
+];
+
+// Пылесосы на терминал — варианты оборудования (цена без функции 20 000 ₽)
+export const vacuumTerminalOptions = [
+  { id: 'vac_elsea_basket', name: 'Пылесос Elsea 3,3 кВт в корзине', price: 90000 },
+  { id: 'vac_elsea_rolling', name: 'Пылесос Elsea 3,3 кВт перекатной', price: 65000 },
+  { id: 'vac_china_basket', name: 'Пылесос китайский 3,3 кВт в корзине', price: 70000 },
+  { id: 'vac_china_rolling', name: 'Пылесос китайский 3,3 кВт перекатной', price: 40000 },
+  { id: 'vac_wall_seko', name: 'Пылесос на стену (Турбина Секо)', price: 120000 },
+  { id: 'vac_1_1kw', name: 'Пылесос 1,1 кВт (нерж. корпус)', price: 121000 },
 ];
 
 export const dosatorOptions: { id: DosatorChoice; name: string; price: number }[] = [
@@ -232,57 +249,66 @@ export const dosatorOptions: { id: DosatorChoice; name: string; price: number }[
 // АВД — базовый входит в комплект (0 ₽), остальные с доплатой
 export const avdKits = [
   { id: 'hawk_15_20', name: 'HAWK 15-20, мотор 5.5 кВт + bypass (входит в комплект)', price: 0 },
+  { id: 'pump_vd_no_frame', name: 'Помпа ВД (без рамы)', price: 65000 },
   { id: 'hawk_15_25', name: 'HAWK 15-25, 7.5 кВт', price: 15000 },
   { id: 'mazzoni_15_20', name: 'MAZZONI 15-20, 5.5 кВт', price: 30000 },
   { id: 'hawk_25_200', name: 'HAWK 25-200 бар (15 л/мин, 5.5 кВт)', price: 85000, premiumOnly: true },
+  { id: 'hawk_nmt1520', name: 'HAWK NMT1520 (по запросу)', price: 0 },
+  { id: 'hawk_nickel', name: 'HAWK никель (по запросу)', price: 0 },
+  { id: 'mazoni_request', name: 'Mazoni (по запросу)', price: 0 },
 ];
 
 export const osmosOptions: OsmosOption[] = [
-  { id: 'osmos_250_std', capacity: '250', level: 'standard', name: '250 л/ч Стандарт', price: 50000 },
-  { id: 'osmos_250_prm', capacity: '250', level: 'premium', name: '250 л/ч Премиум', price: 75000 },
-  { id: 'osmos_500_std', capacity: '500', level: 'standard', name: '500 л/ч Стандарт', price: 80000 },
-  { id: 'osmos_500_prm', capacity: '500', level: 'premium', name: '500 л/ч Премиум', price: 110000 },
-  { id: 'osmos_1000_std', capacity: '1000', level: 'standard', name: '1000 л/ч Стандарт', price: 120000 },
-  { id: 'osmos_1000_prm', capacity: '1000', level: 'premium', name: '1000 л/ч Премиум', price: 160000 },
-  { id: 'osmos_2000_std', capacity: '2000', level: 'standard', name: '2000 л/ч Стандарт', price: 200000 },
-  { id: 'osmos_2000_prm', capacity: '2000', level: 'premium', name: '2000 л/ч Премиум', price: 280000 },
+  { id: 'osmos_250_std', capacity: '250', level: 'standard', name: '250 л/ч', price: 212000 },
+  { id: 'osmos_250_prm', capacity: '250', level: 'premium', name: '250 л/ч Премиум', price: 253000 },
+  { id: 'osmos_500_std', capacity: '500', level: 'standard', name: '500 л/ч', price: 253000 },
+  { id: 'osmos_500_prm', capacity: '500', level: 'premium', name: '500 л/ч Премиум', price: 322000 },
+  { id: 'osmos_1000_std', capacity: '1000', level: 'standard', name: '1000 л/ч', price: 385000 },
+  { id: 'osmos_1000_prm', capacity: '1000', level: 'premium', name: '1000 л/ч Премиум', price: 572000 },
 ];
+
+// Станция повышающая давление (для Step 7)
+export const boosterPumpPrice = 53000;
 
 export const arasModels = [
   { id: 'none', name: 'Нет' },
-  { id: 'aras_1', name: 'ARAS-1', price: 30000 },
-  { id: 'aras_2', name: 'ARAS-2', price: 45000 },
-  { id: 'aras_3', name: 'ARAS-3', price: 60000 },
-  { id: 'aras_4', name: 'ARAS-4', price: 80000 },
-  { id: 'aras_5', name: 'ARAS-5', price: 100000 },
+  { id: 'aros_4', name: 'АРОС 4', price: 121000 },
+  { id: 'aros_6', name: 'АРОС 6', price: 143000 },
 ];
 
 export const defaultPostExtras: PostExtra[] = [
+  { id: 'valve_hd', name: 'Клапан ВД на пенный пистолет', selected: false, quantity: 0, price: 38000 },
+  { id: 'freq_converter', name: 'Частотный преобразователь', selected: false, quantity: 0, price: 44000 },
+  { id: 'traffic_light', name: 'Светофор', selected: false, quantity: 0, price: 13000 },
+  { id: 'dry_run_sensor', name: 'Датчик сухого хода', selected: false, quantity: 0, price: 17000 },
+  { id: 'emergency_valve_elec', name: 'Аварийный клапан электронный', selected: false, quantity: 0, price: 38000 },
+  { id: 'valve_nd_start', name: 'Клапан НД для комплекта Старт', selected: false, quantity: 0, price: 17000 },
+  { id: 'antifreeze_water', name: 'Система антизамерзания на воду (1 пистолет)', selected: false, quantity: 0, price: 22000 },
+  { id: 'antifreeze_water_foam', name: 'Система антизамерзания на воду и пену', selected: false, quantity: 0, price: 66000 },
+  { id: 'basket_console', name: 'Корзина + консоль', selected: false, quantity: 0, price: 38000 },
+  { id: 'basket_console_hoist', name: 'Корзина + консоль + подвес (таль)', selected: false, quantity: 0, price: 50000 },
   { id: 'manometer', name: 'Манометр ВД 400 бар', selected: false, quantity: 0, price: 5000 },
-  { id: 'valve_hd', name: 'Клапан ВД 400 бар', selected: false, quantity: 0, price: 8000 },
-  { id: 'winter_kit', name: 'Зимний комплект', selected: false, quantity: 0, price: 35000 },
-  { id: 'freq_converter', name: 'Частотный преобразователь', selected: false, quantity: 0, price: 25000 },
   { id: 'valve_system', name: 'Система клапанов ВД', selected: false, quantity: 0, price: 15000 },
-  { id: 'bottom_wash', name: 'Мойка днища', selected: false, quantity: 0, price: 20000 },
-  { id: 'traffic_light', name: 'Светофор', selected: false, quantity: 0, price: 12000 },
   { id: 'injectors_extra', name: 'Инжекторы (доп.)', selected: false, quantity: 0, price: 7000 },
 ];
 
 export const vacuumOptions: VacuumOption[] = [
-  { id: 'single_standard', name: 'Однопостовой стандарт', price: 45000 },
-  { id: 'single_premium', name: 'Однопостовой премиум', price: 65000 },
-  { id: 'dual_top', name: 'Двухпостовой топ', price: 95000 },
+  { id: 'single', name: 'Пылесос 1-постовой', price: 235000 },
   { id: 'none', name: 'Нет', price: 0 },
 ];
 
 export const defaultWashExtras: WashExtra[] = [
+  { id: 'tank_1m3', name: 'Ёмкость накопительная (1 куб)', selected: false, quantity: 0, price: 50000 },
+  { id: 'hose_reel', name: 'Катушка инерционная для шланга пылесоса', selected: false, quantity: 0, price: 17000 },
+  { id: 'cloud_register', name: 'Облачная касса (1 год + ФН 15 мес)', selected: false, quantity: 0, price: 120700 },
+  { id: 'cloud_register_renewal', name: 'Продление облачной кассы (год)', selected: false, quantity: 0, price: 33600 },
+  { id: 'handwash_sink', name: 'Рукомойник', selected: false, quantity: 0, price: 50000 },
+  { id: 'dry_fog', name: 'Сухой туман (3 аромата)', selected: false, quantity: 0, price: 250000 },
   { id: 'antifreeze_station', name: 'Установка розлива незамерзайки', selected: false, quantity: 0, price: 40000 },
-  { id: 'pressure_station', name: 'Станция повышающего давления', selected: false, quantity: 0, price: 55000 },
   { id: 'plate_recognition', name: 'Система распознавания номеров', selected: false, quantity: 0, price: 80000 },
   { id: 'local_server', name: 'Локальный сервер', selected: false, quantity: 0, price: 60000 },
   { id: 'manual_wash', name: 'Ручная мойка (АВД)', selected: false, quantity: 0, price: 35000 },
   { id: 'mat_wash', name: 'Мойка ковриков', selected: false, quantity: 0, price: 25000 },
-  { id: 'online_cash', name: 'Онлайн-касса с ФМ', selected: false, quantity: 0, price: 45000 },
 ];
 
 export const managers = [
@@ -356,4 +382,23 @@ export const burModels: RobotBurModel[] = [
   { id: 'bur_2', name: 'БУР 2', description: 'Базовый блок управления', price: 400000 },
   { id: 'bur_4', name: 'БУР 4', description: 'Расширенный блок управления', price: 440000 },
   { id: 'bur_5', name: 'БУР 5', description: 'Топовый блок управления', price: 510000 },
+];
+
+// ─── Рамы (для будущего Step 5 / отдельной секции) ───
+export const frameOptions = [
+  { id: 'frame_mini', name: 'Рама Мини (Старт) Лежачая', price: 7000, note: 'Входит в Старт' },
+  { id: 'frame_standard', name: 'Рама Стандарт', price: 17000, note: 'Входит в Стандарт' },
+  { id: 'frame_top', name: 'Рама ТОП (Банан)', price: 88000, note: '' },
+  { id: 'frame_truck', name: 'Грузовая консоль', price: 77000, note: '' },
+];
+
+// ─── Другое оборудование (справочные данные) ───
+export const otherEquipment = [
+  { id: 'valves_nd', name: 'Система клапанов НД', price: 17000 },
+  { id: 'freq_conv_standalone', name: 'Частотный преобразователь', price: 44000 },
+  { id: 'dry_run_standalone', name: 'Датчик сухого хода', price: 17000 },
+  { id: 'emerg_valve_mech', name: 'Аварийный клапан сброса механический', price: 11000 },
+  { id: 'emerg_valve_elec', name: 'Аварийный клапан сброса электронный', price: 38000 },
+  { id: 'antifreeze_water_standalone', name: 'Система антизамерзания на воду', price: 22000 },
+  { id: 'antifreeze_foam_standalone', name: 'Система антизамерзания на воду и пену', price: 66000 },
 ];

@@ -1,7 +1,7 @@
 'use client';
 
 import type { Step7Data } from '@/types';
-import { osmosOptions, arasModels } from '@/data/mockData';
+import { osmosOptions, arasModels, boosterPumpPrice } from '@/data/mockData';
 
 interface Props {
   data: Step7Data;
@@ -62,6 +62,91 @@ export function Step7Water({ data, onChange, title }: Props) {
               </option>
             ))}
         </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-muted mb-3">Дополнительное оборудование</label>
+        <div className="space-y-3">
+          {/* Станция повышающая давление */}
+          <label className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+            data.boosterPump ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+          }`}>
+            <input type="checkbox" checked={data.boosterPump} onChange={(e) => update({ boosterPump: e.target.checked })} className="sr-only" />
+            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+              data.boosterPump ? 'border-accent bg-accent' : 'border-border'
+            }`}>
+              {data.boosterPump && <span className="text-white text-xs">✓</span>}
+            </div>
+            <div>
+              <div className="text-sm font-medium">Станция повышающая давление</div>
+              <div className="text-xs text-accent font-bold">{boosterPumpPrice.toLocaleString('ru-RU')} ₽</div>
+            </div>
+          </label>
+
+          {/* Умягчение на все функции */}
+          <div className={`p-3 rounded-lg border-2 transition-colors ${
+            data.softeningAll ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+          }`}>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={data.softeningAll} onChange={(e) => update({ softeningAll: e.target.checked, softeningAllPrice: e.target.checked ? Math.max(data.softeningAllPrice, 110000) : 0 })} className="sr-only" />
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                data.softeningAll ? 'border-accent bg-accent' : 'border-border'
+              }`}>
+                {data.softeningAll && <span className="text-white text-xs">✓</span>}
+              </div>
+              <div>
+                <div className="text-sm font-medium">Умягчение на все функции</div>
+                <div className="text-xs text-muted">от 110 000 ₽ (зависит от кол-ва постов)</div>
+              </div>
+            </label>
+            {data.softeningAll && (
+              <div className="flex items-center gap-2 mt-2 ml-8">
+                <input
+                  type="number"
+                  min={110000}
+                  step={1000}
+                  value={data.softeningAllPrice || ''}
+                  onChange={(e) => update({ softeningAllPrice: parseFloat(e.target.value) || 0 })}
+                  placeholder="110000"
+                  className="w-36 bg-surface border border-border rounded px-3 py-1.5 text-sm focus:outline-none focus:border-accent"
+                />
+                <span className="text-xs text-muted">₽</span>
+              </div>
+            )}
+          </div>
+
+          {/* Умягчение для осмоса */}
+          <div className={`p-3 rounded-lg border-2 transition-colors ${
+            data.softeningOsmos ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+          }`}>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={data.softeningOsmos} onChange={(e) => update({ softeningOsmos: e.target.checked, softeningOsmosPrice: e.target.checked ? Math.max(data.softeningOsmosPrice, 110000) : 0 })} className="sr-only" />
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                data.softeningOsmos ? 'border-accent bg-accent' : 'border-border'
+              }`}>
+                {data.softeningOsmos && <span className="text-white text-xs">✓</span>}
+              </div>
+              <div>
+                <div className="text-sm font-medium">Умягчение для осмоса</div>
+                <div className="text-xs text-muted">от 110 000 ₽ (зависит от кол-ва постов)</div>
+              </div>
+            </label>
+            {data.softeningOsmos && (
+              <div className="flex items-center gap-2 mt-2 ml-8">
+                <input
+                  type="number"
+                  min={110000}
+                  step={1000}
+                  value={data.softeningOsmosPrice || ''}
+                  onChange={(e) => update({ softeningOsmosPrice: parseFloat(e.target.value) || 0 })}
+                  placeholder="110000"
+                  className="w-36 bg-surface border border-border rounded px-3 py-1.5 text-sm focus:outline-none focus:border-accent"
+                />
+                <span className="text-xs text-muted">₽</span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {notReady && (

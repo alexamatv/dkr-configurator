@@ -147,6 +147,11 @@ export interface Step7Data {
   osmosOption: string;
   arasModel: string;
   customWaterPrice: number;
+  boosterPump: boolean;
+  softeningAll: boolean;
+  softeningAllPrice: number;
+  softeningOsmos: boolean;
+  softeningOsmosPrice: number;
 }
 
 export interface Step8Data {

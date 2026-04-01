@@ -43,7 +43,7 @@ import { RobotStep4Options } from './steps/RobotStep4Options';
 
 // Функции, которые входят в комплект Премиум (становятся isBase + enabled)
 const premiumIncludedFunctions = [
-  'osmos', 'turbo_water', 'active_chem', 'call_operator',
+  'osmos', 'turbo_water', 'active_chem_seko', 'call_operator',
 ];
 
 function applyProfileDefaults(profileId: string) {
@@ -106,6 +106,11 @@ function createInitialState(): WizardState {
       osmosOption: '',
       arasModel: '',
       customWaterPrice: 0,
+      boosterPump: false,
+      softeningAll: false,
+      softeningAllPrice: 0,
+      softeningOsmos: false,
+      softeningOsmosPrice: 0,
     },
     step8: {
       extras: defaultPostExtras.map((e) => ({ ...e })),

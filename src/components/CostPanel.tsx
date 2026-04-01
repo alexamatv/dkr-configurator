@@ -13,6 +13,7 @@ import {
   robotModels,
   burModels,
   calcPaymentCost,
+  boosterPumpPrice,
 } from '@/data/mockData';
 
 interface CostPanelProps {
@@ -113,14 +114,18 @@ function useMsoCalc(state: WizardState): CalcResult {
   const upgradesPerPost = bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
   const equipmentTotal = (kitPrice + upgradesPerPost) * postCount;
   const customWaterPrice = state.step7.customWaterPrice || 0;
-  const washTotal = osmosPrice + arasPrice + customWaterPrice + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
+  const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
+  const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
+    + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
+  const waterTotal = osmosPrice + arasPrice + customWaterPrice + boosterCost + softeningCost;
+  const washTotal = waterTotal + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
   const subtotal = equipmentTotal + washTotal;
 
   return calcTotals(state, subtotal, postCount, 'пост(ов)', [
     ['Базовая комплектация', kitPrice * postCount],
     ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
     ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
-    ['Водоподготовка', osmosPrice + arasPrice + customWaterPrice],
+    ['Водоподготовка', waterTotal],
     ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
   ]);
 }
@@ -144,7 +149,10 @@ function useRobotCalc(state: WizardState): CalcResult {
   const aras = arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
   const customWaterPrice = state.step7.customWaterPrice || 0;
-  const waterTotal = osmosPrice + arasPrice + customWaterPrice;
+  const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
+  const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
+    + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
+  const waterTotal = osmosPrice + arasPrice + customWaterPrice + boosterCost + softeningCost;
 
   // Wash extras (reuses step9)
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
