@@ -5,173 +5,224 @@ import { gatherDocData, makeFileName, type PostRow } from './gatherData';
 import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
 
-// ─── Brand colors ───
-const BLUE: [number, number, number] = [14, 165, 233]; // #0EA5E9
-const DARK: [number, number, number] = [30, 41, 59];   // #1E293B
-const TEXT: [number, number, number] = [17, 24, 39];    // #111827
-const MUTED: [number, number, number] = [100, 116, 139]; // #64748B
-const STRIPE: [number, number, number] = [248, 250, 252]; // #F8FAFC
-const WHITE: [number, number, number] = [255, 255, 255];
+// ─── Brand colors (RGB tuples) ───
+const BLUE: [number, number, number] = [14, 165, 233];
+const DARK: [number, number, number] = [30, 41, 59];
+const TEXT: [number, number, number] = [17, 24, 39];
+const MUTED: [number, number, number] = [100, 116, 139];
+const LINE: [number, number, number] = [229, 231, 235]; // #E5E7EB
+const STRIPE: [number, number, number] = [249, 250, 251]; // #F9FAFB
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' \u20BD';
+}
+
+function getLastY(doc: jsPDF): number {
+  return (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY;
 }
 
 export function generatePdf(state: WizardState): void {
   const d = gatherDocData(state);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  // ─── Register Roboto font ───
+  // Register Roboto
   doc.addFileToVFS('Roboto-Regular.ttf', robotoRegular);
   doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
   doc.addFileToVFS('Roboto-Bold.ttf', robotoBold);
   doc.addFont('Roboto-Bold.ttf', 'Roboto', 'bold');
   doc.setFont('Roboto');
 
-  const FONT = 'Roboto';
+  const F = 'Roboto';
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const marginL = 14;
-  const marginR = 14;
-  const contentW = pageW - marginL - marginR;
-  const headerH = 18;
-  const footerH = 12;
-  let y = headerH + 6;
+  const mL = 20;
+  const mR = 20;
+  const cW = pageW - mL - mR;
+  const topY = 15;
+  const botY = pageH - 15;
+  let y = topY;
 
-  // ─── Header / Footer drawn on every page ───
+  // ─── Utility: page break ───
+  function checkPage(needed: number) {
+    if (y + needed > botY - 8) {
+      doc.addPage();
+      y = topY + 14; // leave room for header on new pages
+    }
+  }
+
+  // ─── Draw logo (drop circle + text) ───
+  function drawLogo(x: number, yPos: number) {
+    // Blue drop/circle
+    doc.setFillColor(...BLUE);
+    doc.circle(x + 3, yPos - 2, 3, 'F');
+    // Small white highlight
+    doc.setFillColor(255, 255, 255);
+    doc.circle(x + 2.2, yPos - 3, 0.8, 'F');
+    // Text
+    doc.setFont(F, 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...DARK);
+    doc.text('DKR GROUP', x + 8, yPos);
+  }
+
+  // ─── Header/footer on all pages (called last) ───
   function drawHeaderFooter() {
     const pages = doc.getNumberOfPages();
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-
-      // Header background
-      doc.setFillColor(...DARK);
-      doc.rect(0, 0, pageW, headerH, 'F');
-
-      // DKR GROUP text
-      doc.setFont(FONT, 'bold');
-      doc.setFontSize(14);
-      doc.setTextColor(...WHITE);
-      doc.text('DKR GROUP', marginL, 12);
-
-      // Right side
-      doc.setFont(FONT, 'normal');
-      doc.setFontSize(8);
-      doc.text(d.header.date, pageW - marginR, 8, { align: 'right' });
-      doc.setFontSize(9);
-      doc.text('Коммерческое предложение', pageW - marginR, 13, { align: 'right' });
-
-      // Blue accent line
-      doc.setDrawColor(...BLUE);
-      doc.setLineWidth(0.8);
-      doc.line(0, headerH, pageW, headerH);
-
-      // Footer
-      doc.setDrawColor(...BLUE);
+      // Logo top-right
+      drawLogo(pageW - mR - 38, 10);
+      // Footer line
+      doc.setDrawColor(...LINE);
       doc.setLineWidth(0.3);
-      doc.line(marginL, pageH - footerH, pageW - marginR, pageH - footerH);
-
-      doc.setFont(FONT, 'normal');
+      doc.line(mL, pageH - 12, pageW - mR, pageH - 12);
+      // Footer text
+      doc.setFont(F, 'normal');
       doc.setFontSize(7);
       doc.setTextColor(...MUTED);
-      doc.text('DKR Group  |  dkrgroup.ru  |  Конфиденциально', marginL, pageH - 6);
-      doc.text(`${i} / ${pages}`, pageW - marginR, pageH - 6, { align: 'right' });
+      doc.text('DKR Group  |  dkrgroup.ru', mL, pageH - 8);
+      doc.text(`${i} / ${pages}`, pageW - mR, pageH - 8, { align: 'right' });
     }
-    // Reset to last page content state
     doc.setPage(pages);
     doc.setTextColor(...TEXT);
   }
 
-  function checkPage(needed: number) {
-    if (y + needed > pageH - footerH - 4) {
-      doc.addPage();
-      y = headerH + 6;
-    }
-  }
-
+  // ─── Section title: bold dark + thin blue underline ───
   function sectionTitle(title: string) {
-    checkPage(14);
-    y += 3;
+    checkPage(16);
+    y += 5;
+    doc.setFontSize(12);
+    doc.setFont(F, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(title, mL, y);
+    y += 2;
     doc.setDrawColor(...BLUE);
     doc.setLineWidth(0.4);
-    doc.line(marginL, y - 1, marginL + 40, y - 1);
-    doc.setFontSize(12);
-    doc.setFont(FONT, 'bold');
-    doc.setTextColor(...BLUE);
-    doc.text(title, marginL, y + 4);
+    doc.line(mL, y, mL + Math.min(doc.getTextWidth(title) + 4, cW), y);
     doc.setTextColor(...TEXT);
-    y += 9;
+    y += 5;
   }
 
-  function simpleTable(rows: (string | number)[][]) {
+  // ─── Info table (label : value pairs, no borders) ───
+  function infoTable(rows: [string, string][]) {
     autoTable(doc, {
       startY: y,
-      margin: { left: marginL, right: marginR },
+      margin: { left: mL, right: mR },
       theme: 'plain',
-      styles: { fontSize: 9, cellPadding: 2, font: FONT, textColor: TEXT },
+      styles: { fontSize: 9, cellPadding: { top: 1.5, bottom: 1.5, left: 0, right: 4 }, font: F, textColor: TEXT },
       columnStyles: {
-        0: { cellWidth: 55, fontStyle: 'normal', textColor: MUTED },
-        1: { cellWidth: contentW - 55, fontStyle: 'bold' },
+        0: { cellWidth: 50, textColor: MUTED },
+        1: { cellWidth: cW - 50, fontStyle: 'bold' },
       },
-      body: rows.map((r) => [String(r[0]), String(r[1])]),
+      body: rows,
     });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 2;
+    y = getLastY(doc) + 2;
   }
 
+  // ─── Price table: thin gray horizontal lines, no vertical, blue header bottom border ───
   function priceTable(heading: string, items: PostRow[]) {
     if (items.length === 0) return;
     checkPage(10 + items.length * 6);
+
     doc.setFontSize(9);
-    doc.setFont(FONT, 'bold');
+    doc.setFont(F, 'bold');
     doc.setTextColor(...DARK);
-    doc.text(heading, marginL + 2, y);
+    doc.text(heading, mL + 2, y);
     doc.setTextColor(...TEXT);
-    y += 1;
+    y += 2;
 
     autoTable(doc, {
       startY: y,
-      margin: { left: marginL + 2, right: marginR },
-      theme: 'striped',
-      styles: { fontSize: 8.5, cellPadding: 2, font: FONT, textColor: TEXT },
-      headStyles: { fillColor: BLUE, textColor: WHITE, fontStyle: 'bold', fontSize: 8 },
+      margin: { left: mL + 2, right: mR },
+      theme: 'plain',
+      styles: {
+        fontSize: 8.5,
+        cellPadding: { top: 2, bottom: 2, left: 2, right: 2 },
+        font: F,
+        textColor: TEXT,
+        lineColor: LINE,
+        lineWidth: 0,
+      },
+      headStyles: {
+        fillColor: [255, 255, 255],
+        textColor: DARK,
+        fontStyle: 'bold',
+        fontSize: 8,
+      },
       alternateRowStyles: { fillColor: STRIPE },
       columnStyles: {
-        0: { cellWidth: contentW - 42 },
+        0: { cellWidth: cW - 44 },
         1: { cellWidth: 40, halign: 'right' },
       },
       head: [['Наименование', 'Цена']],
       body: items.map((r) => [r.name, fmt(r.price)]),
+      didDrawCell: (data) => {
+        // Draw thin gray bottom border on every cell
+        const { cell, row } = data;
+        doc.setDrawColor(...LINE);
+        doc.setLineWidth(0.2);
+        doc.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
+        // Blue bottom border for head row
+        if (row.section === 'head') {
+          doc.setDrawColor(...BLUE);
+          doc.setLineWidth(0.5);
+          doc.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
+        }
+      },
     });
-    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
+    y = getLastY(doc) + 3;
   }
 
+  // ─── Subtotal line ───
   function subtotalLine(label: string, value: number) {
     checkPage(8);
     doc.setFontSize(10);
-    doc.setFont(FONT, 'bold');
+    doc.setFont(F, 'bold');
     doc.setTextColor(...BLUE);
-    doc.text(label, marginL + 2, y);
-    doc.text(fmt(value), pageW - marginR, y, { align: 'right' });
+    doc.text(label, mL + 2, y);
+    doc.text(fmt(value), pageW - mR, y, { align: 'right' });
     doc.setTextColor(...TEXT);
     y += 7;
   }
 
-  // ─── DOCUMENT TITLE ───
-  const objectLabel = d.isTruck ? 'Грузовая мойка' : d.isRobot ? 'Роботизированная мойка' : 'Мойка самообслуживания';
+  // ─── Inline text line ───
+  function textLine(text: string, bold = false) {
+    checkPage(6);
+    doc.setFontSize(9);
+    doc.setFont(F, bold ? 'bold' : 'normal');
+    doc.text(text, mL + 2, y);
+    y += 5;
+  }
+
+  // ═══════════════════════════════════════════════
+  // PAGE 1: TITLE + CLIENT INFO
+  // ═══════════════════════════════════════════════
+
+  y = 24;
+  // Title
   doc.setFontSize(18);
-  doc.setFont(FONT, 'bold');
+  doc.setFont(F, 'bold');
   doc.setTextColor(...DARK);
   doc.text('Коммерческое предложение', pageW / 2, y, { align: 'center' });
-  y += 7;
+  y += 3;
+  // Thin blue line under title
+  doc.setDrawColor(...BLUE);
+  doc.setLineWidth(0.5);
+  const titleW = doc.getTextWidth('Коммерческое предложение');
+  doc.line((pageW - titleW) / 2, y, (pageW + titleW) / 2, y);
+  y += 6;
+
+  // Subtitle: object type
+  const objectLabel = d.isTruck ? 'Грузовая мойка' : d.isRobot ? 'Роботизированная мойка' : 'Мойка самообслуживания';
   doc.setFontSize(11);
-  doc.setFont(FONT, 'normal');
-  doc.setTextColor(...BLUE);
+  doc.setFont(F, 'normal');
+  doc.setTextColor(...MUTED);
   doc.text(objectLabel, pageW / 2, y, { align: 'center' });
   doc.setTextColor(...TEXT);
-  y += 8;
+  y += 10;
 
-  // ─── CLIENT INFO ───
-  simpleTable([
+  // Client info
+  infoTable([
     ['Дата', d.header.date],
     ['Менеджер', d.header.manager],
     ['Клиент', d.header.client],
@@ -180,59 +231,43 @@ export function generatePdf(state: WizardState): void {
     ['Регион доставки', d.header.region],
   ]);
 
-  // ─── TRUCK, ROBOT, or POSTS ───
+  // ═══════════════════════════════════════════════
+  // CONTENT: TRUCK / ROBOT / MSO
+  // ═══════════════════════════════════════════════
+
   if (d.isTruck && d.truck) {
     sectionTitle('Грузовая мойка');
-    checkPage(12);
-    doc.setFontSize(9);
-    doc.setFont(FONT, 'normal');
-    doc.text(`Тип: ${d.truck.typeName} — ${fmt(d.truck.typePrice)}`, marginL + 2, y);
-    y += 5;
-
+    textLine(`Тип: ${d.truck.typeName} — ${fmt(d.truck.typePrice)}`);
     priceTable('Опции', d.truck.options);
     priceTable('Ручной пост', d.truck.manualPost);
     if (d.truck.manualPostMontage > 0) {
-      checkPage(6);
-      doc.setFontSize(9);
-      doc.setFont(FONT, 'normal');
-      doc.text(`Монтаж ручного поста: ${fmt(d.truck.manualPostMontage)}`, marginL + 2, y);
-      y += 5;
+      textLine(`Монтаж ручного поста: ${fmt(d.truck.manualPostMontage)}`);
     }
     if (d.truck.waterPrice > 0) {
-      checkPage(6);
-      doc.setFontSize(9);
-      doc.setFont(FONT, 'normal');
-      doc.text(`Водоочистка: ${d.truck.waterLabel} — ${fmt(d.truck.waterPrice)}`, marginL + 2, y);
-      y += 5;
+      textLine(`Водоочистка: ${d.truck.waterLabel} — ${fmt(d.truck.waterPrice)}`);
     }
     subtotalLine('Итого грузовая мойка:', d.truck.truckTotal);
+
   } else if (d.isRobot && d.robot) {
     sectionTitle('Робот');
-    checkPage(12);
-    doc.setFontSize(9);
-    doc.setFont(FONT, 'normal');
-    doc.text(`Модель: ${d.robot.modelName} — ${fmt(d.robot.modelPrice)}`, marginL + 2, y);
-    y += 5;
-    doc.text(`БУР: ${d.robot.burName} — ${fmt(d.robot.burPrice)}`, marginL + 2, y);
-    y += 5;
-
+    textLine(`Модель: ${d.robot.modelName} — ${fmt(d.robot.modelPrice)}`);
+    textLine(`БУР: ${d.robot.burName} — ${fmt(d.robot.burPrice)}`);
     priceTable('Опции робота', d.robot.options);
     subtotalLine('Итого робот:', d.robot.robotTotal);
+
   } else {
     d.posts.forEach((post) => {
       sectionTitle(post.title);
+      textLine(`Профиль: ${post.profileName}`);
+      textLine(`Базовая комплектация: ${fmt(post.basePrice)}`);
+      textLine(`Терминал: ${post.bumName}${post.bumPrice > 0 ? ' — доплата ' + fmt(post.bumPrice) : ' (в комплекте)'}`);
 
-      checkPage(15);
-      doc.setFontSize(9);
-      doc.setFont(FONT, 'normal');
-      doc.text(`Профиль: ${post.profileName}`, marginL + 2, y);
-      y += 5;
-      doc.text(`Базовая комплектация: ${fmt(post.basePrice)}`, marginL + 2, y);
-      y += 5;
-      doc.text(`Терминал: ${post.bumName}${post.bumPrice > 0 ? ' — доплата ' + fmt(post.bumPrice) : ' (в комплекте)'}`, marginL + 2, y);
-      y += 5;
+      // Base functions as comma list
+      if (post.baseFunctions.length > 0) {
+        textLine(`Базовые функции: ${post.baseFunctions.map((f) => f.name).join(', ')} (входят в комплект)`);
+      }
 
-      priceTable('Системы оплаты', post.payments.filter((p) => p.price > 0));
+      priceTable('Системы оплаты', post.payments);
       priceTable('Аксессуары', post.accessories);
       priceTable('Функции', post.functions);
       priceTable('Помпы (АВД)', post.pumps);
@@ -241,51 +276,58 @@ export function generatePdf(state: WizardState): void {
       if (post.secondPump) extrasWithPump.push(post.secondPump);
       priceTable('Доп. оборудование к посту', extrasWithPump);
 
-      subtotalLine(`Итого по посту:`, post.postTotal);
+      subtotalLine('Итого по посту:', post.postTotal);
     });
   }
 
-  // ─── WASH (skip for truck) ───
+  // ═══════════════════════════════════════════════
+  // WASH (skip for truck)
+  // ═══════════════════════════════════════════════
+
   if (!d.isTruck) {
     sectionTitle('Оборудование на мойку');
 
-    const washRows: PostRow[] = [];
-    washRows.push({ name: `Водоподготовка: ${d.wash.waterLabel}`, price: d.wash.waterPrice });
-    if (d.wash.vacuumPrice > 0) washRows.push({ name: `Пылесосы: ${d.wash.vacuumLabel}`, price: d.wash.vacuumPrice });
-    d.wash.extras.forEach((e) => washRows.push(e));
-    if (d.wash.pipelines.air > 0) washRows.push({ name: 'Магистрали воздушные', price: d.wash.pipelines.air });
-    if (d.wash.pipelines.water > 0) washRows.push({ name: 'Магистрали водные', price: d.wash.pipelines.water });
-    if (d.wash.pipelines.chem > 0) washRows.push({ name: 'Магистрали химические', price: d.wash.pipelines.chem });
+    // Water rows as table
+    if (d.wash.waterRows.length > 0) {
+      priceTable('Водоподготовка', d.wash.waterRows);
+    }
 
-    if (washRows.length > 0) {
-      autoTable(doc, {
-        startY: y,
-        margin: { left: marginL, right: marginR },
-        theme: 'striped',
-        styles: { fontSize: 8.5, cellPadding: 2, font: FONT, textColor: TEXT },
-        headStyles: { fillColor: BLUE, textColor: WHITE, fontStyle: 'bold', fontSize: 8 },
-        alternateRowStyles: { fillColor: STRIPE },
-        columnStyles: {
-          0: { cellWidth: contentW - 40 },
-          1: { cellWidth: 40, halign: 'right' },
-        },
-        head: [['Наименование', 'Цена']],
-        body: washRows.map((r) => [r.name, fmt(r.price)]),
-      });
-      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 3;
+    if (d.wash.vacuumPrice > 0) {
+      textLine(`Пылесосы: ${d.wash.vacuumLabel} — ${fmt(d.wash.vacuumPrice)}`);
+    }
+
+    if (d.wash.extras.length > 0) {
+      priceTable('Другое оборудование', d.wash.extras);
+    }
+
+    const pipRows: PostRow[] = [];
+    if (d.wash.pipelines.air > 0) pipRows.push({ name: 'Магистрали воздушные', price: d.wash.pipelines.air });
+    if (d.wash.pipelines.water > 0) pipRows.push({ name: 'Магистрали водные', price: d.wash.pipelines.water });
+    if (d.wash.pipelines.chem > 0) pipRows.push({ name: 'Магистрали химические', price: d.wash.pipelines.chem });
+    if (pipRows.length > 0) {
+      priceTable('Магистрали', pipRows);
     }
 
     subtotalLine('Итого на мойку:', d.wash.washTotal);
   }
 
-  // ─── TOTALS ───
+  // ═══════════════════════════════════════════════
+  // TOTALS
+  // ═══════════════════════════════════════════════
+
   sectionTitle('Итоговый расчёт');
 
   const totalsRows: [string, string][] = [
     ['Стоимость оборудования', fmt(d.totals.subtotal)],
-    [`Скидка (${d.totals.discountPct}%)`, `- ${fmt(d.totals.discountAmount)}`],
-    ['После скидки', fmt(d.totals.afterDiscount)],
   ];
+
+  if (d.totals.discountAmount > 0) {
+    totalsRows.push([`Скидка (${d.totals.discountPct}%)`, `\u2212 ${fmt(d.totals.discountAmount)}`]);
+    if (d.totals.discountWarning) {
+      totalsRows.push(['', 'Требует согласования у руководства']);
+    }
+    totalsRows.push(['После скидки', fmt(d.totals.afterDiscount)]);
+  }
 
   if (d.totals.montageAmount > 0) {
     totalsRows.push([`Монтаж (${d.totals.montageType})`, fmt(d.totals.montageFromSubtotal)]);
@@ -304,61 +346,64 @@ export function generatePdf(state: WizardState): void {
 
   autoTable(doc, {
     startY: y,
-    margin: { left: marginL, right: marginR },
+    margin: { left: mL, right: mR },
     theme: 'plain',
-    styles: { fontSize: 9.5, cellPadding: 2.5, font: FONT, textColor: TEXT },
+    styles: { fontSize: 9.5, cellPadding: 2.5, font: F, textColor: TEXT },
     columnStyles: {
-      0: { cellWidth: contentW - 50, fontStyle: 'normal' },
-      1: { cellWidth: 50, halign: 'right', fontStyle: 'bold' },
+      0: { cellWidth: cW - 55 },
+      1: { cellWidth: 55, halign: 'right', fontStyle: 'bold' },
     },
     body: totalsRows,
   });
-  y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4;
+  y = getLastY(doc) + 5;
 
-  // ─── TOTAL BANNER ───
-  checkPage(20);
-  doc.setFillColor(...BLUE);
-  doc.roundedRect(marginL, y, contentW, 14, 2, 2, 'F');
-  doc.setFont(FONT, 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(...WHITE);
-  doc.text('ИТОГО:', marginL + 6, y + 9);
+  // ИТОГО — bold line + large text (no banner)
+  checkPage(16);
+  doc.setDrawColor(...DARK);
+  doc.setLineWidth(0.5);
+  doc.line(mL, y, pageW - mR, y);
+  y += 7;
   doc.setFontSize(14);
-  doc.text(fmt(d.totals.total), pageW - marginR - 6, y + 9, { align: 'right' });
+  doc.setFont(F, 'bold');
+  doc.setTextColor(...DARK);
+  doc.text('ИТОГО:', mL, y);
+  doc.setTextColor(...BLUE);
+  doc.text(fmt(d.totals.total), pageW - mR, y, { align: 'right' });
   doc.setTextColor(...TEXT);
-  y += 20;
+  y += 10;
 
-  // ─── CONDITIONS ───
+  // ═══════════════════════════════════════════════
+  // CONDITIONS
+  // ═══════════════════════════════════════════════
+
   if (d.deliveryConditions !== '—' || d.paymentConditions !== '—') {
     sectionTitle('Условия');
     doc.setFontSize(9);
-    doc.setFont(FONT, 'normal');
 
     if (d.deliveryConditions !== '—') {
-      doc.setFont(FONT, 'bold');
-      doc.text('Условия доставки:', marginL, y);
-      doc.setFont(FONT, 'normal');
+      doc.setFont(F, 'bold');
+      doc.text('Условия доставки:', mL, y);
+      doc.setFont(F, 'normal');
       y += 4;
-      const lines = doc.splitTextToSize(d.deliveryConditions, contentW - 4);
-      doc.text(lines, marginL + 2, y);
+      const lines = doc.splitTextToSize(d.deliveryConditions, cW - 4);
+      doc.text(lines, mL + 2, y);
       y += lines.length * 4 + 4;
     }
 
     if (d.paymentConditions !== '—') {
-      checkPage(10);
-      doc.setFont(FONT, 'bold');
-      doc.text('Условия оплаты:', marginL, y);
-      doc.setFont(FONT, 'normal');
+      checkPage(12);
+      doc.setFont(F, 'bold');
+      doc.text('Условия оплаты:', mL, y);
+      doc.setFont(F, 'normal');
       y += 4;
-      const lines = doc.splitTextToSize(d.paymentConditions, contentW - 4);
-      doc.text(lines, marginL + 2, y);
+      const lines = doc.splitTextToSize(d.paymentConditions, cW - 4);
+      doc.text(lines, mL + 2, y);
       y += lines.length * 4 + 4;
     }
   }
 
-  // Draw header/footer on all pages (done last so page count is correct)
+  // Draw header/footer on all pages (last, so page count is correct)
   drawHeaderFooter();
 
-  const fileName = makeFileName(state, 'pdf');
-  doc.save(fileName);
+  doc.save(makeFileName(state, 'pdf'));
 }

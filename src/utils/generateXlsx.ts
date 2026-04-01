@@ -2,12 +2,12 @@ import ExcelJS from 'exceljs';
 import type { WizardState } from '@/types';
 import { gatherDocData, makeFileName, type PostRow } from './gatherData';
 
-// ─── Brand colors ───
-const BLUE = '0EA5E9';
+// ─── Palette ───
 const DARK = '1E293B';
-const STRIPE = 'F8FAFC';
-const WHITE = 'FFFFFF';
-const BLUE_TEXT = '0EA5E9';
+const BLUE = '0EA5E9';
+const GRAY = '64748B';
+const LINE_GRAY = 'E2E8F0';
+const SUBTLE_BG = 'F8FAFC';
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU');
@@ -17,26 +17,29 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   const d = gatherDocData(state);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('КП', {
-    properties: { defaultColWidth: 20 },
+    properties: { defaultColWidth: 18 },
   });
 
   // Column widths
-  ws.getColumn(1).width = 35;
-  ws.getColumn(2).width = 45;
-  ws.getColumn(3).width = 22;
+  ws.getColumn(1).width = 45;
+  ws.getColumn(2).width = 50;
+  ws.getColumn(3).width = 18;
 
-  const headerFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: DARK } };
-  const headerFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: WHITE }, size: 14, name: 'Calibri' };
-  const sectionFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE } };
-  const sectionFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: WHITE }, size: 11, name: 'Calibri' };
-  const boldFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri' };
-  const normalFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri' };
-  const labelFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri', color: { argb: '64748B' } };
-  const subtotalFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: BLUE_TEXT } };
-  const totalFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: BLUE } };
-  const totalFont: Partial<ExcelJS.Font> = { bold: true, color: { argb: WHITE }, size: 13, name: 'Calibri' };
-  const stripeFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: STRIPE } };
+  // ─── Style presets ───
+  const titleFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: 'Calibri', color: { argb: DARK } };
+  const subtitleFont: Partial<ExcelJS.Font> = { bold: true, size: 12, name: 'Calibri', color: { argb: DARK } };
+  const sectionFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: 'Calibri', color: { argb: DARK } };
+  const boldFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: DARK } };
+  const normalFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri', color: { argb: DARK } };
+  const labelFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri', color: { argb: GRAY } };
+  const blueFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: BLUE } };
+  const totalFont: Partial<ExcelJS.Font> = { bold: true, size: 13, name: 'Calibri', color: { argb: BLUE } };
+  const footerFont: Partial<ExcelJS.Font> = { italic: true, size: 8, name: 'Calibri', color: { argb: GRAY } };
   const priceFormat = '#,##0" ₽"';
+
+  const thinBlueBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: BLUE } };
+  const thinGrayBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: LINE_GRAY } };
+  const subtleFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: SUBTLE_BG } };
 
   let rowNum = 0;
 
@@ -50,24 +53,17 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     return row;
   }
 
-  function addHeaderRow(text: string): ExcelJS.Row {
-    const row = addRow(text);
-    ws.mergeCells(rowNum, 1, rowNum, 3);
-    row.getCell(1).fill = headerFill;
-    row.getCell(1).font = headerFont;
-    row.getCell(1).alignment = { vertical: 'middle' };
-    row.height = 30;
-    return row;
+  function addSpacer() {
+    addRow();
   }
 
   function addSectionRow(text: string): ExcelJS.Row {
-    addRow(); // spacer
+    addSpacer();
     const row = addRow(text);
     ws.mergeCells(rowNum, 1, rowNum, 3);
-    row.getCell(1).fill = sectionFill;
     row.getCell(1).font = sectionFont;
-    row.getCell(1).alignment = { vertical: 'middle' };
-    row.height = 24;
+    row.getCell(1).border = { bottom: thinBlueBorder };
+    row.height = 22;
     return row;
   }
 
@@ -75,6 +71,9 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     const row = addRow(label, value);
     row.getCell(1).font = labelFont;
     row.getCell(2).font = boldFont;
+    row.getCell(1).border = { bottom: thinGrayBorder };
+    row.getCell(2).border = { bottom: thinGrayBorder };
+    row.getCell(3).border = { bottom: thinGrayBorder };
     return row;
   }
 
@@ -84,30 +83,33 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     row.getCell(2).font = normalFont;
     row.getCell(3).font = normalFont;
     row.getCell(3).numFmt = priceFormat;
+    row.getCell(1).border = { bottom: thinGrayBorder };
+    row.getCell(2).border = { bottom: thinGrayBorder };
+    row.getCell(3).border = { bottom: thinGrayBorder };
     if (stripe) {
-      row.getCell(1).fill = stripeFill;
-      row.getCell(2).fill = stripeFill;
-      row.getCell(3).fill = stripeFill;
+      row.getCell(1).fill = subtleFill;
+      row.getCell(2).fill = subtleFill;
+      row.getCell(3).fill = subtleFill;
     }
     return row;
   }
 
   function addSubtotalRow(label: string, price: number) {
     const row = addRow(label, '', price);
-    row.getCell(1).font = subtotalFont;
-    row.getCell(3).font = subtotalFont;
+    row.getCell(1).font = blueFont;
+    row.getCell(3).font = blueFont;
     row.getCell(3).numFmt = priceFormat;
     return row;
   }
 
   function addPriceBlock(heading: string, items: PostRow[]) {
     if (items.length === 0) return;
-    // Table header
+    // Subtle table header
     const headRow = addRow('', heading, 'Цена');
-    headRow.getCell(2).font = { ...sectionFont, size: 9 };
-    headRow.getCell(3).font = { ...sectionFont, size: 9 };
-    headRow.getCell(2).fill = sectionFill;
-    headRow.getCell(3).fill = sectionFill;
+    headRow.getCell(2).font = { ...boldFont, size: 9 };
+    headRow.getCell(3).font = { ...boldFont, size: 9 };
+    headRow.getCell(2).border = { bottom: thinBlueBorder };
+    headRow.getCell(3).border = { bottom: thinBlueBorder };
     headRow.getCell(3).alignment = { horizontal: 'right' };
     // Items
     items.forEach((r, i) => {
@@ -119,10 +121,23 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   // DOCUMENT
   // ═══════════════════════════════════════
 
-  // Header
-  addHeaderRow('DKR GROUP — Коммерческое предложение');
+  // Row 1: empty
+  addSpacer();
 
-  addRow(); // spacer
+  // Row 2: DKR GROUP + КП title
+  const titleRow = addRow('DKR GROUP', '', 'Коммерческое предложение');
+  titleRow.getCell(1).font = titleFont;
+  titleRow.getCell(3).font = subtitleFont;
+  titleRow.getCell(3).alignment = { horizontal: 'right' };
+  titleRow.height = 24;
+
+  // Row 3: thin blue line under header
+  const lineRow = addRow();
+  lineRow.getCell(1).border = { bottom: thinBlueBorder };
+  lineRow.getCell(2).border = { bottom: thinBlueBorder };
+  lineRow.getCell(3).border = { bottom: thinBlueBorder };
+
+  addSpacer();
   addInfoRow('Дата', d.header.date);
   addInfoRow('Менеджер', d.header.manager);
   addInfoRow('Клиент', d.header.client);
@@ -148,6 +163,9 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   } else if (d.isRobot && d.robot) {
     addSectionRow('Робот');
     addPriceRow('Модель', d.robot.modelName, d.robot.modelPrice);
+    if (d.robot.includedComponents.length > 0) {
+      addInfoRow('В комплекте', d.robot.includedComponents.join(', '));
+    }
     addPriceRow('БУР', d.robot.burName, d.robot.burPrice);
     addPriceBlock('Опции робота', d.robot.options);
     addSubtotalRow('Итого робот', d.robot.robotTotal);
@@ -165,6 +183,10 @@ export async function generateXlsx(state: WizardState): Promise<void> {
 
       addPriceBlock('Системы оплаты', post.payments);
       addPriceBlock('Аксессуары', post.accessories);
+
+      if (post.baseFunctions.length > 0) {
+        addPriceBlock('Базовые функции (в комплекте)', post.baseFunctions);
+      }
       addPriceBlock('Функции', post.functions);
       addPriceBlock('Помпы (АВД)', post.pumps);
 
@@ -179,7 +201,13 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   // ─── WASH BLOCK ───
   if (!d.isTruck) {
     addSectionRow('Оборудование на мойку');
-    addPriceRow('Водоподготовка', d.wash.waterLabel, d.wash.waterPrice);
+
+    if (d.wash.waterRows.length > 0) {
+      addPriceBlock('Водоподготовка', d.wash.waterRows);
+      if (d.wash.waterTotal > 0) {
+        addSubtotalRow('Итого водоподготовка', d.wash.waterTotal);
+      }
+    }
 
     if (d.wash.vacuumPrice > 0) {
       addPriceRow('Пылесосы', d.wash.vacuumLabel, d.wash.vacuumPrice);
@@ -203,7 +231,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   // ─── TOTALS ───
   addSectionRow('Итоговый расчёт');
   addPriceRow('Стоимость оборудования', '', d.totals.subtotal);
-  addPriceRow(`Скидка (${d.totals.discountPct}%)`, '', -d.totals.discountAmount);
+  addPriceRow(`Скидка (${d.totals.discountPct}%)`, d.totals.discountWarning ? '⚠ Скидка > 3%' : '', -d.totals.discountAmount);
   addPriceRow('После скидки', '', d.totals.afterDiscount);
 
   if (d.totals.montageAmount > 0) {
@@ -221,14 +249,17 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     addInfoRow('НДС', 'Участник Сколково — не применяется');
   }
 
-  addRow(); // spacer
+  addSpacer();
 
-  // TOTAL row with blue background
+  // TOTAL row — bold blue text with thin line above, no fill
+  const totalLineRow = addRow();
+  totalLineRow.getCell(1).border = { bottom: { style: 'medium', color: { argb: DARK } } };
+  totalLineRow.getCell(2).border = { bottom: { style: 'medium', color: { argb: DARK } } };
+  totalLineRow.getCell(3).border = { bottom: { style: 'medium', color: { argb: DARK } } };
+
   const totalRow = addRow('ИТОГО', '', d.totals.total);
   ws.mergeCells(rowNum, 1, rowNum, 2);
-  totalRow.getCell(1).fill = totalFill;
   totalRow.getCell(1).font = totalFont;
-  totalRow.getCell(3).fill = totalFill;
   totalRow.getCell(3).font = totalFont;
   totalRow.getCell(3).numFmt = priceFormat;
   totalRow.getCell(3).alignment = { horizontal: 'right' };
@@ -240,10 +271,10 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   addInfoRow('Условия оплаты', d.paymentConditions);
 
   // ─── FOOTER ───
-  addRow();
+  addSpacer();
   const footerRow = addRow('DKR Group  |  dkrgroup.ru  |  Конфиденциально');
   ws.mergeCells(rowNum, 1, rowNum, 3);
-  footerRow.getCell(1).font = { ...labelFont, italic: true, size: 8 };
+  footerRow.getCell(1).font = footerFont;
   footerRow.getCell(1).alignment = { horizontal: 'center' };
 
   // Write file

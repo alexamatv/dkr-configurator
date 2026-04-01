@@ -24,6 +24,8 @@ import {
   kompakMontagePrice,
 } from '@/data/mockData';
 
+// ─── Shared types ───
+
 export interface PostRow {
   name: string;
   price: number;
@@ -37,6 +39,7 @@ export interface PostBlock {
   bumPrice: number;
   payments: PostRow[];
   accessories: PostRow[];
+  baseFunctions: PostRow[];
   functions: PostRow[];
   pumps: PostRow[];
   postExtras: PostRow[];
@@ -45,8 +48,8 @@ export interface PostBlock {
 }
 
 export interface WashBlock {
-  waterLabel: string;
-  waterPrice: number;
+  waterRows: PostRow[];
+  waterTotal: number;
   vacuumLabel: string;
   vacuumPrice: number;
   extras: PostRow[];
@@ -58,6 +61,7 @@ export interface TotalsBlock {
   subtotal: number;
   discountPct: number;
   discountAmount: number;
+  discountWarning: boolean;
   afterDiscount: number;
   montageType: string;
   montageFromSubtotal: number;
@@ -77,12 +81,12 @@ export interface HeaderData {
   vehicleType: string;
   objectType: string;
   region: string;
-  currency: string;
 }
 
 export interface RobotBlock {
   modelName: string;
   modelPrice: number;
+  includedComponents: string[];
   burName: string;
   burPrice: number;
   options: PostRow[];
@@ -93,7 +97,6 @@ export interface RobotBlock {
 export interface TruckBlock {
   typeName: string;
   typePrice: number;
-  currency: string;
   options: PostRow[];
   optionsTotal: number;
   manualPost: PostRow[];
@@ -115,13 +118,18 @@ export interface DocData {
   totals: TotalsBlock;
   deliveryConditions: string;
   paymentConditions: string;
+  language: string;
 }
+
+// ─── Helpers ───
 
 function getPostName(post: PostConfig, idx: number): string {
   if (post.customName) return post.customName;
   const profile = profiles.find((p) => p.id === post.profile);
   return `Пост #${idx + 1} — ${profile?.name ?? 'Без профиля'}`;
 }
+
+// ─── MSO: Post block ───
 
 function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostBlock {
   const profile = profiles.find((p) => p.id === post.profile);
@@ -131,11 +139,11 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
   const bumName = bum?.name ?? '—';
   const bumPrice = bum?.price ?? 0;
 
+  // Payment systems: show all selected + removal discounts for deselected base items
   const payments: PostRow[] = post.paymentSystems.map((ps) => ({
     name: paymentSystemLabels[ps] ?? ps,
     price: paymentSystemPrices[ps] ?? 0,
   }));
-  // Add removal discounts for base items that were deselected
   basePaymentSystems
     .filter((ps) => !post.paymentSystems.includes(ps as PaymentSystem))
     .forEach((ps) => {
@@ -145,6 +153,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
       }
     });
 
+  // Accessories (including customPrice)
   const accessories: PostRow[] = post.accessories
     .filter((a) => a.selected)
     .map((a) => ({
@@ -152,13 +161,23 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
       price: a.customPrice !== undefined ? a.customPrice : a.price,
     }));
 
+  // Base functions (enabled, входит в комплект)
+  const baseFunctions: PostRow[] = post.functions
+    .filter((f) => f.isBase && f.enabled)
+    .map((f) => ({ name: f.name, price: 0 }));
+
+  // Extra functions with dosator info
   const functions: PostRow[] = post.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
     .map((f) => {
       let price = 0;
       let suffix = '';
-      if (f.option === 'button_only') price = f.buttonPrice;
-      else if (f.option === 'button_and_kit') price = f.buttonPrice + f.kitPrice;
+      if (f.option === 'button_only') {
+        price = f.buttonPrice;
+        suffix = ' (только кнопка)';
+      } else if (f.option === 'button_and_kit') {
+        price = f.buttonPrice + f.kitPrice;
+      }
       if (f.requiresDosator && f.selectedDosator) {
         const dos = dosatorOptions.find((d) => d.id === f.selectedDosator);
         if (dos) {
@@ -169,6 +188,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
       return { name: f.name + suffix, price };
     });
 
+  // Pumps (АВД)
   const pumps: PostRow[] = post.avdSelections.map((sel) => {
     const kit = avdKits.find((a) => a.id === sel.avdId);
     return {
@@ -177,13 +197,22 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
     };
   });
   if (state.step5.customPumpPrice && state.step5.customPumpPrice > 0) {
-    pumps.push({ name: 'Доп. помпа (ручной ввод)', price: state.step5.customPumpPrice });
+    pumps.push({ name: 'Дополнительная помпа (ручной ввод)', price: state.step5.customPumpPrice });
   }
 
+  // Post extras (Step 8) — premium included items shown at 0
+  const isPremium = post.profile === 'premium';
+  const premiumIncluded = ['freq_converter'];
   const postExtras: PostRow[] = state.step8.extras
     .filter((e) => e.selected)
-    .map((e) => ({ name: e.name + (e.quantity > 1 ? ` x${e.quantity}` : ''), price: e.price * e.quantity }));
+    .map((e) => {
+      const effectivePrice = (isPremium && premiumIncluded.includes(e.id)) ? 0 : e.price;
+      const label = e.name + (e.quantity > 1 ? ` x${e.quantity}` : '')
+        + (effectivePrice === 0 && e.price > 0 ? ' (входит в Премиум)' : '');
+      return { name: label, price: effectivePrice * e.quantity };
+    });
 
+  // Second pump
   let secondPump: PostRow | null = null;
   if (state.step8.secondPumpEnabled) {
     const defaultSel = state.step5.avdSelections.find((s) => s.isDefault);
@@ -209,6 +238,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
     bumPrice,
     payments,
     accessories,
+    baseFunctions,
     functions,
     pumps,
     postExtras,
@@ -217,63 +247,76 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
   };
 }
 
+// ─── Wash block (MSO + Robot) ───
+
 function calcWashBlock(state: WizardState): WashBlock {
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
   const aras = arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
   const customWater = state.step7.customWaterPrice || 0;
 
-  let waterLabel = '—';
-  let waterPrice = 0;
-  if (osmos) {
-    waterLabel = `Осмос: ${osmos.name}`;
-    waterPrice = osmos.price;
-  }
-  if (aras && aras.id !== 'none') {
-    waterLabel += (waterLabel !== '—' ? ' + ' : '') + `ARAS: ${aras.name}`;
-    waterPrice += arasPrice;
-  }
-  if (customWater > 0) {
-    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Ручной ввод';
-    waterPrice += customWater;
-  }
-  if (state.step7.boosterPump) {
-    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Станция повышающая давление';
-    waterPrice += boosterPumpPrice;
-  }
-  if (state.step7.softeningAll && state.step7.softeningAllPrice > 0) {
-    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Умягчение (все)';
-    waterPrice += state.step7.softeningAllPrice;
-  }
-  if (state.step7.softeningOsmos && state.step7.softeningOsmosPrice > 0) {
-    waterLabel += (waterLabel !== '—' ? ' + ' : '') + 'Умягчение (осмос)';
-    waterPrice += state.step7.softeningOsmosPrice;
-  }
-  if (!osmos && (!aras || aras.id === 'none') && customWater === 0 && !state.step7.boosterPump) {
-    waterLabel = 'Клиент докупит самостоятельно';
+  // Build individual water rows
+  const waterRows: PostRow[] = [];
+  let waterTotal = 0;
+
+  if (state.step7.osmosOption === 'none') {
+    waterRows.push({ name: 'Осмос: клиент докупит самостоятельно', price: 0 });
+  } else if (osmos) {
+    waterRows.push({ name: `Осмос: ${osmos.name}`, price: osmos.price });
+    waterTotal += osmos.price;
   }
 
+  if (aras && aras.id !== 'none') {
+    waterRows.push({ name: `АРОС: ${aras.name}`, price: arasPrice });
+    waterTotal += arasPrice;
+  } else if (state.step7.arasModel === 'none') {
+    waterRows.push({ name: 'АРОС: не нужно', price: 0 });
+  }
+
+  if (customWater > 0) {
+    waterRows.push({ name: 'Водоподготовка (ручной ввод)', price: customWater });
+    waterTotal += customWater;
+  }
+
+  if (state.step7.boosterPump) {
+    waterRows.push({ name: 'Станция повышающая давление', price: boosterPumpPrice });
+    waterTotal += boosterPumpPrice;
+  }
+
+  if (state.step7.softeningAll && state.step7.softeningAllPrice > 0) {
+    waterRows.push({ name: 'Умягчение на все функции', price: state.step7.softeningAllPrice });
+    waterTotal += state.step7.softeningAllPrice;
+  }
+
+  if (state.step7.softeningOsmos && state.step7.softeningOsmosPrice > 0) {
+    waterRows.push({ name: 'Умягчение для осмоса', price: state.step7.softeningOsmosPrice });
+    waterTotal += state.step7.softeningOsmosPrice;
+  }
+
+  // Vacuum
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
   const vacPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
   const vacLabel = vac && vac.id !== 'none'
     ? `${vac.name} x${state.step9.vacuumQuantity}`
     : 'Нет';
 
+  // Wash extras (Step 9)
   const washExtras: PostRow[] = state.step9.extras
     .filter((e) => e.selected)
     .map((e) => ({ name: e.name + (e.quantity > 1 ? ` x${e.quantity}` : ''), price: e.price * e.quantity }));
 
+  // Pipelines
   const pipAir = state.step9.pipelinesAirPrice || 0;
   const pipWater = state.step9.pipelinesWaterPrice || 0;
   const pipChem = state.step9.pipelinesChemPrice || 0;
 
-  const washTotal = waterPrice + vacPrice
+  const washTotal = waterTotal + vacPrice
     + washExtras.reduce((s, r) => s + r.price, 0)
     + pipAir + pipWater + pipChem;
 
   return {
-    waterLabel,
-    waterPrice,
+    waterRows,
+    waterTotal,
     vacuumLabel: vacLabel,
     vacuumPrice: vacPrice,
     extras: washExtras,
@@ -281,6 +324,8 @@ function calcWashBlock(state: WizardState): WashBlock {
     washTotal,
   };
 }
+
+// ─── Shared totals ───
 
 function calcSharedTotals(state: WizardState, subtotal: number): TotalsBlock {
   const discountPct = state.step10.discount;
@@ -304,6 +349,7 @@ function calcSharedTotals(state: WizardState, subtotal: number): TotalsBlock {
     subtotal,
     discountPct,
     discountAmount,
+    discountWarning: discountPct > 3,
     afterDiscount,
     montageType: montageTypeLabel,
     montageFromSubtotal,
@@ -316,6 +362,8 @@ function calcSharedTotals(state: WizardState, subtotal: number): TotalsBlock {
     total,
   };
 }
+
+// ─── Robot branch ───
 
 function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
   const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
@@ -338,6 +386,7 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
   const robotBlock: RobotBlock = {
     modelName: robot?.name ?? '—',
     modelPrice: robotPrice,
+    includedComponents: robot?.includedComponents ?? [],
     burName: bur?.name ?? '—',
     burPrice,
     options,
@@ -347,23 +396,7 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
 
   const wash = calcWashBlock(state);
 
-  // Wash extras for robot (no post extras / second pump)
-  const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
-  const aras = arasModels.find((a) => a.id === state.step7.arasModel);
-  const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
-  const customWater = state.step7.customWaterPrice || 0;
-  const osmosPrice = osmos?.price ?? 0;
-
-  const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
-  const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
-  const washExtrasPrice = state.step9.extras.filter((e) => e.selected).reduce((s, e) => s + e.price * e.quantity, 0);
-  const pipelinesPrice = (state.step9.pipelinesAirPrice || 0) + (state.step9.pipelinesWaterPrice || 0) + (state.step9.pipelinesChemPrice || 0);
-  const equipTotal = vacuumPrice + washExtrasPrice + pipelinesPrice;
-
-  const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
-  const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
-    + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
-  const subtotal = robotPrice + burPrice + optionsTotal + osmosPrice + arasPrice + customWater + boosterCost + softeningCost + equipTotal;
+  const subtotal = robotTotal + wash.washTotal;
   const totals = calcSharedTotals(state, subtotal);
 
   return {
@@ -377,14 +410,16 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
     totals,
     deliveryConditions: state.step10.deliveryConditions || '—',
     paymentConditions: state.step10.paymentConditions || '—',
+    language: state.step10.language,
   };
 }
+
+// ─── Truck branch ───
 
 function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
   const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
-  const currency = truckType?.currency ?? 'RUB';
 
   // Options
   const options: PostRow[] = [];
@@ -429,7 +464,7 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
   let waterPrice = waterSys?.price ?? 0;
   if (state.truckStep5.selectedWater === 'custom') {
     waterPrice = state.truckStep5.customWaterPrice || 0;
-    waterLabel = `Своя стоимость: ${waterPrice.toLocaleString('ru-RU')} ₽`;
+    waterLabel = 'Своя стоимость';
   }
 
   const truckTotal = basePrice + optionsTotal + manualPostTotal + waterPrice;
@@ -437,7 +472,6 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
   const truckBlock: TruckBlock = {
     typeName: truckType?.name ?? '—',
     typePrice: basePrice,
-    currency,
     options,
     optionsTotal,
     manualPost,
@@ -466,8 +500,9 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
       subtotal,
       discountPct,
       discountAmount,
+      discountWarning: discountPct > 3,
       afterDiscount,
-      montageType: montage !== 'none' ? `Монтаж (фикс. ${kompakMontagePrice.toLocaleString('ru-RU')} ₽)` : 'Нет',
+      montageType: montage !== 'none' ? `Монтаж (фикс. ${kompakMontagePrice.toLocaleString('ru-RU')} \u20BD)` : 'Нет',
       montageFromSubtotal: montage !== 'none' ? kompakMontagePrice : 0,
       montageExtra: montage === 'full' ? (state.step10.montageExtra || 0) : 0,
       montageAmount,
@@ -481,10 +516,10 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
     totals = calcSharedTotals(state, subtotal);
   }
 
-  // Empty wash block for truck (water is in truck block)
+  // Empty wash block for truck
   const wash: WashBlock = {
-    waterLabel: '—',
-    waterPrice: 0,
+    waterRows: [],
+    waterTotal: 0,
     vacuumLabel: 'Нет',
     vacuumPrice: 0,
     extras: [],
@@ -503,8 +538,11 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
     totals,
     deliveryConditions: state.step10.deliveryConditions || '—',
     paymentConditions: state.step10.paymentConditions || '—',
+    language: state.step10.language,
   };
 }
+
+// ─── Main entry ───
 
 export function gatherDocData(state: WizardState): DocData {
   const mgr = managers.find((m) => m.id === state.step1.manager);
@@ -516,7 +554,6 @@ export function gatherDocData(state: WizardState): DocData {
     vehicleType: state.step1.vehicleType === 'passenger' ? 'Легковой (коммерческий)' : 'Грузовой',
     objectType: state.step1.objectType === 'truck' ? 'Грузовая мойка' : state.step1.objectType === 'self_service' ? 'Мойка самообслуживания' : 'Роботизированная мойка',
     region: state.step10.region || '—',
-    currency: state.step10.currency,
   };
 
   const isRobot = state.step1.objectType === 'robotic';
@@ -524,18 +561,14 @@ export function gatherDocData(state: WizardState): DocData {
   if (isRobot) return gatherRobotDocData(state, header);
   if (isTruck) return gatherTruckDocData(state, header);
 
+  // ─── MSO branch ───
   const postsData = state.posts.length > 0 ? state.posts : [];
   const postBlocks = postsData.map((p, i) => calcPostBlock(p, i, state));
 
   const wash = calcWashBlock(state);
 
-  // Totals — mirror CostPanel logic
+  // Mirror CostPanel subtotal logic exactly
   const postCount = Math.max(postBlocks.length, 1);
-
-  const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
-  const aras = arasModels.find((a) => a.id === state.step7.arasModel);
-  const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
-  const customWater = state.step7.customWaterPrice || 0;
 
   const profileObj = profiles.find((p) => p.id === state.step2.profile);
   const cpBasePrice = profileObj?.basePrice ?? 0;
@@ -569,19 +602,12 @@ export function gatherDocData(state: WizardState): DocData {
     const p = (gIsPremium && gPremiumIncluded.includes(e.id)) ? 0 : e.price;
     return s + p * e.quantity;
   }, 0) + cpSecondPumpPrice;
-  const cpOsmosPrice = osmos?.price ?? 0;
-  const cpWashExtras = state.step9.extras.filter((e) => e.selected).reduce((s, e) => s + e.price * e.quantity, 0);
-  const pipAir = state.step9.pipelinesAirPrice || 0;
-  const pipWater = state.step9.pipelinesWaterPrice || 0;
-  const pipChem = state.step9.pipelinesChemPrice || 0;
-  const cpPipelines = pipAir + pipWater + pipChem;
 
   const cpUpgradesPerPost = cpBumUpgrade + cpPayUpgrade + cpFuncPrice + cpAvdUpgrade;
   const cpEquipmentTotal = (cpKitPrice + cpUpgradesPerPost) * postCount;
-  const cpBooster = state.step7.boosterPump ? boosterPumpPrice : 0;
-  const cpSoftening = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
-    + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
-  const cpWashTotal = cpOsmosPrice + arasPrice + customWater + cpBooster + cpSoftening + cpPostExtras + (wash.vacuumPrice) + cpWashExtras + cpPipelines;
+  const cpWashTotal = wash.waterTotal + cpPostExtras + wash.vacuumPrice
+    + wash.extras.reduce((s, r) => s + r.price, 0)
+    + (wash.pipelines.air + wash.pipelines.water + wash.pipelines.chem);
   const subtotal = cpEquipmentTotal + cpWashTotal;
 
   const totals = calcSharedTotals(state, subtotal);
@@ -597,6 +623,7 @@ export function gatherDocData(state: WizardState): DocData {
     totals,
     deliveryConditions: state.step10.deliveryConditions || '—',
     paymentConditions: state.step10.paymentConditions || '—',
+    language: state.step10.language,
   };
 }
 
