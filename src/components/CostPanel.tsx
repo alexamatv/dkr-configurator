@@ -72,9 +72,17 @@ function useCostCalc(state: WizardState) {
   const aras = arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
 
+  // Вторая помпа (step8) — цена основной помпы из step5
+  let secondPumpPrice = 0;
+  if (state.step8.secondPumpEnabled) {
+    const defaultSel = state.step5.avdSelections.find((s) => s.isDefault);
+    const defaultAvd = defaultSel ? avdKits.find((k) => k.id === defaultSel.avdId) : null;
+    secondPumpPrice = defaultAvd ? (defaultAvd.price > 0 ? defaultAvd.price : 85000) : 0;
+  }
+
   const postExtrasPrice = state.step8.extras
     .filter((e) => e.selected)
-    .reduce((sum, e) => sum + e.price * e.quantity, 0);
+    .reduce((sum, e) => sum + e.price * e.quantity, 0) + secondPumpPrice;
 
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
   const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;

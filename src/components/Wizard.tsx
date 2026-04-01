@@ -280,7 +280,7 @@ export function Wizard() {
       case 7:
         return <Step7Water data={state.step7} onChange={updateStep7} />;
       case 8:
-        return <Step8PostExtras data={state.step8} onChange={updateStep8} />;
+        return <Step8PostExtras data={state.step8} avdSelections={state.step5.avdSelections} onChange={updateStep8} />;
       case 9:
         return <Step9WashExtras data={state.step9} onChange={updateStep9} />;
       case 10:

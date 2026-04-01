@@ -151,6 +151,7 @@ export interface Step7Data {
 
 export interface Step8Data {
   extras: PostExtra[];
+  secondPumpEnabled?: boolean;
 }
 
 export interface Step9Data {
