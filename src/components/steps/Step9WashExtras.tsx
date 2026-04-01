@@ -101,17 +101,27 @@ export function Step9WashExtras({ data, onChange }: Props) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-muted mb-1">Магистрали</label>
-        <p className="text-xs text-muted mb-2">Введите общую стоимость магистралей</p>
-        <input
-          type="number"
-          min={0}
-          step={1000}
-          value={data.pipelinesPrice || ''}
-          onChange={(e) => update({ pipelinesPrice: parseFloat(e.target.value) || 0 })}
-          placeholder="0"
-          className="w-full sm:w-64 bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
-        />
+        <label className="block text-sm font-medium text-muted mb-3">Магистрали</label>
+        <div className="grid grid-cols-3 gap-4">
+          {([
+            ['pipelinesAirPrice', 'Воздушные, ₽'],
+            ['pipelinesWaterPrice', 'Водные, ₽'],
+            ['pipelinesChemPrice', 'Химические, ₽'],
+          ] as const).map(([key, label]) => (
+            <div key={key}>
+              <label className="block text-xs text-muted mb-1">{label}</label>
+              <input
+                type="number"
+                min={0}
+                step={1000}
+                value={data[key] || ''}
+                onChange={(e) => update({ [key]: parseFloat(e.target.value) || 0 })}
+                placeholder="0"
+                className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
+              />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

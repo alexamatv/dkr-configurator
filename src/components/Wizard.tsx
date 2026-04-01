@@ -92,7 +92,9 @@ function createInitialState(): WizardState {
       vacuumOption: 'none',
       vacuumQuantity: 0,
       extras: defaultWashExtras.map((e) => ({ ...e })),
-      pipelinesPrice: 0,
+      pipelinesAirPrice: 0,
+      pipelinesWaterPrice: 0,
+      pipelinesChemPrice: 0,
     },
     step10: {
       deliveryConditions: '',

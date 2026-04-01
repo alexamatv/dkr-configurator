@@ -158,7 +158,9 @@ export interface Step9Data {
   vacuumOption: string;
   vacuumQuantity: number;
   extras: WashExtra[];
-  pipelinesPrice?: number;
+  pipelinesAirPrice?: number;
+  pipelinesWaterPrice?: number;
+  pipelinesChemPrice?: number;
 }
 
 export interface Step10Data {
