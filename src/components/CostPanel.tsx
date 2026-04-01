@@ -91,10 +91,7 @@ function useCostCalc(state: WizardState) {
     .filter((e) => e.selected)
     .reduce((sum, e) => sum + e.price * e.quantity, 0);
 
-  const pipelinesPrice =
-    state.step9.pipelines.air * 500 +
-    state.step9.pipelines.water * 700 +
-    state.step9.pipelines.chemical * 900;
+  const pipelinesPrice = state.step9.pipelinesPrice || 0;
 
   const upgradesPerPost = bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
   const equipmentTotal = (kitPrice + upgradesPerPost) * postCount;
