@@ -33,18 +33,20 @@ export function Step1Transport({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Тип объекта</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {([['self_service', 'Мойка самообслуживания'], ['robotic', 'Роботизированная мойка']] as const).map(
-            ([value, label]) => (
-              <button
-                key={value}
-                onClick={() => update({ objectType: value })}
-                className={`radio-card text-center ${data.objectType === value ? 'selected' : ''}`}
-              >
-                <div className="font-medium">{label}</div>
-              </button>
-            )
-          )}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {([
+            ['self_service', 'Мойка самообслуживания'],
+            ['robotic', 'Роботизированная мойка'],
+            ['truck', 'Грузовая мойка'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => update({ objectType: value })}
+              className={`radio-card text-center ${data.objectType === value ? 'selected' : ''}`}
+            >
+              <div className="font-medium">{label}</div>
+            </button>
+          ))}
         </div>
       </div>
 

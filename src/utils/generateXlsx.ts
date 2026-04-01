@@ -45,8 +45,29 @@ export function generateXlsx(state: WizardState): void {
   addRow('Регион доставки', d.header.region);
   addRow('Валюта', d.header.currency);
 
-  // ─── ROBOT or POSTS ───
-  if (d.isRobot && d.robot) {
+  // ─── TRUCK, ROBOT, or POSTS ───
+  if (d.isTruck && d.truck) {
+    addSection('Грузовая мойка');
+    addRow('Тип мойки', d.truck.typeName, d.truck.typePrice);
+    if (d.truck.currency !== 'RUB') {
+      addRow('Валюта мойки', d.truck.currency);
+    }
+    if (d.truck.options.length > 0) {
+      addRow('Опции');
+      d.truck.options.forEach((r) => addRow('', r.name, r.price));
+    }
+    if (d.truck.manualPost.length > 0) {
+      addRow('Ручной пост');
+      d.truck.manualPost.forEach((r) => addRow('', r.name, r.price));
+      if (d.truck.manualPostMontage > 0) {
+        addRow('', 'Монтаж ручного поста', d.truck.manualPostMontage);
+      }
+    }
+    if (d.truck.waterPrice > 0) {
+      addRow('Водоочистка', d.truck.waterLabel, d.truck.waterPrice);
+    }
+    addBold('Итого грузовая мойка', '', d.truck.truckTotal);
+  } else if (d.isRobot && d.robot) {
     addSection('Робот');
     addRow('Модель', d.robot.modelName, d.robot.modelPrice);
     addRow('БУР', d.robot.burName, d.robot.burPrice);
@@ -100,7 +121,8 @@ export function generateXlsx(state: WizardState): void {
     });
   }
 
-  // ─── WASH BLOCK ───
+  // ─── WASH BLOCK (skip for truck — water is in truck block) ───
+  if (!d.isTruck) {
   addSection('Оборудование на мойку');
   addRow('Водоподготовка', d.wash.waterLabel, d.wash.waterPrice);
 
@@ -121,6 +143,7 @@ export function generateXlsx(state: WizardState): void {
   }
 
   addBold('Итого на мойку', '', d.wash.washTotal);
+  } // end if !isTruck
 
   // ─── TOTALS ───
   addSection('Итоговый расчёт');

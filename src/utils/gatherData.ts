@@ -16,6 +16,12 @@ import {
   basePaymentSystems,
   paymentSystemRemovalDiscounts,
   boosterPumpPrice,
+  truckWashTypes,
+  kompakOptions,
+  truckManualPostEquipment,
+  truckManualPostMontage,
+  truckWaterSystems,
+  kompakMontagePrice,
 } from '@/data/mockData';
 
 export interface PostRow {
@@ -84,11 +90,27 @@ export interface RobotBlock {
   robotTotal: number;
 }
 
+export interface TruckBlock {
+  typeName: string;
+  typePrice: number;
+  currency: string;
+  options: PostRow[];
+  optionsTotal: number;
+  manualPost: PostRow[];
+  manualPostMontage: number;
+  manualPostTotal: number;
+  waterLabel: string;
+  waterPrice: number;
+  truckTotal: number;
+}
+
 export interface DocData {
   isRobot: boolean;
+  isTruck: boolean;
   header: HeaderData;
   posts: PostBlock[];
   robot: RobotBlock | null;
+  truck: TruckBlock | null;
   wash: WashBlock;
   totals: TotalsBlock;
   deliveryConditions: string;
@@ -346,9 +368,137 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
 
   return {
     isRobot: true,
+    isTruck: false,
     header,
     posts: [],
     robot: robotBlock,
+    truck: null,
+    wash,
+    totals,
+    deliveryConditions: state.step10.deliveryConditions || '—',
+    paymentConditions: state.step10.paymentConditions || '—',
+  };
+}
+
+function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
+  const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
+  const basePrice = truckType?.price ?? 0;
+  const isKompak = state.truckStep2.selectedType === 'kompak';
+  const currency = truckType?.currency ?? 'RUB';
+
+  // Options
+  const options: PostRow[] = [];
+  let optionsTotal = 0;
+  if (isKompak) {
+    state.truckStep3.selectedOptions.forEach((optId) => {
+      const opt = kompakOptions.find((o) => o.id === optId);
+      if (opt) {
+        options.push({ name: opt.name, price: opt.price });
+        optionsTotal += opt.price;
+      }
+    });
+  } else if (state.truckStep3.customOptionsPrice > 0) {
+    options.push({ name: 'Дополнительные опции', price: state.truckStep3.customOptionsPrice });
+    optionsTotal = state.truckStep3.customOptionsPrice;
+  }
+
+  // Manual post
+  const manualPost: PostRow[] = [];
+  let manualPostTotal = 0;
+  let manualPostMontage = 0;
+  if (state.truckStep4.manualPostEnabled) {
+    const avdItem = truckManualPostEquipment.find((e) => e.id === 'avd');
+    const hangerItem = truckManualPostEquipment.find((e) => e.id === 'cable_hanger');
+    if (avdItem && state.truckStep4.avdCount > 0) {
+      const p = avdItem.price * state.truckStep4.avdCount;
+      manualPost.push({ name: `${avdItem.name} x${state.truckStep4.avdCount}`, price: p });
+      manualPostTotal += p;
+    }
+    if (hangerItem && state.truckStep4.hangerCount > 0) {
+      const p = hangerItem.price * state.truckStep4.hangerCount;
+      manualPost.push({ name: `${hangerItem.name} x${state.truckStep4.hangerCount}`, price: p });
+      manualPostTotal += p;
+    }
+    manualPostMontage = truckManualPostMontage;
+    manualPostTotal += manualPostMontage;
+  }
+
+  // Water
+  const waterSys = truckWaterSystems.find((w) => w.id === state.truckStep5.selectedWater);
+  let waterLabel = waterSys?.name ?? '—';
+  let waterPrice = waterSys?.price ?? 0;
+  if (state.truckStep5.selectedWater === 'custom') {
+    waterPrice = state.truckStep5.customWaterPrice || 0;
+    waterLabel = `Своя стоимость: ${waterPrice.toLocaleString('ru-RU')} ₽`;
+  }
+
+  const truckTotal = basePrice + optionsTotal + manualPostTotal + waterPrice;
+
+  const truckBlock: TruckBlock = {
+    typeName: truckType?.name ?? '—',
+    typePrice: basePrice,
+    currency,
+    options,
+    optionsTotal,
+    manualPost,
+    manualPostMontage,
+    manualPostTotal,
+    waterLabel,
+    waterPrice,
+    truckTotal,
+  };
+
+  // Totals — КОМПАК has fixed montage
+  const subtotal = truckTotal;
+  let totals: TotalsBlock;
+  if (isKompak) {
+    const discountPct = state.step10.discount;
+    const discountAmount = subtotal * (discountPct / 100);
+    const afterDiscount = subtotal - discountAmount;
+    const montage = state.step10.montage;
+    const montageAmount = montage !== 'none' ? kompakMontagePrice + (montage === 'full' ? (state.step10.montageExtra || 0) : 0) : 0;
+    const vatEnabled = state.step10.vatEnabled;
+    const vatPct = state.step10.vat;
+    const vatBase = afterDiscount + montageAmount;
+    const vatAmount = vatEnabled ? vatBase * (vatPct / 100) : 0;
+    const total = vatBase + vatAmount;
+    totals = {
+      subtotal,
+      discountPct,
+      discountAmount,
+      afterDiscount,
+      montageType: montage !== 'none' ? `Монтаж (фикс. ${kompakMontagePrice.toLocaleString('ru-RU')} ₽)` : 'Нет',
+      montageFromSubtotal: montage !== 'none' ? kompakMontagePrice : 0,
+      montageExtra: montage === 'full' ? (state.step10.montageExtra || 0) : 0,
+      montageAmount,
+      vatEnabled,
+      vatPct,
+      vatBase,
+      vatAmount,
+      total,
+    };
+  } else {
+    totals = calcSharedTotals(state, subtotal);
+  }
+
+  // Empty wash block for truck (water is in truck block)
+  const wash: WashBlock = {
+    waterLabel: '—',
+    waterPrice: 0,
+    vacuumLabel: 'Нет',
+    vacuumPrice: 0,
+    extras: [],
+    pipelines: { air: 0, water: 0, chem: 0 },
+    washTotal: 0,
+  };
+
+  return {
+    isRobot: false,
+    isTruck: true,
+    header,
+    posts: [],
+    robot: null,
+    truck: truckBlock,
     wash,
     totals,
     deliveryConditions: state.step10.deliveryConditions || '—',
@@ -364,13 +514,15 @@ export function gatherDocData(state: WizardState): DocData {
     manager: mgr?.name ?? (state.step1.manager || '—'),
     client: state.step1.clientSearch || '—',
     vehicleType: state.step1.vehicleType === 'passenger' ? 'Легковой (коммерческий)' : 'Грузовой',
-    objectType: state.step1.objectType === 'self_service' ? 'Мойка самообслуживания' : 'Роботизированная мойка',
+    objectType: state.step1.objectType === 'truck' ? 'Грузовая мойка' : state.step1.objectType === 'self_service' ? 'Мойка самообслуживания' : 'Роботизированная мойка',
     region: state.step10.region || '—',
     currency: state.step10.currency,
   };
 
   const isRobot = state.step1.objectType === 'robotic';
+  const isTruck = state.step1.objectType === 'truck';
   if (isRobot) return gatherRobotDocData(state, header);
+  if (isTruck) return gatherTruckDocData(state, header);
 
   const postsData = state.posts.length > 0 ? state.posts : [];
   const postBlocks = postsData.map((p, i) => calcPostBlock(p, i, state));
@@ -436,9 +588,11 @@ export function gatherDocData(state: WizardState): DocData {
 
   return {
     isRobot: false,
+    isTruck: false,
     header,
     posts: postBlocks,
     robot: null,
+    truck: null,
     wash,
     totals,
     deliveryConditions: state.step10.deliveryConditions || '—',

@@ -33,6 +33,15 @@ const robotSteps: StepInfo[] = [
   { number: 7, name: 'Финализация', description: 'Сводка и условия', scope: 'wash' },
 ];
 
+const truckSteps: StepInfo[] = [
+  { number: 1, name: 'Тип транспорта', description: 'Тип ТС и объекта', scope: 'post' },
+  { number: 2, name: 'Тип мойки', description: 'КОМПАК / SmartBot Track', scope: 'post' },
+  { number: 3, name: 'Опции', description: 'Дополнительные опции', scope: 'post' },
+  { number: 4, name: 'Ручной пост', description: 'АВД и подвесы', scope: 'post' },
+  { number: 5, name: 'Водоочистка', description: 'Циклон / АРОС', scope: 'wash' },
+  { number: 6, name: 'Финализация', description: 'Сводка и условия', scope: 'wash' },
+];
+
 interface StepNavigationProps {
   currentStep: number;
   objectType: ObjectType;
@@ -41,8 +50,8 @@ interface StepNavigationProps {
 
 export function StepNavigation({ currentStep, objectType, onStepClick }: StepNavigationProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const steps = objectType === 'robotic' ? robotSteps : msoSteps;
-  const title = objectType === 'robotic' ? 'Конфигуратор Робот' : 'Конфигуратор МСО';
+  const steps = objectType === 'truck' ? truckSteps : objectType === 'robotic' ? robotSteps : msoSteps;
+  const title = objectType === 'truck' ? 'Конфигуратор Грузовая' : objectType === 'robotic' ? 'Конфигуратор Робот' : 'Конфигуратор МСО';
 
   useEffect(() => {
     if (!scrollRef.current) return;

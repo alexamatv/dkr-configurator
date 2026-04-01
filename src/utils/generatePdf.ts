@@ -94,8 +94,37 @@ export function generatePdf(state: WizardState): void {
     ['Валюта', d.header.currency],
   ]);
 
-  // ─── ROBOT or POSTS ───
-  if (d.isRobot && d.robot) {
+  // ─── TRUCK, ROBOT, or POSTS ───
+  if (d.isTruck && d.truck) {
+    sectionTitle('Грузовая мойка');
+    checkPage(20);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    const currSymbol = d.truck.currency === 'USD' ? '$' : '₽';
+    doc.text(`Тип: ${d.truck.typeName} — ${d.truck.typePrice.toLocaleString('ru-RU')} ${currSymbol}`, marginL + 2, y);
+    y += 5;
+
+    priceTable('Опции', d.truck.options);
+    priceTable('Ручной пост', d.truck.manualPost);
+    if (d.truck.manualPostMontage > 0) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Монтаж ручного поста: ${fmt(d.truck.manualPostMontage)}`, marginL + 2, y);
+      y += 5;
+    }
+    if (d.truck.waterPrice > 0) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`Водоочистка: ${d.truck.waterLabel} — ${fmt(d.truck.waterPrice)}`, marginL + 2, y);
+      y += 5;
+    }
+
+    checkPage(8);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Итого грузовая мойка: ${fmt(d.truck.truckTotal)}`, marginL, y);
+    y += 6;
+  } else if (d.isRobot && d.robot) {
     sectionTitle('Робот');
     checkPage(20);
     doc.setFontSize(9);
@@ -143,7 +172,8 @@ export function generatePdf(state: WizardState): void {
     });
   }
 
-  // ─── WASH ───
+  // ─── WASH (skip for truck) ───
+  if (!d.isTruck) {
   sectionTitle('Оборудование на мойку');
 
   const washRows: PostRow[] = [];
@@ -176,6 +206,7 @@ export function generatePdf(state: WizardState): void {
   doc.setFont('helvetica', 'bold');
   doc.text(`Итого на мойку: ${fmt(d.wash.washTotal)}`, marginL, y);
   y += 8;
+  } // end if !isTruck
 
   // ─── TOTALS ───
   sectionTitle('Итоговый расчёт');

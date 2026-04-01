@@ -14,6 +14,12 @@ import {
   burModels,
   calcPaymentCost,
   boosterPumpPrice,
+  truckWashTypes,
+  kompakOptions,
+  truckManualPostEquipment,
+  truckManualPostMontage,
+  truckWaterSystems,
+  kompakMontagePrice,
 } from '@/data/mockData';
 
 interface CostPanelProps {
@@ -175,6 +181,82 @@ function useRobotCalc(state: WizardState): CalcResult {
     ['Водоподготовка', waterTotal],
     ['Доп. оборудование', equipTotal],
   ]);
+}
+
+function useTruckCalc(state: WizardState): CalcResult {
+  const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
+  const basePrice = truckType?.price ?? 0;
+  const isKompak = state.truckStep2.selectedType === 'kompak';
+
+  // Options
+  let optionsPrice = 0;
+  if (isKompak) {
+    optionsPrice = state.truckStep3.selectedOptions.reduce((sum, optId) => {
+      const opt = kompakOptions.find((o) => o.id === optId);
+      return sum + (opt?.price ?? 0);
+    }, 0);
+  } else {
+    optionsPrice = state.truckStep3.customOptionsPrice || 0;
+  }
+
+  // Manual post
+  let manualPostPrice = 0;
+  if (state.truckStep4.manualPostEnabled) {
+    const avdItem = truckManualPostEquipment.find((e) => e.id === 'avd');
+    const hangerItem = truckManualPostEquipment.find((e) => e.id === 'cable_hanger');
+    manualPostPrice = (avdItem?.price ?? 0) * state.truckStep4.avdCount
+      + (hangerItem?.price ?? 0) * state.truckStep4.hangerCount
+      + truckManualPostMontage;
+  }
+
+  // Water
+  const waterSys = truckWaterSystems.find((w) => w.id === state.truckStep5.selectedWater);
+  const waterPrice = (waterSys?.price ?? 0) + (state.truckStep5.selectedWater === 'custom' ? (state.truckStep5.customWaterPrice || 0) : 0);
+
+  const subtotal = basePrice + optionsPrice + manualPostPrice + waterPrice;
+
+  // For КОМПАК: fixed montage instead of percentage
+  const lines: [string, number][] = [
+    ['Мойка', basePrice],
+    ['Опции', optionsPrice],
+    ['Ручной пост', manualPostPrice],
+    ['Водоочистка', waterPrice],
+  ];
+
+  if (isKompak) {
+    // Override calcTotals montage with fixed kompak montage
+    const discountPct = state.step10.discount;
+    const discountAmount = subtotal * (discountPct / 100);
+    const afterDiscount = subtotal - discountAmount;
+
+    const montage = state.step10.montage;
+    const montageAmount = montage !== 'none' ? kompakMontagePrice + (montage === 'full' ? (state.step10.montageExtra || 0) : 0) : 0;
+
+    const vatEnabled = state.step10.vatEnabled;
+    const vatPct = state.step10.vat;
+    const beforeVat = afterDiscount + montageAmount;
+    const vatAmount = vatEnabled ? beforeVat * (vatPct / 100) : 0;
+    const total = beforeVat + vatAmount;
+
+    return {
+      postCount: 1,
+      unitLabel: 'грузовая мойка',
+      lines,
+      subtotal,
+      discountPct,
+      discountAmount,
+      vatEnabled,
+      vatPct,
+      vatAmount,
+      montage,
+      montagePct: montage !== 'none' ? kompakMontagePrice : 0,
+      montageExtra: montage === 'full' ? (state.step10.montageExtra || 0) : 0,
+      montageAmount,
+      total,
+    };
+  }
+
+  return calcTotals(state, subtotal, 1, 'грузовая мойка', lines);
 }
 
 function calcTotals(
@@ -373,7 +455,8 @@ function CostContent({
 export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isRobot = state.step1.objectType === 'robotic';
-  const calc = isRobot ? useRobotCalc(state) : useMsoCalc(state);
+  const isTruck = state.step1.objectType === 'truck';
+  const calc = isTruck ? useTruckCalc(state) : isRobot ? useRobotCalc(state) : useMsoCalc(state);
 
   return (
     <>
@@ -382,7 +465,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
         <div className="p-4 border-b border-border">
           <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
           <p className="text-xs text-muted mt-1">
-            {isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
+            {isTruck ? '1 грузовая мойка' : isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
           </p>
         </div>
         <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} />
@@ -410,7 +493,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
               <div>
                 <h3 className="text-sm font-bold text-foreground">Расчёт стоимости</h3>
                 <p className="text-xs text-muted mt-0.5">
-                  {isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
+                  {isTruck ? '1 грузовая мойка' : isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
                 </p>
               </div>
               <button

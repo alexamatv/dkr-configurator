@@ -1,5 +1,5 @@
 export type VehicleType = 'passenger' | 'truck';
-export type ObjectType = 'self_service' | 'robotic';
+export type ObjectType = 'self_service' | 'robotic' | 'truck';
 export type ProfileType = 'start' | 'standard' | 'premium';
 
 export interface Accessory {
@@ -221,6 +221,28 @@ export interface RobotStep4Data {
   guidesPrice: number;
 }
 
+// ─── Truck types ───
+
+export interface TruckStep2Data {
+  selectedType: string;
+}
+
+export interface TruckStep3Data {
+  selectedOptions: string[];
+  customOptionsPrice: number;
+}
+
+export interface TruckStep4Data {
+  manualPostEnabled: boolean;
+  avdCount: number;
+  hangerCount: number;
+}
+
+export interface TruckStep5Data {
+  selectedWater: string;
+  customWaterPrice: number;
+}
+
 // ─── Wizard state ───
 
 export interface WizardState {
@@ -241,4 +263,9 @@ export interface WizardState {
   robotStep2: RobotStep2Data;
   robotStep3: RobotStep3Data;
   robotStep4: RobotStep4Data;
+  // Truck branch
+  truckStep2: TruckStep2Data;
+  truckStep3: TruckStep3Data;
+  truckStep4: TruckStep4Data;
+  truckStep5: TruckStep5Data;
 }

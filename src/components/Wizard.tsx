@@ -16,6 +16,10 @@ import type {
   RobotStep2Data,
   RobotStep3Data,
   RobotStep4Data,
+  TruckStep2Data,
+  TruckStep3Data,
+  TruckStep4Data,
+  TruckStep5Data,
 } from '@/types';
 import {
   defaultAccessories,
@@ -40,6 +44,10 @@ import { Step10Final } from './steps/Step10Final';
 import { RobotStep2Model } from './steps/RobotStep2Model';
 import { RobotStep3Bur } from './steps/RobotStep3Bur';
 import { RobotStep4Options } from './steps/RobotStep4Options';
+import { TruckStep2Type } from './steps/TruckStep2Type';
+import { TruckStep3Options } from './steps/TruckStep3Options';
+import { TruckStep4ManualPost } from './steps/TruckStep4ManualPost';
+import { TruckStep5Water } from './steps/TruckStep5Water';
 
 // Функции, которые входят в комплект Премиум (становятся isBase + enabled)
 const premiumIncludedFunctions = [
@@ -139,6 +147,11 @@ function createInitialState(): WizardState {
     robotStep2: { robotModel: '' },
     robotStep3: { burModel: '' },
     robotStep4: { sideBlowerEnabled: false, sideBlowerPrice: 0, guidesEnabled: false, guidesPrice: 0 },
+    // Truck
+    truckStep2: { selectedType: '' },
+    truckStep3: { selectedOptions: [], customOptionsPrice: 0 },
+    truckStep4: { manualPostEnabled: false, avdCount: 0, hangerCount: 0 },
+    truckStep5: { selectedWater: '', customWaterPrice: 0 },
   };
 }
 
@@ -146,7 +159,8 @@ export function Wizard() {
   const [state, setState] = useState<WizardState>(createInitialState);
 
   const isRobot = state.step1.objectType === 'robotic';
-  const maxStep = isRobot ? 7 : 10;
+  const isTruck = state.step1.objectType === 'truck';
+  const maxStep = isTruck ? 6 : isRobot ? 7 : 10;
 
   const setStep = (step: number) => setState((s) => ({ ...s, currentStep: Math.min(step, maxStep) }));
 
@@ -186,6 +200,12 @@ export function Wizard() {
   const updateRobotStep2 = useCallback((data: RobotStep2Data) => setState((s) => ({ ...s, robotStep2: data })), []);
   const updateRobotStep3 = useCallback((data: RobotStep3Data) => setState((s) => ({ ...s, robotStep3: data })), []);
   const updateRobotStep4 = useCallback((data: RobotStep4Data) => setState((s) => ({ ...s, robotStep4: data })), []);
+
+  // Truck updaters
+  const updateTruckStep2 = useCallback((data: TruckStep2Data) => setState((s) => ({ ...s, truckStep2: data })), []);
+  const updateTruckStep3 = useCallback((data: TruckStep3Data) => setState((s) => ({ ...s, truckStep3: data })), []);
+  const updateTruckStep4 = useCallback((data: TruckStep4Data) => setState((s) => ({ ...s, truckStep4: data })), []);
+  const updateTruckStep5 = useCallback((data: TruckStep5Data) => setState((s) => ({ ...s, truckStep5: data })), []);
 
   // ─── MSO post operations ───
   const saveCurrentPostToList = useCallback(() => {
@@ -371,15 +391,43 @@ export function Wizard() {
     }
   };
 
+  const renderTruckStep = () => {
+    switch (state.currentStep) {
+      case 2:
+        return <TruckStep2Type data={state.truckStep2} onChange={updateTruckStep2} />;
+      case 3:
+        return <TruckStep3Options data={state.truckStep3} selectedType={state.truckStep2.selectedType} onChange={updateTruckStep3} />;
+      case 4:
+        return <TruckStep4ManualPost data={state.truckStep4} onChange={updateTruckStep4} />;
+      case 5:
+        return <TruckStep5Water data={state.truckStep5} onChange={updateTruckStep5} />;
+      case 6:
+        return (
+          <Step10Final
+            data={state.step10}
+            posts={[]}
+            wizardState={state}
+            onChange={updateStep10}
+            onEditPost={() => {}}
+            onDuplicatePost={() => {}}
+            onDeletePost={() => {}}
+            title="Шаг 6. Финализация"
+          />
+        );
+      default:
+        return null;
+    }
+  };
+
   const renderStep = () => {
     if (state.currentStep === 1) {
       return <Step1Transport data={state.step1} onChange={updateStep1} />;
     }
-    return isRobot ? renderRobotStep() : renderMsoStep();
+    return isTruck ? renderTruckStep() : isRobot ? renderRobotStep() : renderMsoStep();
   };
 
   const handleNext = () => {
-    if (!isRobot && state.currentStep === 5) {
+    if (!isRobot && !isTruck && state.currentStep === 5) {
       saveCurrentPostToList();
       setStep(6);
     } else {
@@ -387,11 +435,15 @@ export function Wizard() {
     }
   };
 
-  // Water validation: for MSO on step 7, for Robot on step 5
-  const waterStep = isRobot ? 5 : 7;
-  const waterValid = state.currentStep !== waterStep
-    || (state.step7.osmosOption !== '' && state.step7.arasModel !== '')
-    || (state.step7.customWaterPrice > 0);
+  // Water validation: for MSO on step 7, for Robot on step 5, for Truck on step 5
+  const waterValid = (() => {
+    if (isTruck && state.currentStep === 5) {
+      return state.truckStep5.selectedWater !== '';
+    }
+    const waterStep = isRobot ? 5 : 7;
+    if (state.currentStep !== waterStep) return true;
+    return (state.step7.osmosOption !== '' && state.step7.arasModel !== '') || (state.step7.customWaterPrice > 0);
+  })();
   const nextDisabled = state.currentStep === maxStep || !waterValid;
 
   return (
