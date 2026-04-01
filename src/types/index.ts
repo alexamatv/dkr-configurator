@@ -139,6 +139,7 @@ export interface AvdSelection {
 
 export interface Step5Data {
   avdSelections: AvdSelection[];
+  customPumpPrice?: number;
 }
 
 export interface Step7Data {

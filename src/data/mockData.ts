@@ -19,7 +19,7 @@ export const profiles: ProfileConfig[] = [
     basePrice: 250000,
     defaultAvd: 'hawk_15_20',
 
-    defaultTerminal: 'model_9',
+    defaultTerminal: 'model_20',
     defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
     defaultAccessories: [
       'foam_gun',
@@ -30,7 +30,7 @@ export const profiles: ProfileConfig[] = [
       'hose_4m',
     ],
     includedComponents: [
-      'Терминал БУМ №9 (до 5 кнопок)',
+      'Терминал БУМ №20 (до 5 кнопок)',
       'Купюроприемник + монетоприемник + карта лояльности',
       '2 дозатора Ulka',
       '2 поворотные консоли',
@@ -53,7 +53,7 @@ export const profiles: ProfileConfig[] = [
     basePrice: 305000,
     defaultAvd: 'hawk_15_20',
 
-    defaultTerminal: 'model_9',
+    defaultTerminal: 'model_20',
     defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
     defaultAccessories: [
       'foam_gun',
@@ -64,7 +64,7 @@ export const profiles: ProfileConfig[] = [
       'hose_4m',
     ],
     includedComponents: [
-      'Терминал БУМ №9 (до 5 кнопок)',
+      'Терминал БУМ №20 (до 5 кнопок)',
       'Купюроприемник + монетоприемник + карта лояльности',
       '2 дозатора SEKO',
       '2 поворотные консоли',
@@ -89,7 +89,7 @@ export const profiles: ProfileConfig[] = [
     basePrice: 380000,
     defaultAvd: 'hawk_15_20',
 
-    defaultTerminal: 'model_9',
+    defaultTerminal: 'model_20',
     defaultPayments: ['bill_acceptor', 'coin_acceptor', 'loyalty_reader'],
     defaultAccessories: [
       'foam_gun',
@@ -100,7 +100,7 @@ export const profiles: ProfileConfig[] = [
       'hose_4m',
     ],
     includedComponents: [
-      'Терминал БУМ №9 (до 5 кнопок)',
+      'Терминал БУМ №20 (до 5 кнопок)',
       'Купюроприемник + монетоприемник + карта лояльности',
       '2 дозатора SEKO',
       '2 поворотные консоли',
@@ -131,7 +131,7 @@ export const defaultAccessories: Accessory[] = [
 ];
 
 export const bumModels: BumModel[] = [
-  { id: 'model_9', name: 'БУМ №9', description: 'Входит в комплект', maxButtons: 5, price: 0 },
+  { id: 'model_20', name: 'БУМ №20', description: 'Входит в комплект', maxButtons: 5, price: 0 },
   { id: 'model_6', name: 'БУМ №6', description: 'Компактный терминал', maxButtons: 8, price: 45000 },
   { id: 'model_13', name: 'БУМ №13', description: 'Стандартный терминал', maxButtons: 10, price: 55000 },
   { id: 'model_15', name: 'БУМ №15', description: 'Расширенный терминал', maxButtons: 12, price: 65000 },

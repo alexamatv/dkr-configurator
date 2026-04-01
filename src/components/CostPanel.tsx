@@ -64,7 +64,7 @@ function useCostCalc(state: WizardState) {
   const avdUpgrade = state.step5.avdSelections.reduce((sum, sel) => {
     const kit = avdKits.find((a) => a.id === sel.avdId);
     return sum + (kit?.price ?? 0);
-  }, 0);
+  }, 0) + (state.step5.customPumpPrice || 0);
 
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
   const osmosPrice = osmos?.price ?? 0;

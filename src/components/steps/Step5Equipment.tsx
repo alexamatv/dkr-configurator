@@ -14,6 +14,7 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
 
   const updateSelection = (id: string, avdId: string) => {
     onChange({
+      ...data,
       avdSelections: data.avdSelections.map((s) =>
         s.id === id ? { ...s, avdId } : s
       ),
@@ -22,6 +23,7 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
 
   const addPump = () => {
     onChange({
+      ...data,
       avdSelections: [
         ...data.avdSelections,
         { id: String(Date.now()), avdId: '', isDefault: false },
@@ -31,6 +33,7 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
 
   const removePump = (id: string) => {
     onChange({
+      ...data,
       avdSelections: data.avdSelections.filter((s) => s.id !== id),
     });
   };
@@ -93,6 +96,22 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
         >
           + Добавить помпу
         </button>
+      </div>
+
+      <div className="border-t border-border pt-6">
+        <label className="block text-sm font-medium text-muted mb-1">Добавить помпу</label>
+        <p className="text-xs text-muted mb-2">Введите стоимость дополнительной помпы</p>
+        <input
+          type="number"
+          min={0}
+          step={1000}
+          value={data.customPumpPrice || ''}
+          onChange={(e) =>
+            onChange({ ...data, customPumpPrice: parseFloat(e.target.value) || 0 })
+          }
+          placeholder="Сумма, ₽"
+          className="w-full sm:w-64 bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent placeholder:text-muted/50"
+        />
       </div>
     </div>
   );
