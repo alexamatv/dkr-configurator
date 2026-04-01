@@ -69,6 +69,7 @@ export interface PostConfig {
   customDesign: boolean;
   functions: PostFunction[];
   avdSelections: AvdSelection[];
+  customName?: string;
 }
 
 export type OsmosCapacity = '250' | '500' | '1000' | '2000';

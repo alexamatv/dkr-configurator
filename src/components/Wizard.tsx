@@ -222,6 +222,13 @@ export function Wizard() {
     }));
   }, []);
 
+  const handleUpdatePost = useCallback((index: number, post: PostConfig) => {
+    setState((s) => ({
+      ...s,
+      posts: s.posts.map((p, i) => (i === index ? post : p)),
+    }));
+  }, []);
+
   const handleCreateNew = useCallback(() => {
     saveCurrentPostToList();
     const defaults = applyProfileDefaults('standard')!;
@@ -267,6 +274,7 @@ export function Wizard() {
             onCopyCurrent={handleCopyCurrent}
             onCreateNew={handleCreateNew}
             onFinish={handleFinishPosts}
+            onUpdatePost={handleUpdatePost}
           />
         );
       case 7:

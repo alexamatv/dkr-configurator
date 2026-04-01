@@ -1,7 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import type { PostConfig } from '@/types';
-import { profiles, bumModels } from '@/data/mockData';
+import {
+  profiles,
+  bumModels,
+  paymentSystemPrices,
+  avdKits,
+  dosatorOptions,
+} from '@/data/mockData';
 
 interface Props {
   posts: PostConfig[];
@@ -11,6 +18,46 @@ interface Props {
   onCopyCurrent: (count: number) => void;
   onCreateNew: () => void;
   onFinish: () => void;
+  onUpdatePost: (index: number, post: PostConfig) => void;
+}
+
+function fmt(n: number): string {
+  return n.toLocaleString('ru-RU') + ' ₽';
+}
+
+function calcPostPrice(post: PostConfig): number {
+  const profile = profiles.find((p) => p.id === post.profile);
+  const basePrice = profile?.basePrice ?? 0;
+
+  const accessoriesPrice = post.accessories
+    .filter((a) => a.selected)
+    .reduce((sum, a) => sum + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
+
+  const bumUpgrade = bumModels.find((b) => b.id === post.bumModel)?.price ?? 0;
+
+  const paymentUpgrade = post.paymentSystems.reduce(
+    (sum, ps) => sum + (paymentSystemPrices[ps] ?? 0),
+    0
+  );
+
+  const functionsPrice = post.functions
+    .filter((f) => !f.isBase && f.option && f.option !== 'none')
+    .reduce((sum, f) => {
+      let price = 0;
+      if (f.option === 'button_only') price = f.buttonPrice;
+      else if (f.option === 'button_and_kit') price = f.buttonPrice + f.kitPrice;
+      if (f.requiresDosator && f.selectedDosator) {
+        price += dosatorOptions.find((d) => d.id === f.selectedDosator)?.price ?? 0;
+      }
+      return sum + price;
+    }, 0);
+
+  const avdUpgrade = post.avdSelections.reduce((sum, sel) => {
+    const kit = avdKits.find((a) => a.id === sel.avdId);
+    return sum + (kit?.price ?? 0);
+  }, 0);
+
+  return basePrice + accessoriesPrice + bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
 }
 
 export function Step6Posts({
@@ -21,10 +68,37 @@ export function Step6Posts({
   onCopyCurrent,
   onCreateNew,
   onFinish,
+  onUpdatePost,
 }: Props) {
+  const [editingName, setEditingName] = useState<string | null>(null);
+  const [nameValue, setNameValue] = useState('');
+
+  const startEditing = (postId: string, currentName: string) => {
+    setEditingName(postId);
+    setNameValue(currentName);
+  };
+
+  const saveName = (idx: number, post: PostConfig) => {
+    const trimmed = nameValue.trim();
+    onUpdatePost(idx, { ...post, customName: trimmed || undefined });
+    setEditingName(null);
+  };
+
+  const getDefaultName = (idx: number, post: PostConfig) => {
+    const profile = profiles.find((p) => p.id === post.profile);
+    return `Пост #${idx + 1} — ${profile?.name ?? 'Без профиля'}`;
+  };
+
   return (
     <div className="space-y-8">
       <h2 className="text-xl font-bold">Шаг 6. Формирование постов</h2>
+
+      <div className="flex items-center gap-3 px-4 py-3 bg-accent/10 border border-accent/30 rounded-lg">
+        <span className="text-2xl font-bold text-accent">{posts.length}</span>
+        <span className="text-sm font-medium text-muted">
+          {posts.length === 1 ? 'пост в конфигурации' : posts.length >= 2 && posts.length <= 4 ? 'поста в конфигурации' : 'постов в конфигурации'}
+        </span>
+      </div>
 
       {posts.length === 0 ? (
         <div className="text-center py-12 text-muted">
@@ -40,6 +114,10 @@ export function Step6Posts({
             const funcCount = post.functions.filter(
               (f) => f.isBase ? f.enabled : f.option !== 'none'
             ).length;
+            const price = calcPostPrice(post);
+            const displayName = post.customName || getDefaultName(idx, post);
+            const isEditing = editingName === post.id;
+
             return (
               <div
                 key={post.id}
@@ -49,9 +127,32 @@ export function Step6Posts({
                   <div className="w-10 h-10 rounded-full bg-accent/20 text-accent font-bold flex items-center justify-center shrink-0">
                     {idx + 1}
                   </div>
-                  <div className="min-w-0">
-                    <div className="font-medium truncate">
-                      Пост #{idx + 1} — {profile?.name ?? 'Без профиля'}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3">
+                      {isEditing ? (
+                        <input
+                          autoFocus
+                          value={nameValue}
+                          onChange={(e) => setNameValue(e.target.value)}
+                          onBlur={() => saveName(idx, post)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') saveName(idx, post);
+                            if (e.key === 'Escape') setEditingName(null);
+                          }}
+                          className="flex-1 min-w-0 bg-background border border-accent rounded px-2 py-0.5 text-sm font-medium focus:outline-none"
+                        />
+                      ) : (
+                        <div
+                          onClick={() => startEditing(post.id, displayName)}
+                          className="font-medium truncate cursor-pointer hover:text-accent transition-colors"
+                          title="Нажмите, чтобы переименовать"
+                        >
+                          {displayName}
+                        </div>
+                      )}
+                      <span className="shrink-0 text-sm font-bold text-accent">
+                        {fmt(price)}
+                      </span>
                     </div>
                     <div className="text-xs text-muted mt-1">
                       {post.vehicleType === 'passenger' ? 'Легковой' : 'Грузовой'} •{' '}
