@@ -99,7 +99,7 @@ function createInitialState(): WizardState {
     step10: {
       deliveryConditions: '',
       paymentConditions: '',
-      region: 'moscow',
+      region: '',
       currency: 'RUB',
       discount: 0,
       vatEnabled: false,

@@ -241,10 +241,4 @@ export const managers = [
   { id: 'manager_3', name: 'Сидоров С.С.' },
 ];
 
-export const regions = [
-  { id: 'moscow', name: 'Москва' },
-  { id: 'spb', name: 'Санкт-Петербург' },
-  { id: 'regions', name: 'Регионы' },
-];
-
 export const dosatorTypes = ['SEKO', 'Ulka', 'Injector'] as const;

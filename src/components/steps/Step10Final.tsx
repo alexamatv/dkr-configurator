@@ -1,7 +1,7 @@
 'use client';
 
 import type { Step10Data, PostConfig } from '@/types';
-import { profiles, bumModels, regions } from '@/data/mockData';
+import { profiles, bumModels } from '@/data/mockData';
 
 interface Props {
   data: Step10Data;
@@ -72,15 +72,13 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Регион доставки</label>
-          <select
+          <input
+            type="text"
             value={data.region}
-            onChange={(e) => update({ region: e.target.value as Step10Data['region'] })}
+            onChange={(e) => update({ region: e.target.value })}
+            placeholder="Введите регион доставки"
             className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
-          >
-            {regions.map((r) => (
-              <option key={r.id} value={r.id}>{r.name}</option>
-            ))}
-          </select>
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Валюта</label>

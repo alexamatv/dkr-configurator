@@ -107,7 +107,6 @@ export interface WashExtra {
 
 export type MontageType = 'none' | 'commissioning' | 'full';
 export type Language = 'ru' | 'en';
-export type Region = 'moscow' | 'spb' | 'regions';
 export type Currency = 'RUB' | 'USD' | 'EUR';
 
 export interface Step1Data {
@@ -166,7 +165,7 @@ export interface Step9Data {
 export interface Step10Data {
   deliveryConditions: string;
   paymentConditions: string;
-  region: Region;
+  region: string;
   currency: Currency;
   discount: number;
   vatEnabled: boolean;
