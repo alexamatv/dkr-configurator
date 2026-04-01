@@ -50,7 +50,7 @@ export function generatePdf(state: WizardState): void {
   function checkPage(needed: number) {
     if (y + needed > botY) {
       doc.addPage();
-      y = 18;
+      y = 30;
     }
   }
 
@@ -60,7 +60,7 @@ export function generatePdf(state: WizardState): void {
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
       // Logo image left
-      doc.addImage('data:image/jpeg;base64,' + DKR_LOGO_BASE64, 'JPEG', 14, 10, 45, 15);
+      doc.addImage('data:image/png;base64,' + DKR_LOGO_BASE64, 'PNG', 14, 10, 45, 10);
       // Date right
       doc.setFont(F, 'normal');
       doc.setFontSize(9);
@@ -105,7 +105,7 @@ export function generatePdf(state: WizardState): void {
   function infoTable(rows: [string, string][]) {
     autoTable(doc, {
       startY: y,
-      margin: { left: mL, right: mR },
+      margin: { top: 30, left: mL, right: mR },
       theme: 'plain',
       styles: {
         font: F,
@@ -141,7 +141,7 @@ export function generatePdf(state: WizardState): void {
 
     autoTable(doc, {
       startY: y,
-      margin: { left: mL, right: mR },
+      margin: { top: 30, left: mL, right: mR },
       theme: 'plain',
       styles: {
         font: F,
@@ -179,7 +179,7 @@ export function generatePdf(state: WizardState): void {
         data.cell.styles.lineWidth = { bottom: 0.3, top: 0, left: 0, right: 0 } as unknown as number;
       },
     });
-    y = getLastY(doc) + 3;
+    y = getLastY(doc) + 10;
   }
 
   // ─── Subtotal line with thin line above ───
