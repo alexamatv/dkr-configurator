@@ -2,161 +2,197 @@ import ExcelJS from 'exceljs';
 import type { WizardState } from '@/types';
 import { gatherDocData, makeFileName, type PostRow } from './gatherData';
 
-// ─── Palette ───
+// ─── Palette (ARGB without alpha prefix — ExcelJS adds FF) ───
 const DARK = '1E293B';
 const BLUE = '0EA5E9';
-const GRAY = '64748B';
-const LINE_GRAY = 'E2E8F0';
-const SUBTLE_BG = 'F8FAFC';
+const LABEL_GRAY = '6B7280';
+const TEXT_DARK = '111827';
+const SUBHEAD_GRAY = '374151';
+const LINE_LIGHT = 'F3F4F6';
+const LINE_MID = 'D1D5DB';
+const FOOTER_GRAY = '9CA3AF';
+const FONT = 'Arial';
 
 export async function generateXlsx(state: WizardState): Promise<void> {
   const d = gatherDocData(state);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('КП', {
-    properties: { defaultColWidth: 18 },
+    properties: { defaultColWidth: 10 },
+    pageSetup: {
+      orientation: 'portrait',
+      margins: { left: 0.79, right: 0.79, top: 0.79, bottom: 0.79, header: 0.3, footer: 0.3 },
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0,
+    },
   });
 
   // Column widths
-  ws.getColumn(1).width = 45;
-  ws.getColumn(2).width = 50;
+  ws.getColumn(1).width = 8;
+  ws.getColumn(2).width = 55;
   ws.getColumn(3).width = 18;
 
   // ─── Style presets ───
-  const titleFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: 'Calibri', color: { argb: DARK } };
-  const subtitleFont: Partial<ExcelJS.Font> = { bold: true, size: 12, name: 'Calibri', color: { argb: DARK } };
-  const sectionFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: 'Calibri', color: { argb: DARK } };
-  const boldFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: DARK } };
-  const normalFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri', color: { argb: DARK } };
-  const labelFont: Partial<ExcelJS.Font> = { size: 10, name: 'Calibri', color: { argb: GRAY } };
-  const blueFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: BLUE } };
-  const totalFont: Partial<ExcelJS.Font> = { bold: true, size: 13, name: 'Calibri', color: { argb: BLUE } };
-  const footerFont: Partial<ExcelJS.Font> = { italic: true, size: 8, name: 'Calibri', color: { argb: GRAY } };
-  const pctFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: 'Calibri', color: { argb: BLUE } };
+  const dkrFont: Partial<ExcelJS.Font> = { bold: true, size: 16, name: FONT, color: { argb: BLUE } };
+  const kpFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: FONT, color: { argb: SUBHEAD_GRAY } };
+  const sectionFont: Partial<ExcelJS.Font> = { bold: true, size: 12, name: FONT, color: { argb: DARK } };
+  const labelFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: LABEL_GRAY } };
+  const valueFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: TEXT_DARK } };
+  const subheadFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: SUBHEAD_GRAY } };
+  const dataFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: SUBHEAD_GRAY } };
+  const priceFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: TEXT_DARK } };
+  const subtotalFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: FONT, color: { argb: BLUE } };
+  const grandLabelFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: FONT, color: { argb: DARK } };
+  const grandValueFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: FONT, color: { argb: BLUE } };
+  const pctFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: BLUE } };
+  const footerFont: Partial<ExcelJS.Font> = { italic: true, size: 8, name: FONT, color: { argb: FOOTER_GRAY } };
   const priceFormat = '#,##0" ₽"';
 
-  const thinBlueBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: BLUE } };
-  const thinGrayBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: LINE_GRAY } };
-  const subtleFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: SUBTLE_BG } };
+  const blueBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: BLUE } };
+  const midBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: LINE_MID } };
+  const lightBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: LINE_LIGHT } };
+  const darkMedBorder: Partial<ExcelJS.Border> = { style: 'medium', color: { argb: DARK } };
 
   let rowNum = 0;
 
   // ─── Row helpers ───
 
-  function addRow(a?: string | number | null, b?: string | number | null, c?: string | number | null): ExcelJS.Row {
+  function nextRow(): ExcelJS.Row {
     rowNum++;
-    const row = ws.getRow(rowNum);
-    row.getCell(1).value = a ?? null;
-    row.getCell(2).value = b ?? null;
-    row.getCell(3).value = c ?? null;
-    row.font = normalFont;
-    return row;
+    return ws.getRow(rowNum);
   }
 
   function addSpacer() {
-    addRow();
+    nextRow();
   }
 
-  function addSectionRow(text: string): ExcelJS.Row {
+  /** Section header: merged A:C, bold 12pt, blue bottom border */
+  function addSectionRow(text: string) {
     addSpacer();
-    const row = addRow(text);
+    const row = nextRow();
     ws.mergeCells(rowNum, 1, rowNum, 3);
+    row.getCell(1).value = text;
     row.getCell(1).font = sectionFont;
-    row.getCell(1).border = { bottom: thinBlueBorder };
+    row.getCell(1).border = { bottom: blueBorder };
     row.height = 22;
-    return row;
   }
 
+  /** Info row: label in A (gray), value in B (bold dark), no borders */
   function addInfoRow(label: string, value: string | number) {
-    const row = addRow(label, value);
+    const row = nextRow();
+    row.getCell(1).value = label;
     row.getCell(1).font = labelFont;
-    row.getCell(2).font = boldFont;
-    row.getCell(1).border = { bottom: thinGrayBorder };
-    row.getCell(2).border = { bottom: thinGrayBorder };
-    row.getCell(3).border = { bottom: thinGrayBorder };
-    return row;
+    row.getCell(2).value = value;
+    row.getCell(2).font = valueFont;
   }
 
-  /** Writes a price number into C column; returns the row number for formula tracking */
-  function addPriceRow(label: string, name: string, price: number, stripe = false): number {
-    const row = addRow(label, name, price);
-    row.getCell(1).font = labelFont;
-    row.getCell(2).font = normalFont;
-    row.getCell(3).font = normalFont;
+  /** Price data row: name in B, price in C. Very light bottom border. Returns row number. */
+  function addPriceRow(name: string, price: number): number {
+    const row = nextRow();
+    row.getCell(2).value = name;
+    row.getCell(2).font = dataFont;
+    row.getCell(3).value = price;
+    row.getCell(3).font = priceFont;
     row.getCell(3).numFmt = priceFormat;
-    row.getCell(1).border = { bottom: thinGrayBorder };
-    row.getCell(2).border = { bottom: thinGrayBorder };
-    row.getCell(3).border = { bottom: thinGrayBorder };
-    if (stripe) {
-      row.getCell(1).fill = subtleFill;
-      row.getCell(2).fill = subtleFill;
-      row.getCell(3).fill = subtleFill;
-    }
+    row.getCell(3).alignment = { horizontal: 'right' };
+    row.getCell(1).border = { bottom: lightBorder };
+    row.getCell(2).border = { bottom: lightBorder };
+    row.getCell(3).border = { bottom: lightBorder };
     return rowNum;
   }
 
-  /** Writes a SUM formula into C column referencing tracked rows; returns row number */
-  function addFormulaSubtotal(label: string, trackedRows: number[], fallback: number): number {
-    rowNum++;
-    const row = ws.getRow(rowNum);
+  /** Labeled price row for totals section: label in A (gray), price in C. Returns row number. */
+  function addLabeledPriceRow(label: string, name: string, price: number): number {
+    const row = nextRow();
     row.getCell(1).value = label;
-    row.getCell(1).font = blueFont;
-    row.getCell(2).value = null;
+    row.getCell(1).font = labelFont;
+    if (name) {
+      row.getCell(2).value = name;
+      row.getCell(2).font = dataFont;
+    }
+    row.getCell(3).value = price;
+    row.getCell(3).font = priceFont;
+    row.getCell(3).numFmt = priceFormat;
+    row.getCell(3).alignment = { horizontal: 'right' };
+    row.getCell(1).border = { bottom: lightBorder };
+    row.getCell(2).border = { bottom: lightBorder };
+    row.getCell(3).border = { bottom: lightBorder };
+    return rowNum;
+  }
+
+  /** Subtotal row: merged A:B blue text, C blue value with top border. Returns row number. */
+  function addFormulaSubtotal(label: string, trackedRows: number[], fallback: number): number {
+    const row = nextRow();
+    ws.mergeCells(rowNum, 1, rowNum, 2);
+    row.getCell(1).value = label;
+    row.getCell(1).font = subtotalFont;
+    row.getCell(1).border = { top: midBorder };
     if (trackedRows.length > 0) {
       row.getCell(3).value = { formula: sumOf(trackedRows), result: fallback };
     } else {
       row.getCell(3).value = 0;
     }
-    row.getCell(3).font = blueFont;
+    row.getCell(3).font = subtotalFont;
     row.getCell(3).numFmt = priceFormat;
+    row.getCell(3).alignment = { horizontal: 'right' };
+    row.getCell(3).border = { top: midBorder };
     return rowNum;
   }
 
-  /** Writes an arbitrary formula into C column; returns row number */
-  function addFormulaRow(label: string, formula: string, fallback: number, font: Partial<ExcelJS.Font> = normalFont): number {
-    const row = addRow(label, null, null);
+  /** Formula row for totals: label in A, formula result in C. Returns row number. */
+  function addFormulaRow(label: string, formula: string, fallback: number, font: Partial<ExcelJS.Font> = priceFont): number {
+    const row = nextRow();
+    row.getCell(1).value = label;
     row.getCell(1).font = labelFont;
     row.getCell(3).value = { formula, result: fallback };
     row.getCell(3).font = font;
     row.getCell(3).numFmt = priceFormat;
-    row.getCell(1).border = { bottom: thinGrayBorder };
-    row.getCell(2).border = { bottom: thinGrayBorder };
-    row.getCell(3).border = { bottom: thinGrayBorder };
+    row.getCell(3).alignment = { horizontal: 'right' };
+    row.getCell(1).border = { bottom: lightBorder };
+    row.getCell(2).border = { bottom: lightBorder };
+    row.getCell(3).border = { bottom: lightBorder };
     return rowNum;
   }
 
-  /** Adds editable % value in B column; C column left empty for formula set after. Returns row number. */
+  /** Editable % in B, C left for formula. Returns row number. */
   function addPctRow(label: string, pctValue: number): number {
-    const row = addRow(label, pctValue, null);
+    const row = nextRow();
+    row.getCell(1).value = label;
     row.getCell(1).font = labelFont;
+    row.getCell(2).value = pctValue;
     row.getCell(2).font = pctFont;
     row.getCell(2).numFmt = '#0"%"';
-    row.getCell(3).font = normalFont;
+    row.getCell(3).font = priceFont;
     row.getCell(3).numFmt = priceFormat;
-    row.getCell(1).border = { bottom: thinGrayBorder };
-    row.getCell(2).border = { bottom: thinGrayBorder };
-    row.getCell(3).border = { bottom: thinGrayBorder };
+    row.getCell(3).alignment = { horizontal: 'right' };
+    row.getCell(1).border = { bottom: lightBorder };
+    row.getCell(2).border = { bottom: lightBorder };
+    row.getCell(3).border = { bottom: lightBorder };
     return rowNum;
   }
 
   /** Sets formula on C column of a given row */
-  function setFormula(row: number, formula: string, fallback: number) {
-    ws.getRow(row).getCell(3).value = { formula, result: fallback };
+  function setFormula(r: number, formula: string, fallback: number) {
+    ws.getRow(r).getCell(3).value = { formula, result: fallback };
   }
 
-  /** Adds a block of price items with heading; returns row numbers of all price cells */
+  /** Sub-header row for a price block: B = heading bold, C = "Цена" right. */
+  function addBlockHeader(heading: string) {
+    const row = nextRow();
+    row.getCell(2).value = heading;
+    row.getCell(2).font = subheadFont;
+    row.getCell(3).value = 'Цена';
+    row.getCell(3).font = subheadFont;
+    row.getCell(3).alignment = { horizontal: 'right' };
+    row.getCell(2).border = { bottom: midBorder };
+    row.getCell(3).border = { bottom: midBorder };
+  }
+
+  /** Price block: sub-header + item rows. Returns tracked row numbers. */
   function addPriceBlock(heading: string, items: PostRow[]): number[] {
     if (items.length === 0) return [];
-    const headRow = addRow('', heading, 'Цена');
-    headRow.getCell(2).font = { ...boldFont, size: 9 };
-    headRow.getCell(3).font = { ...boldFont, size: 9 };
-    headRow.getCell(2).border = { bottom: thinBlueBorder };
-    headRow.getCell(3).border = { bottom: thinBlueBorder };
-    headRow.getCell(3).alignment = { horizontal: 'right' };
-    const rows: number[] = [];
-    items.forEach((r, i) => {
-      rows.push(addPriceRow('', r.name, r.price, i % 2 === 1));
-    });
-    return rows;
+    addBlockHeader(heading);
+    return items.map((r) => addPriceRow(r.name, r.price));
   }
 
   // ─── Formula helpers ───
@@ -167,13 +203,8 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     return 'SUM(' + rows.map((r) => `C${r}`).join(',') + ')';
   }
 
-  function cellC(row: number): string {
-    return `C${row}`;
-  }
-
-  function cellB(row: number): string {
-    return `B${row}`;
-  }
+  function cellC(r: number): string { return `C${r}`; }
+  function cellB(r: number): string { return `B${r}`; }
 
   // ═══════════════════════════════════════
   // DOCUMENT
@@ -182,20 +213,26 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   // Row 1: empty
   addSpacer();
 
-  // Row 2: DKR GROUP + КП title
-  const titleRow = addRow('DKR GROUP', '', 'Коммерческое предложение');
-  titleRow.getCell(1).font = titleFont;
-  titleRow.getCell(3).font = subtitleFont;
-  titleRow.getCell(3).alignment = { horizontal: 'right' };
-  titleRow.height = 24;
+  // Row 2: header
+  const headerRow = nextRow();
+  ws.mergeCells(rowNum, 1, rowNum, 2);
+  headerRow.getCell(1).value = 'DKR GROUP';
+  headerRow.getCell(1).font = dkrFont;
+  headerRow.getCell(3).value = 'Коммерческое предложение';
+  headerRow.getCell(3).font = kpFont;
+  headerRow.getCell(3).alignment = { horizontal: 'right' };
+  headerRow.height = 26;
 
-  // Row 3: thin blue line under header
-  const lineRow = addRow();
-  lineRow.getCell(1).border = { bottom: thinBlueBorder };
-  lineRow.getCell(2).border = { bottom: thinBlueBorder };
-  lineRow.getCell(3).border = { bottom: thinBlueBorder };
+  // Row 3: thin blue line
+  const lineRow = nextRow();
+  lineRow.getCell(1).border = { bottom: blueBorder };
+  lineRow.getCell(2).border = { bottom: blueBorder };
+  lineRow.getCell(3).border = { bottom: blueBorder };
 
+  // Row 4: spacer
   addSpacer();
+
+  // Rows 5-10: info (no borders, no fill)
   addInfoRow('Дата', d.header.date);
   addInfoRow('Менеджер', d.header.manager);
   addInfoRow('Клиент', d.header.client);
@@ -203,91 +240,88 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   addInfoRow('Тип объекта', d.header.objectType);
   addInfoRow('Регион доставки', d.header.region);
 
-  // ─── Tracked subtotal rows for the final equipment formula ───
+  // ─── Tracked subtotal rows for equipment formula ───
   const equipmentSubtotalRows: number[] = [];
 
   // ─── TRUCK, ROBOT, or POSTS ───
   if (d.isTruck && d.truck) {
     addSectionRow('Грузовая мойка');
-    const truckPriceRows: number[] = [];
+    const priceRows: number[] = [];
 
-    truckPriceRows.push(addPriceRow('Тип мойки', d.truck.typeName, d.truck.typePrice));
-    truckPriceRows.push(...addPriceBlock('Опции', d.truck.options));
+    priceRows.push(addPriceRow(d.truck.typeName, d.truck.typePrice));
+    priceRows.push(...addPriceBlock('Опции', d.truck.options));
 
     if (d.truck.manualPost.length > 0) {
-      truckPriceRows.push(...addPriceBlock('Ручной пост', d.truck.manualPost));
+      priceRows.push(...addPriceBlock('Ручной пост', d.truck.manualPost));
       if (d.truck.manualPostMontage > 0) {
-        truckPriceRows.push(addPriceRow('', 'Монтаж ручного поста', d.truck.manualPostMontage));
+        priceRows.push(addPriceRow('Монтаж ручного поста', d.truck.manualPostMontage));
       }
     }
     if (d.truck.waterPrice > 0) {
-      truckPriceRows.push(addPriceRow('Водоочистка', d.truck.waterLabel, d.truck.waterPrice));
+      priceRows.push(addPriceRow(`Водоочистка: ${d.truck.waterLabel}`, d.truck.waterPrice));
     }
 
-    const truckSub = addFormulaSubtotal('Итого грузовая мойка', truckPriceRows, d.truck.truckTotal);
-    equipmentSubtotalRows.push(truckSub);
+    equipmentSubtotalRows.push(addFormulaSubtotal('Итого грузовая мойка', priceRows, d.truck.truckTotal));
 
   } else if (d.isRobot && d.robot) {
     addSectionRow('Робот');
-    const robotPriceRows: number[] = [];
+    const priceRows: number[] = [];
 
-    robotPriceRows.push(addPriceRow('Модель', d.robot.modelName, d.robot.modelPrice));
+    priceRows.push(addPriceRow(d.robot.modelName, d.robot.modelPrice));
     if (d.robot.includedComponents.length > 0) {
       addInfoRow('В комплекте', d.robot.includedComponents.join(', '));
     }
-    robotPriceRows.push(addPriceRow('БУР', d.robot.burName, d.robot.burPrice));
-    robotPriceRows.push(...addPriceBlock('Опции робота', d.robot.options));
+    priceRows.push(addPriceRow(`БУР: ${d.robot.burName}`, d.robot.burPrice));
+    priceRows.push(...addPriceBlock('Опции робота', d.robot.options));
 
-    const robotSub = addFormulaSubtotal('Итого робот', robotPriceRows, d.robot.robotTotal);
-    equipmentSubtotalRows.push(robotSub);
+    equipmentSubtotalRows.push(addFormulaSubtotal('Итого робот', priceRows, d.robot.robotTotal));
 
   } else {
     d.posts.forEach((post) => {
       addSectionRow(post.title);
       addInfoRow('Профиль', post.profileName);
-      const postPriceRows: number[] = [];
+      const priceRows: number[] = [];
 
-      postPriceRows.push(addPriceRow('Базовая комплектация', '', post.basePrice));
+      priceRows.push(addPriceRow('Базовая комплектация', post.basePrice));
 
       if (post.bumPrice > 0) {
-        postPriceRows.push(addPriceRow('Терминал (доплата)', post.bumName, post.bumPrice));
+        priceRows.push(addPriceRow(`Терминал: ${post.bumName} (доплата)`, post.bumPrice));
       } else {
-        postPriceRows.push(addPriceRow('Терминал', post.bumName + ' (в комплекте)', 0));
+        priceRows.push(addPriceRow(`Терминал: ${post.bumName} (в комплекте)`, 0));
       }
 
-      postPriceRows.push(...addPriceBlock('Системы оплаты', post.payments));
-      postPriceRows.push(...addPriceBlock('Аксессуары', post.accessories));
+      priceRows.push(...addPriceBlock('Системы оплаты', post.payments));
+      priceRows.push(...addPriceBlock('Аксессуары', post.accessories));
 
       if (post.baseFunctions.length > 0) {
-        postPriceRows.push(...addPriceBlock('Базовые функции (в комплекте)', post.baseFunctions));
+        priceRows.push(...addPriceBlock('Базовые функции (в комплекте)', post.baseFunctions));
       }
-      postPriceRows.push(...addPriceBlock('Функции', post.functions));
-      postPriceRows.push(...addPriceBlock('Помпы (АВД)', post.pumps));
+      priceRows.push(...addPriceBlock('Функции', post.functions));
+      priceRows.push(...addPriceBlock('Помпы (АВД)', post.pumps));
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
-      postPriceRows.push(...addPriceBlock('Доп. оборудование к посту', extrasWithPump));
+      priceRows.push(...addPriceBlock('Доп. оборудование к посту', extrasWithPump));
 
-      const postSub = addFormulaSubtotal('Итого по посту', postPriceRows, post.postTotal);
-      equipmentSubtotalRows.push(postSub);
+      equipmentSubtotalRows.push(addFormulaSubtotal('Итого по посту', priceRows, post.postTotal));
     });
   }
 
   // ─── WASH BLOCK ───
   if (!d.isTruck) {
     addSectionRow('Оборудование на мойку');
-    const washPriceRows: number[] = [];
+    const washRows: number[] = [];
 
     if (d.wash.waterRows.length > 0) {
-      washPriceRows.push(...addPriceBlock('Водоподготовка', d.wash.waterRows));
+      washRows.push(...addPriceBlock('Водоподготовка', d.wash.waterRows));
     }
 
     if (d.wash.vacuumPrice > 0) {
-      washPriceRows.push(addPriceRow('Пылесосы', d.wash.vacuumLabel, d.wash.vacuumPrice));
+      washRows.push(addPriceRow(`Пылесосы: ${d.wash.vacuumLabel}`, d.wash.vacuumPrice));
     }
 
     if (d.wash.extras.length > 0) {
-      washPriceRows.push(...addPriceBlock('Другое оборудование', d.wash.extras));
+      washRows.push(...addPriceBlock('Другое оборудование', d.wash.extras));
     }
 
     if (d.wash.pipelines.air > 0 || d.wash.pipelines.water > 0 || d.wash.pipelines.chem > 0) {
@@ -295,11 +329,10 @@ export async function generateXlsx(state: WizardState): Promise<void> {
       if (d.wash.pipelines.air > 0) pipRows.push({ name: 'Воздушные', price: d.wash.pipelines.air });
       if (d.wash.pipelines.water > 0) pipRows.push({ name: 'Водные', price: d.wash.pipelines.water });
       if (d.wash.pipelines.chem > 0) pipRows.push({ name: 'Химические', price: d.wash.pipelines.chem });
-      washPriceRows.push(...addPriceBlock('Магистрали', pipRows));
+      washRows.push(...addPriceBlock('Магистрали', pipRows));
     }
 
-    const washSub = addFormulaSubtotal('Итого на мойку', washPriceRows, d.wash.washTotal);
-    equipmentSubtotalRows.push(washSub);
+    equipmentSubtotalRows.push(addFormulaSubtotal('Итого на мойку', washRows, d.wash.washTotal));
   }
 
   // ═══════════════════════════════════════
@@ -307,14 +340,14 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   // ═══════════════════════════════════════
   addSectionRow('Итоговый расчёт');
 
-  // Equipment subtotal = SUM of all section subtotals
+  // Equipment subtotal = SUM of section subtotals
   const equipRow = addFormulaSubtotal('Стоимость оборудования', equipmentSubtotalRows, d.totals.subtotal);
 
   // Discount: editable % in B, formula in C
   const discountRow = addPctRow('Скидка, %', d.totals.discountPct);
   setFormula(discountRow, `${cellC(equipRow)}*${cellB(discountRow)}/100`, d.totals.discountAmount);
   if (d.totals.discountWarning) {
-    ws.getRow(discountRow).getCell(2).note = '⚠ Скидка больше 3% — требуется согласование';
+    ws.getRow(discountRow).getCell(2).note = '\u26A0 Скидка больше 3% — требуется согласование';
   }
 
   // After discount = equipment - discount
@@ -322,32 +355,29 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     'После скидки',
     `${cellC(equipRow)}-${cellC(discountRow)}`,
     d.totals.afterDiscount,
-    boldFont,
+    valueFont,
   );
 
   // Montage: editable % in B (or fixed for КОМПАК), formula in C
   const isKompakTruck = d.isTruck && d.truck && d.totals.montageType.includes('фикс');
   let montageRow: number;
   if (isKompakTruck) {
-    // КОМПАК: fixed montage, editable as plain number
-    montageRow = addPriceRow(`Монтаж (${d.totals.montageType})`, '', d.totals.montageFromSubtotal);
+    montageRow = addLabeledPriceRow(`Монтаж (${d.totals.montageType})`, '', d.totals.montageFromSubtotal);
   } else {
     const montagePct = d.totals.montageAmount > 0
       ? (d.totals.montageType.includes('10') ? 10 : d.totals.montageType.includes('5') ? 5 : 0)
       : 0;
     montageRow = addPctRow('Монтаж, %', montagePct);
-    // Montage calculated from subtotal BEFORE discount
     setFormula(montageRow, `${cellC(equipRow)}*${cellB(montageRow)}/100`, d.totals.montageFromSubtotal);
   }
 
   // Montage extra: editable plain number
   let montageExtraRow: number | null = null;
   if (d.totals.montageExtra > 0 || d.totals.montageAmount > 0) {
-    montageExtraRow = addPriceRow('Доп. работы по монтажу', '', d.totals.montageExtra);
+    montageExtraRow = addLabeledPriceRow('Доп. работы по монтажу', '', d.totals.montageExtra);
   }
 
   // VAT: editable % in B, formula in C
-  // НДС = (После скидки + Монтаж + Доп. работы) × %
   const vatPct = d.totals.vatEnabled ? d.totals.vatPct : 0;
   const vatBaseFormula = montageExtraRow
     ? `(${cellC(afterDiscRow)}+${cellC(montageRow)}+${cellC(montageExtraRow)})`
@@ -361,27 +391,27 @@ export async function generateXlsx(state: WizardState): Promise<void> {
 
   addSpacer();
 
-  // ─── ИТОГО line ───
-  const totalLineRow = addRow();
-  totalLineRow.getCell(1).border = { bottom: { style: 'medium', color: { argb: DARK } } };
-  totalLineRow.getCell(2).border = { bottom: { style: 'medium', color: { argb: DARK } } };
-  totalLineRow.getCell(3).border = { bottom: { style: 'medium', color: { argb: DARK } } };
+  // ─── ИТОГО: medium dark border top, text, medium dark border bottom ───
+  const topBorderRow = nextRow();
+  topBorderRow.getCell(1).border = { bottom: darkMedBorder };
+  topBorderRow.getCell(2).border = { bottom: darkMedBorder };
+  topBorderRow.getCell(3).border = { bottom: darkMedBorder };
 
-  // ИТОГО = После скидки + Монтаж + Доп. работы + НДС
   const grandParts = [cellC(afterDiscRow), cellC(montageRow), cellC(vatRow)];
   if (montageExtraRow) grandParts.splice(2, 0, cellC(montageExtraRow));
   const grandFormula = grandParts.join('+');
 
-  rowNum++;
-  const grandRow = ws.getRow(rowNum);
+  const grandRow = nextRow();
   ws.mergeCells(rowNum, 1, rowNum, 2);
   grandRow.getCell(1).value = 'ИТОГО';
-  grandRow.getCell(1).font = totalFont;
+  grandRow.getCell(1).font = grandLabelFont;
   grandRow.getCell(3).value = { formula: grandFormula, result: d.totals.total };
-  grandRow.getCell(3).font = totalFont;
+  grandRow.getCell(3).font = grandValueFont;
   grandRow.getCell(3).numFmt = priceFormat;
   grandRow.getCell(3).alignment = { horizontal: 'right' };
   grandRow.height = 28;
+  grandRow.getCell(1).border = { bottom: darkMedBorder };
+  grandRow.getCell(3).border = { bottom: darkMedBorder };
 
   // ─── CONDITIONS ───
   addSectionRow('Условия');
@@ -390,10 +420,15 @@ export async function generateXlsx(state: WizardState): Promise<void> {
 
   // ─── FOOTER ───
   addSpacer();
-  const footerRow = addRow('DKR Group  |  dkrgroup.ru  |  Конфиденциально');
+  addSpacer();
+  const footerRow = nextRow();
   ws.mergeCells(rowNum, 1, rowNum, 3);
+  footerRow.getCell(1).value = 'DKR Group \u00B7 dkrgroup.ru \u00B7 Конфиденциально';
   footerRow.getCell(1).font = footerFont;
   footerRow.getCell(1).alignment = { horizontal: 'center' };
+
+  // Print area
+  ws.pageSetup.printArea = `A1:C${rowNum}`;
 
   // Write file
   const buffer = await wb.xlsx.writeBuffer();

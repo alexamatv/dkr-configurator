@@ -6,12 +6,13 @@ import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
 
 // ─── Brand colors (RGB tuples) ───
-const BLUE: [number, number, number] = [14, 165, 233];
-const DARK: [number, number, number] = [30, 41, 59];
-const TEXT: [number, number, number] = [17, 24, 39];
-const MUTED: [number, number, number] = [100, 116, 139];
-const LINE: [number, number, number] = [229, 231, 235]; // #E5E7EB
-const STRIPE: [number, number, number] = [249, 250, 251]; // #F9FAFB
+const BLUE: [number, number, number] = [14, 165, 233];     // #0EA5E9
+const DARK: [number, number, number] = [30, 41, 59];       // #1E293B
+const TEXT: [number, number, number] = [17, 24, 39];        // #111827
+const MUTED: [number, number, number] = [107, 114, 128];   // #6B7280
+const FOOTER_GRAY: [number, number, number] = [156, 163, 175]; // #9CA3AF
+const LINE: [number, number, number] = [229, 231, 235];    // #E5E7EB
+const STRIPE: [number, number, number] = [249, 250, 251];  // #F9FAFB
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' \u20BD';
@@ -38,31 +39,15 @@ export function generatePdf(state: WizardState): void {
   const mL = 20;
   const mR = 20;
   const cW = pageW - mL - mR;
-  const topY = 15;
-  const botY = pageH - 15;
-  let y = topY;
+  const botY = pageH - 18;
+  let y = 25;
 
   // ─── Utility: page break ───
   function checkPage(needed: number) {
-    if (y + needed > botY - 8) {
+    if (y + needed > botY) {
       doc.addPage();
-      y = topY + 14; // leave room for header on new pages
+      y = 20;
     }
-  }
-
-  // ─── Draw logo (drop circle + text) ───
-  function drawLogo(x: number, yPos: number) {
-    // Blue drop/circle
-    doc.setFillColor(...BLUE);
-    doc.circle(x + 3, yPos - 2, 3, 'F');
-    // Small white highlight
-    doc.setFillColor(255, 255, 255);
-    doc.circle(x + 2.2, yPos - 3, 0.8, 'F');
-    // Text
-    doc.setFont(F, 'bold');
-    doc.setFontSize(11);
-    doc.setTextColor(...DARK);
-    doc.text('DKR GROUP', x + 8, yPos);
   }
 
   // ─── Header/footer on all pages (called last) ───
@@ -70,48 +55,53 @@ export function generatePdf(state: WizardState): void {
     const pages = doc.getNumberOfPages();
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      // Logo top-right
-      drawLogo(pageW - mR - 38, 10);
-      // Footer line
-      doc.setDrawColor(...LINE);
-      doc.setLineWidth(0.3);
-      doc.line(mL, pageH - 12, pageW - mR, pageH - 12);
-      // Footer text
+      // "DKR GROUP" top-right — plain text, no icons
+      doc.setFont(F, 'bold');
+      doc.setFontSize(16);
+      doc.setTextColor(...BLUE);
+      doc.text('DKR GROUP', pageW - mR, 12, { align: 'right' });
+      // Footer
       doc.setFont(F, 'normal');
       doc.setFontSize(7);
-      doc.setTextColor(...MUTED);
-      doc.text('DKR Group  |  dkrgroup.ru', mL, pageH - 8);
-      doc.text(`${i} / ${pages}`, pageW - mR, pageH - 8, { align: 'right' });
+      doc.setTextColor(...FOOTER_GRAY);
+      doc.text('DKR Group \u00B7 dkrgroup.ru', pageW / 2, pageH - 8, { align: 'center' });
+      doc.text(`стр. ${i}`, pageW - mR, pageH - 8, { align: 'right' });
     }
     doc.setPage(pages);
     doc.setTextColor(...TEXT);
   }
 
-  // ─── Section title: bold dark + thin blue underline ───
+  // ─── Section title: 13pt bold dark + thin gray underline ───
   function sectionTitle(title: string) {
-    checkPage(16);
-    y += 5;
-    doc.setFontSize(12);
+    checkPage(18);
+    y += 10;
+    doc.setFontSize(13);
     doc.setFont(F, 'bold');
     doc.setTextColor(...DARK);
     doc.text(title, mL, y);
-    y += 2;
-    doc.setDrawColor(...BLUE);
-    doc.setLineWidth(0.4);
-    doc.line(mL, y, mL + Math.min(doc.getTextWidth(title) + 4, cW), y);
+    y += 2.5;
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.3);
+    doc.line(mL, y, pageW - mR, y);
     doc.setTextColor(...TEXT);
-    y += 5;
+    y += 3;
   }
 
-  // ─── Info table (label : value pairs, no borders) ───
+  // ─── Info table (label : value pairs) ───
   function infoTable(rows: [string, string][]) {
     autoTable(doc, {
       startY: y,
       margin: { left: mL, right: mR },
       theme: 'plain',
-      styles: { fontSize: 9, cellPadding: { top: 1.5, bottom: 1.5, left: 0, right: 4 }, font: F, textColor: TEXT },
+      styles: {
+        font: F,
+        fontSize: 10,
+        cellPadding: { top: 1.8, bottom: 1.8, left: 0, right: 4 },
+        textColor: TEXT,
+        lineWidth: 0,
+      },
       columnStyles: {
-        0: { cellWidth: 50, textColor: MUTED },
+        0: { cellWidth: 50, fontSize: 9, textColor: MUTED },
         1: { cellWidth: cW - 50, fontStyle: 'bold' },
       },
       body: rows,
@@ -119,67 +109,72 @@ export function generatePdf(state: WizardState): void {
     y = getLastY(doc) + 2;
   }
 
-  // ─── Price table: thin gray horizontal lines, no vertical, blue header bottom border ───
+  // ─── Shared autoTable config for price tables ───
   function priceTable(heading: string, items: PostRow[]) {
     if (items.length === 0) return;
-    checkPage(10 + items.length * 6);
+    checkPage(12 + items.length * 7);
 
+    // Sub-heading above table
     doc.setFontSize(9);
     doc.setFont(F, 'bold');
-    doc.setTextColor(...DARK);
+    doc.setTextColor(...MUTED);
     doc.text(heading, mL + 2, y);
     doc.setTextColor(...TEXT);
     y += 2;
 
     autoTable(doc, {
       startY: y,
-      margin: { left: mL + 2, right: mR },
+      margin: { left: mL, right: mR },
       theme: 'plain',
       styles: {
-        fontSize: 8.5,
-        cellPadding: { top: 2, bottom: 2, left: 2, right: 2 },
         font: F,
-        textColor: TEXT,
+        fontSize: 9,
+        cellPadding: { top: 4, bottom: 4, left: 6, right: 6 },
         lineColor: LINE,
-        lineWidth: 0,
+        lineWidth: 0.3,
+        textColor: TEXT,
       },
       headStyles: {
         fillColor: [255, 255, 255],
-        textColor: DARK,
+        textColor: MUTED,
         fontStyle: 'bold',
         fontSize: 8,
       },
-      alternateRowStyles: { fillColor: STRIPE },
-      columnStyles: {
-        0: { cellWidth: cW - 44 },
-        1: { cellWidth: 40, halign: 'right' },
+      bodyStyles: {
+        fillColor: [255, 255, 255],
       },
+      alternateRowStyles: {
+        fillColor: STRIPE,
+      },
+      columnStyles: {
+        0: { cellWidth: 120 },
+        1: { cellWidth: 50, halign: 'right' },
+      },
+      tableLineColor: LINE,
+      tableLineWidth: 0,
       head: [['Наименование', 'Цена']],
       body: items.map((r) => [r.name, fmt(r.price)]),
-      didDrawCell: (data) => {
-        // Draw thin gray bottom border on every cell
-        const { cell, row } = data;
-        doc.setDrawColor(...LINE);
-        doc.setLineWidth(0.2);
-        doc.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
-        // Blue bottom border for head row
-        if (row.section === 'head') {
-          doc.setDrawColor(...BLUE);
-          doc.setLineWidth(0.5);
-          doc.line(cell.x, cell.y + cell.height, cell.x + cell.width, cell.y + cell.height);
-        }
+      didParseCell: (data) => {
+        // Only horizontal bottom lines
+        data.cell.styles.lineWidth = { bottom: 0.3, top: 0, left: 0, right: 0 } as unknown as number;
       },
     });
     y = getLastY(doc) + 3;
   }
 
-  // ─── Subtotal line ───
+  // ─── Subtotal line with thin line above ───
   function subtotalLine(label: string, value: number) {
-    checkPage(8);
-    doc.setFontSize(10);
+    checkPage(10);
+    // Thin line above
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.3);
+    doc.line(mL, y, pageW - mR, y);
+    y += 5;
+    doc.setFontSize(11);
     doc.setFont(F, 'bold');
+    doc.setTextColor(...DARK);
+    doc.text(label, mL, y);
     doc.setTextColor(...BLUE);
-    doc.text(label, mL + 2, y);
     doc.text(fmt(value), pageW - mR, y, { align: 'right' });
     doc.setTextColor(...TEXT);
     y += 7;
@@ -198,23 +193,24 @@ export function generatePdf(state: WizardState): void {
   // PAGE 1: TITLE + CLIENT INFO
   // ═══════════════════════════════════════════════
 
-  y = 24;
-  // Title
-  doc.setFontSize(18);
+  y = 25;
+
+  // Title centered
+  doc.setFontSize(20);
   doc.setFont(F, 'bold');
   doc.setTextColor(...DARK);
-  doc.text('Коммерческое предложение', pageW / 2, y, { align: 'center' });
+  doc.text('КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ', pageW / 2, y, { align: 'center' });
   y += 3;
-  // Thin blue line under title
+
+  // Thin blue line full width
   doc.setDrawColor(...BLUE);
   doc.setLineWidth(0.5);
-  const titleW = doc.getTextWidth('Коммерческое предложение');
-  doc.line((pageW - titleW) / 2, y, (pageW + titleW) / 2, y);
+  doc.line(mL, y, pageW - mR, y);
   y += 6;
 
   // Subtitle: object type
   const objectLabel = d.isTruck ? 'Грузовая мойка' : d.isRobot ? 'Роботизированная мойка' : 'Мойка самообслуживания';
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   doc.setFont(F, 'normal');
   doc.setTextColor(...MUTED);
   doc.text(objectLabel, pageW / 2, y, { align: 'center' });
@@ -227,7 +223,6 @@ export function generatePdf(state: WizardState): void {
     ['Менеджер', d.header.manager],
     ['Клиент', d.header.client],
     ['Тип транспорта', d.header.vehicleType],
-    ['Тип объекта', d.header.objectType],
     ['Регион доставки', d.header.region],
   ]);
 
@@ -262,7 +257,6 @@ export function generatePdf(state: WizardState): void {
       textLine(`Базовая комплектация: ${fmt(post.basePrice)}`);
       textLine(`Терминал: ${post.bumName}${post.bumPrice > 0 ? ' — доплата ' + fmt(post.bumPrice) : ' (в комплекте)'}`);
 
-      // Base functions as comma list
       if (post.baseFunctions.length > 0) {
         textLine(`Базовые функции: ${post.baseFunctions.map((f) => f.name).join(', ')} (входят в комплект)`);
       }
@@ -287,7 +281,6 @@ export function generatePdf(state: WizardState): void {
   if (!d.isTruck) {
     sectionTitle('Оборудование на мойку');
 
-    // Water rows as table
     if (d.wash.waterRows.length > 0) {
       priceTable('Водоподготовка', d.wash.waterRows);
     }
@@ -324,7 +317,7 @@ export function generatePdf(state: WizardState): void {
   if (d.totals.discountAmount > 0) {
     totalsRows.push([`Скидка (${d.totals.discountPct}%)`, `\u2212 ${fmt(d.totals.discountAmount)}`]);
     if (d.totals.discountWarning) {
-      totalsRows.push(['', 'Требует согласования у руководства']);
+      totalsRows.push(['', '\u26A0 Требует согласования у руководства']);
     }
     totalsRows.push(['После скидки', fmt(d.totals.afterDiscount)]);
   }
@@ -348,27 +341,37 @@ export function generatePdf(state: WizardState): void {
     startY: y,
     margin: { left: mL, right: mR },
     theme: 'plain',
-    styles: { fontSize: 9.5, cellPadding: 2.5, font: F, textColor: TEXT },
+    styles: {
+      fontSize: 9.5,
+      cellPadding: { top: 2.5, bottom: 2.5, left: 0, right: 4 },
+      font: F,
+      textColor: TEXT,
+      lineWidth: 0,
+    },
     columnStyles: {
-      0: { cellWidth: cW - 55 },
+      0: { cellWidth: cW - 55, textColor: MUTED },
       1: { cellWidth: 55, halign: 'right', fontStyle: 'bold' },
     },
     body: totalsRows,
   });
   y = getLastY(doc) + 5;
 
-  // ИТОГО — bold line + large text (no banner)
-  checkPage(16);
+  // ─── ИТОГО block: line above, text, line below ───
+  checkPage(18);
   doc.setDrawColor(...DARK);
-  doc.setLineWidth(0.5);
+  doc.setLineWidth(1);
   doc.line(mL, y, pageW - mR, y);
   y += 7;
   doc.setFontSize(14);
   doc.setFont(F, 'bold');
   doc.setTextColor(...DARK);
-  doc.text('ИТОГО:', mL, y);
+  doc.text('ИТОГО', mL, y);
   doc.setTextColor(...BLUE);
   doc.text(fmt(d.totals.total), pageW - mR, y, { align: 'right' });
+  y += 4;
+  doc.setDrawColor(...DARK);
+  doc.setLineWidth(1);
+  doc.line(mL, y, pageW - mR, y);
   doc.setTextColor(...TEXT);
   y += 10;
 
