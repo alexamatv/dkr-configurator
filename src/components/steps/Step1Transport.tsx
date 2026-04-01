@@ -21,7 +21,14 @@ export function Step1Transport({ data, onChange }: Props) {
           {([['passenger', 'Легковой (коммерческий)'], ['truck', 'Грузовой']] as const).map(([value, label]) => (
             <button
               key={value}
-              onClick={() => update({ vehicleType: value })}
+              onClick={() => {
+                if (value === 'truck') {
+                  update({ vehicleType: 'truck', objectType: 'truck' });
+                } else {
+                  // Switching back to passenger — reset objectType so user picks MSO/Robot
+                  update({ vehicleType: 'passenger', objectType: 'self_service' });
+                }
+              }}
               className={`radio-card text-center ${data.vehicleType === value ? 'selected' : ''}`}
             >
               <div className="text-2xl mb-2">{value === 'passenger' ? '🚗' : '🚛'}</div>
@@ -31,24 +38,25 @@ export function Step1Transport({ data, onChange }: Props) {
         </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-muted mb-3">Тип объекта</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {([
-            ['self_service', 'Мойка самообслуживания'],
-            ['robotic', 'Роботизированная мойка'],
-            ['truck', 'Грузовая мойка'],
-          ] as const).map(([value, label]) => (
-            <button
-              key={value}
-              onClick={() => update({ objectType: value })}
-              className={`radio-card text-center ${data.objectType === value ? 'selected' : ''}`}
-            >
-              <div className="font-medium">{label}</div>
-            </button>
-          ))}
+      {data.vehicleType === 'passenger' && (
+        <div>
+          <label className="block text-sm font-medium text-muted mb-3">Тип объекта</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {([
+              ['self_service', 'Мойка самообслуживания'],
+              ['robotic', 'Роботизированная мойка'],
+            ] as const).map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => update({ objectType: value })}
+                className={`radio-card text-center ${data.objectType === value ? 'selected' : ''}`}
+              >
+                <div className="font-medium">{label}</div>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div>
         <label className="block text-sm font-medium text-muted mb-2">Клиент</label>
