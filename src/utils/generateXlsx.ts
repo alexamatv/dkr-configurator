@@ -7,9 +7,9 @@ const DARK = '1E293B';
 const BLUE = '0EA5E9';
 const LABEL_GRAY = '6B7280';
 const TEXT_DARK = '111827';
-const SUBHEAD_GRAY = '374151';
-const LINE_LIGHT = 'F3F4F6';
-const LINE_MID = 'D1D5DB';
+const SUBHEAD = '374151';
+const HEAD_BG = 'F1F5F9';
+const LINE_LIGHT = 'E2E8F0';
 const FOOTER_GRAY = '9CA3AF';
 const FONT = 'Arial';
 
@@ -27,30 +27,34 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     },
   });
 
-  // Column widths
+  // Column widths: A=8, B=55, C=18
   ws.getColumn(1).width = 8;
   ws.getColumn(2).width = 55;
   ws.getColumn(3).width = 18;
 
   // ─── Style presets ───
-  const dkrFont: Partial<ExcelJS.Font> = { bold: true, size: 16, name: FONT, color: { argb: BLUE } };
-  const kpFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: FONT, color: { argb: SUBHEAD_GRAY } };
-  const sectionFont: Partial<ExcelJS.Font> = { bold: true, size: 12, name: FONT, color: { argb: DARK } };
+  const dkrFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: FONT, color: { argb: BLUE } };
+  const titleFont: Partial<ExcelJS.Font> = { bold: true, size: 12, name: FONT, color: { argb: DARK } };
+  const subtitleFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: LABEL_GRAY } };
+  const dateFont: Partial<ExcelJS.Font> = { size: 9, name: FONT, color: { argb: LABEL_GRAY } };
+  const sectionFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: FONT, color: { argb: DARK } };
   const labelFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: LABEL_GRAY } };
   const valueFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: TEXT_DARK } };
-  const subheadFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: SUBHEAD_GRAY } };
-  const dataFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: SUBHEAD_GRAY } };
+  const subheadFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: SUBHEAD } };
+  const dataFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: SUBHEAD } };
   const priceFont: Partial<ExcelJS.Font> = { size: 10, name: FONT, color: { argb: TEXT_DARK } };
   const subtotalFont: Partial<ExcelJS.Font> = { bold: true, size: 11, name: FONT, color: { argb: BLUE } };
   const grandLabelFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: FONT, color: { argb: DARK } };
   const grandValueFont: Partial<ExcelJS.Font> = { bold: true, size: 14, name: FONT, color: { argb: BLUE } };
   const pctFont: Partial<ExcelJS.Font> = { bold: true, size: 10, name: FONT, color: { argb: BLUE } };
   const footerFont: Partial<ExcelJS.Font> = { italic: true, size: 8, name: FONT, color: { argb: FOOTER_GRAY } };
-  const priceFormat = '#,##0" ₽"';
+  const priceFormat = '#,##0" \u20BD"';
 
+  const thinBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: DARK } };
   const blueBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: BLUE } };
-  const midBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: LINE_MID } };
   const lightBorder: Partial<ExcelJS.Border> = { style: 'thin', color: { argb: LINE_LIGHT } };
+  const headFill: ExcelJS.FillPattern = { type: 'pattern', pattern: 'solid', fgColor: { argb: HEAD_BG } };
+  const blueMedBorder: Partial<ExcelJS.Border> = { style: 'medium', color: { argb: BLUE } };
   const darkMedBorder: Partial<ExcelJS.Border> = { style: 'medium', color: { argb: DARK } };
 
   let rowNum = 0;
@@ -66,18 +70,18 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     nextRow();
   }
 
-  /** Section header: merged A:C, bold 12pt, blue bottom border */
+  // ─── Section header: merged A:C, bold 11pt, thin bottom border ───
   function addSectionRow(text: string) {
     addSpacer();
     const row = nextRow();
     ws.mergeCells(rowNum, 1, rowNum, 3);
     row.getCell(1).value = text;
     row.getCell(1).font = sectionFont;
-    row.getCell(1).border = { bottom: blueBorder };
+    row.getCell(1).border = { bottom: thinBorder };
     row.height = 22;
   }
 
-  /** Info row: label in A (gray), value in B (bold dark), no borders */
+  // ─── Info row: label gray, value bold, no borders ───
   function addInfoRow(label: string, value: string | number) {
     const row = nextRow();
     row.getCell(1).value = label;
@@ -86,7 +90,24 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     row.getCell(2).font = valueFont;
   }
 
-  /** Price data row: name in B, price in C. Very light bottom border. Returns row number. */
+  // ─── Table header row: gray fill, bold, thin borders ───
+  function addBlockHeader(heading: string) {
+    const row = nextRow();
+    row.getCell(2).value = heading;
+    row.getCell(2).font = subheadFont;
+    row.getCell(3).value = 'Стоимость';
+    row.getCell(3).font = subheadFont;
+    row.getCell(3).alignment = { horizontal: 'right' };
+    // Gray fill on B and C
+    row.getCell(1).fill = headFill;
+    row.getCell(2).fill = headFill;
+    row.getCell(3).fill = headFill;
+    row.getCell(1).border = { bottom: lightBorder, top: lightBorder };
+    row.getCell(2).border = { bottom: lightBorder, top: lightBorder };
+    row.getCell(3).border = { bottom: lightBorder, top: lightBorder };
+  }
+
+  // ─── Data row: name in B, price in C, thin #E2E8F0 bottom border. Returns row number. ───
   function addPriceRow(name: string, price: number): number {
     const row = nextRow();
     row.getCell(2).value = name;
@@ -101,7 +122,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     return rowNum;
   }
 
-  /** Labeled price row for totals section: label in A (gray), price in C. Returns row number. */
+  // ─── Labeled price row (for totals): label in A, price in C ───
   function addLabeledPriceRow(label: string, name: string, price: number): number {
     const row = nextRow();
     row.getCell(1).value = label;
@@ -120,13 +141,20 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     return rowNum;
   }
 
-  /** Subtotal row: merged A:B blue text, C blue value with top border. Returns row number. */
+  // ─── Price block: sub-header + items. Returns tracked rows. ───
+  function addPriceBlock(heading: string, items: PostRow[]): number[] {
+    if (items.length === 0) return [];
+    addBlockHeader(heading);
+    return items.map((r) => addPriceRow(r.name, r.price));
+  }
+
+  // ─── Subtotal: merged A:B, blue text, top border ───
   function addFormulaSubtotal(label: string, trackedRows: number[], fallback: number): number {
     const row = nextRow();
     ws.mergeCells(rowNum, 1, rowNum, 2);
     row.getCell(1).value = label;
     row.getCell(1).font = subtotalFont;
-    row.getCell(1).border = { top: midBorder };
+    row.getCell(1).border = { top: lightBorder };
     if (trackedRows.length > 0) {
       row.getCell(3).value = { formula: sumOf(trackedRows), result: fallback };
     } else {
@@ -135,11 +163,11 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     row.getCell(3).font = subtotalFont;
     row.getCell(3).numFmt = priceFormat;
     row.getCell(3).alignment = { horizontal: 'right' };
-    row.getCell(3).border = { top: midBorder };
+    row.getCell(3).border = { top: lightBorder };
     return rowNum;
   }
 
-  /** Formula row for totals: label in A, formula result in C. Returns row number. */
+  // ─── Formula row: label in A, formula in C ───
   function addFormulaRow(label: string, formula: string, fallback: number, font: Partial<ExcelJS.Font> = priceFont): number {
     const row = nextRow();
     row.getCell(1).value = label;
@@ -154,7 +182,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     return rowNum;
   }
 
-  /** Editable % in B, C left for formula. Returns row number. */
+  // ─── Editable % in B, C left for formula ───
   function addPctRow(label: string, pctValue: number): number {
     const row = nextRow();
     row.getCell(1).value = label;
@@ -171,69 +199,54 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     return rowNum;
   }
 
-  /** Sets formula on C column of a given row */
   function setFormula(r: number, formula: string, fallback: number) {
     ws.getRow(r).getCell(3).value = { formula, result: fallback };
   }
 
-  /** Sub-header row for a price block: B = heading bold, C = "Цена" right. */
-  function addBlockHeader(heading: string) {
-    const row = nextRow();
-    row.getCell(2).value = heading;
-    row.getCell(2).font = subheadFont;
-    row.getCell(3).value = 'Цена';
-    row.getCell(3).font = subheadFont;
-    row.getCell(3).alignment = { horizontal: 'right' };
-    row.getCell(2).border = { bottom: midBorder };
-    row.getCell(3).border = { bottom: midBorder };
-  }
-
-  /** Price block: sub-header + item rows. Returns tracked row numbers. */
-  function addPriceBlock(heading: string, items: PostRow[]): number[] {
-    if (items.length === 0) return [];
-    addBlockHeader(heading);
-    return items.map((r) => addPriceRow(r.name, r.price));
-  }
-
   // ─── Formula helpers ───
-
   function sumOf(rows: number[]): string {
     if (rows.length === 0) return '0';
     if (rows.length === 1) return `C${rows[0]}`;
     return 'SUM(' + rows.map((r) => `C${r}`).join(',') + ')';
   }
-
   function cellC(r: number): string { return `C${r}`; }
   function cellB(r: number): string { return `B${r}`; }
 
   // ═══════════════════════════════════════
-  // DOCUMENT
+  // HEADER (rows 1-5)
   // ═══════════════════════════════════════
 
-  // Row 1: empty
+  // Row 1: merge A1:C1, "DKR GROUP"
+  const row1 = nextRow();
+  ws.mergeCells(1, 1, 1, 3);
+  row1.getCell(1).value = 'DKR GROUP';
+  row1.getCell(1).font = dkrFont;
+  row1.height = 24;
+
+  // Row 2: merge A2:C2, "КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ"
+  const row2 = nextRow();
+  ws.mergeCells(2, 1, 2, 3);
+  row2.getCell(1).value = '\u041A\u041E\u041C\u041C\u0415\u0420\u0427\u0415\u0421\u041A\u041E\u0415 \u041F\u0420\u0415\u0414\u041B\u041E\u0416\u0415\u041D\u0418\u0415';
+  row2.getCell(1).font = titleFont;
+  row2.height = 20;
+
+  // Row 3: merge A3:C3, subtitle (object type)
+  const objectLabel = d.isTruck ? 'Грузовая мойка' : d.isRobot ? 'Роботизированная мойка' : 'Мойка самообслуживания';
+  const row3 = nextRow();
+  ws.mergeCells(3, 1, 3, 3);
+  row3.getCell(1).value = objectLabel;
+  row3.getCell(1).font = subtitleFont;
+
+  // Row 4: merge A4:C4, date
+  const row4 = nextRow();
+  ws.mergeCells(4, 1, 4, 3);
+  row4.getCell(1).value = d.header.date;
+  row4.getCell(1).font = dateFont;
+
+  // Row 5: spacer
   addSpacer();
 
-  // Row 2: header
-  const headerRow = nextRow();
-  ws.mergeCells(rowNum, 1, rowNum, 2);
-  headerRow.getCell(1).value = 'DKR GROUP';
-  headerRow.getCell(1).font = dkrFont;
-  headerRow.getCell(3).value = 'Коммерческое предложение';
-  headerRow.getCell(3).font = kpFont;
-  headerRow.getCell(3).alignment = { horizontal: 'right' };
-  headerRow.height = 26;
-
-  // Row 3: thin blue line
-  const lineRow = nextRow();
-  lineRow.getCell(1).border = { bottom: blueBorder };
-  lineRow.getCell(2).border = { bottom: blueBorder };
-  lineRow.getCell(3).border = { bottom: blueBorder };
-
-  // Row 4: spacer
-  addSpacer();
-
-  // Rows 5-10: info (no borders, no fill)
-  addInfoRow('Дата', d.header.date);
+  // Info rows (6-11)
   addInfoRow('Менеджер', d.header.manager);
   addInfoRow('Клиент', d.header.client);
   addInfoRow('Тип транспорта', d.header.vehicleType);
@@ -296,8 +309,8 @@ export async function generateXlsx(state: WizardState): Promise<void> {
       if (post.baseFunctions.length > 0) {
         priceRows.push(...addPriceBlock('Базовые функции (в комплекте)', post.baseFunctions));
       }
-      priceRows.push(...addPriceBlock('Функции', post.functions));
-      priceRows.push(...addPriceBlock('Помпы (АВД)', post.pumps));
+      priceRows.push(...addPriceBlock('Функции мойки', post.functions));
+      priceRows.push(...addPriceBlock('АВД (помпы)', post.pumps));
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
@@ -321,7 +334,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     }
 
     if (d.wash.extras.length > 0) {
-      washRows.push(...addPriceBlock('Другое оборудование', d.wash.extras));
+      washRows.push(...addPriceBlock('Доп. оборудование мойки', d.wash.extras));
     }
 
     if (d.wash.pipelines.air > 0 || d.wash.pipelines.water > 0 || d.wash.pipelines.chem > 0) {
@@ -336,21 +349,21 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   }
 
   // ═══════════════════════════════════════
-  // TOTALS SECTION — all formulas
+  // TOTALS — all formulas
   // ═══════════════════════════════════════
   addSectionRow('Итоговый расчёт');
 
-  // Equipment subtotal = SUM of section subtotals
-  const equipRow = addFormulaSubtotal('Стоимость оборудования', equipmentSubtotalRows, d.totals.subtotal);
+  // Итого оборудование = SUM of section subtotals
+  const equipRow = addFormulaSubtotal('Итого оборудование', equipmentSubtotalRows, d.totals.subtotal);
 
-  // Discount: editable % in B, formula in C
+  // Скидка: editable % in B, formula in C
   const discountRow = addPctRow('Скидка, %', d.totals.discountPct);
   setFormula(discountRow, `${cellC(equipRow)}*${cellB(discountRow)}/100`, d.totals.discountAmount);
   if (d.totals.discountWarning) {
     ws.getRow(discountRow).getCell(2).note = '\u26A0 Скидка больше 3% — требуется согласование';
   }
 
-  // After discount = equipment - discount
+  // После скидки = оборудование - скидка
   const afterDiscRow = addFormulaRow(
     'После скидки',
     `${cellC(equipRow)}-${cellC(discountRow)}`,
@@ -358,7 +371,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     valueFont,
   );
 
-  // Montage: editable % in B (or fixed for КОМПАК), formula in C
+  // Монтаж: editable % or fixed for КОМПАК
   const isKompakTruck = d.isTruck && d.truck && d.totals.montageType.includes('фикс');
   let montageRow: number;
   if (isKompakTruck) {
@@ -368,16 +381,17 @@ export async function generateXlsx(state: WizardState): Promise<void> {
       ? (d.totals.montageType.includes('10') ? 10 : d.totals.montageType.includes('5') ? 5 : 0)
       : 0;
     montageRow = addPctRow('Монтаж, %', montagePct);
+    // Montage from subtotal BEFORE discount
     setFormula(montageRow, `${cellC(equipRow)}*${cellB(montageRow)}/100`, d.totals.montageFromSubtotal);
   }
 
-  // Montage extra: editable plain number
+  // Доп. работы: editable number
   let montageExtraRow: number | null = null;
   if (d.totals.montageExtra > 0 || d.totals.montageAmount > 0) {
     montageExtraRow = addLabeledPriceRow('Доп. работы по монтажу', '', d.totals.montageExtra);
   }
 
-  // VAT: editable % in B, formula in C
+  // НДС: editable % in B, formula in C
   const vatPct = d.totals.vatEnabled ? d.totals.vatPct : 0;
   const vatBaseFormula = montageExtraRow
     ? `(${cellC(afterDiscRow)}+${cellC(montageRow)}+${cellC(montageExtraRow)})`
@@ -391,11 +405,11 @@ export async function generateXlsx(state: WizardState): Promise<void> {
 
   addSpacer();
 
-  // ─── ИТОГО: medium dark border top, text, medium dark border bottom ───
+  // ─── ИТОГО: medium blue border top, bold text, medium blue border bottom ───
   const topBorderRow = nextRow();
-  topBorderRow.getCell(1).border = { bottom: darkMedBorder };
-  topBorderRow.getCell(2).border = { bottom: darkMedBorder };
-  topBorderRow.getCell(3).border = { bottom: darkMedBorder };
+  topBorderRow.getCell(1).border = { bottom: blueMedBorder };
+  topBorderRow.getCell(2).border = { bottom: blueMedBorder };
+  topBorderRow.getCell(3).border = { bottom: blueMedBorder };
 
   const grandParts = [cellC(afterDiscRow), cellC(montageRow), cellC(vatRow)];
   if (montageExtraRow) grandParts.splice(2, 0, cellC(montageExtraRow));
@@ -410,8 +424,8 @@ export async function generateXlsx(state: WizardState): Promise<void> {
   grandRow.getCell(3).numFmt = priceFormat;
   grandRow.getCell(3).alignment = { horizontal: 'right' };
   grandRow.height = 28;
-  grandRow.getCell(1).border = { bottom: darkMedBorder };
-  grandRow.getCell(3).border = { bottom: darkMedBorder };
+  grandRow.getCell(1).border = { bottom: blueMedBorder };
+  grandRow.getCell(3).border = { bottom: blueMedBorder };
 
   // ─── CONDITIONS ───
   addSectionRow('Условия');

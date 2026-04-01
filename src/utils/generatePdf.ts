@@ -4,15 +4,19 @@ import type { WizardState } from '@/types';
 import { gatherDocData, makeFileName, type PostRow } from './gatherData';
 import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
+import { DKR_LOGO_BASE64 } from '../fonts/dkr-logo';
 
 // ─── Brand colors (RGB tuples) ───
-const BLUE: [number, number, number] = [14, 165, 233];     // #0EA5E9
 const DARK: [number, number, number] = [30, 41, 59];       // #1E293B
-const TEXT: [number, number, number] = [17, 24, 39];        // #111827
+const BLUE: [number, number, number] = [14, 165, 233];     // #0EA5E9
+const TEXT: [number, number, number] = [30, 41, 59];        // #1E293B
 const MUTED: [number, number, number] = [107, 114, 128];   // #6B7280
+const SUBTLE: [number, number, number] = [55, 65, 81];     // #374151
 const FOOTER_GRAY: [number, number, number] = [156, 163, 175]; // #9CA3AF
-const LINE: [number, number, number] = [229, 231, 235];    // #E5E7EB
-const STRIPE: [number, number, number] = [249, 250, 251];  // #F9FAFB
+const LINE: [number, number, number] = [226, 232, 240];    // #E2E8F0
+const HEAD_BG: [number, number, number] = [241, 245, 249]; // #F1F5F9
+const STRIPE: [number, number, number] = [248, 250, 252];  // #F8FAFC
+const BLOCK_BG: [number, number, number] = [241, 245, 249]; // #F1F5F9
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' \u20BD';
@@ -36,17 +40,17 @@ export function generatePdf(state: WizardState): void {
   const F = 'Roboto';
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
-  const mL = 20;
-  const mR = 20;
+  const mL = 14;
+  const mR = 14;
   const cW = pageW - mL - mR;
   const botY = pageH - 18;
-  let y = 25;
+  let y = 30;
 
-  // ─── Utility: page break ───
+  // ─── Page break check ───
   function checkPage(needed: number) {
     if (y + needed > botY) {
       doc.addPage();
-      y = 20;
+      y = 18;
     }
   }
 
@@ -55,36 +59,46 @@ export function generatePdf(state: WizardState): void {
     const pages = doc.getNumberOfPages();
     for (let i = 1; i <= pages; i++) {
       doc.setPage(i);
-      // "DKR GROUP" top-right — plain text, no icons
-      doc.setFont(F, 'bold');
-      doc.setFontSize(16);
-      doc.setTextColor(...BLUE);
-      doc.text('DKR GROUP', pageW - mR, 12, { align: 'right' });
-      // Footer
+      // Logo image left
+      doc.addImage('data:image/jpeg;base64,' + DKR_LOGO_BASE64, 'JPEG', 14, 10, 45, 15);
+      // Date right
       doc.setFont(F, 'normal');
-      doc.setFontSize(7);
+      doc.setFontSize(9);
+      doc.setTextColor(...MUTED);
+      doc.text(d.header.date, pageW - mR, 18, { align: 'right' });
+      // Thin line under header
+      doc.setDrawColor(...LINE);
+      doc.setLineWidth(0.5);
+      doc.line(mL, 27, pageW - mR, 27);
+      // Footer line
+      doc.setDrawColor(...LINE);
+      doc.setLineWidth(0.5);
+      doc.line(mL, pageH - 14, pageW - mR, pageH - 14);
+      // Footer text
+      doc.setFont(F, 'normal');
+      doc.setFontSize(8);
       doc.setTextColor(...FOOTER_GRAY);
-      doc.text('DKR Group \u00B7 dkrgroup.ru', pageW / 2, pageH - 8, { align: 'center' });
-      doc.text(`стр. ${i}`, pageW - mR, pageH - 8, { align: 'right' });
+      doc.text('DKR Group \u00B7 dkrgroup.ru', mL, pageH - 9);
+      doc.text(`\u0421\u0442\u0440. ${i} \u0438\u0437 ${pages}`, pageW - mR, pageH - 9, { align: 'right' });
     }
     doc.setPage(pages);
     doc.setTextColor(...TEXT);
   }
 
-  // ─── Section title: 13pt bold dark + thin gray underline ───
+  // ─── Section title: 11pt bold #1E293B + thin line #E2E8F0 ───
   function sectionTitle(title: string) {
-    checkPage(18);
+    checkPage(16);
     y += 10;
-    doc.setFontSize(13);
+    doc.setFontSize(11);
     doc.setFont(F, 'bold');
     doc.setTextColor(...DARK);
     doc.text(title, mL, y);
-    y += 2.5;
+    y += 2;
     doc.setDrawColor(...LINE);
     doc.setLineWidth(0.3);
     doc.line(mL, y, pageW - mR, y);
     doc.setTextColor(...TEXT);
-    y += 3;
+    y += 2;
   }
 
   // ─── Info table (label : value pairs) ───
@@ -109,17 +123,20 @@ export function generatePdf(state: WizardState): void {
     y = getLastY(doc) + 2;
   }
 
-  // ─── Shared autoTable config for price tables ───
+  // ─── Price table with professional styling ───
   function priceTable(heading: string, items: PostRow[]) {
     if (items.length === 0) return;
     checkPage(12 + items.length * 7);
 
-    // Sub-heading above table
-    doc.setFontSize(9);
+    // Sub-heading
+    doc.setFontSize(11);
     doc.setFont(F, 'bold');
-    doc.setTextColor(...MUTED);
-    doc.text(heading, mL + 2, y);
-    doc.setTextColor(...TEXT);
+    doc.setTextColor(...DARK);
+    doc.text(heading, mL, y);
+    y += 2;
+    doc.setDrawColor(...LINE);
+    doc.setLineWidth(0.3);
+    doc.line(mL, y, pageW - mR, y);
     y += 2;
 
     autoTable(doc, {
@@ -129,33 +146,36 @@ export function generatePdf(state: WizardState): void {
       styles: {
         font: F,
         fontSize: 9,
-        cellPadding: { top: 4, bottom: 4, left: 6, right: 6 },
-        lineColor: LINE,
+        cellPadding: { top: 3, bottom: 3, left: 6, right: 6 },
+        lineColor: [229, 231, 235],
         lineWidth: 0.3,
         textColor: TEXT,
       },
       headStyles: {
-        fillColor: [255, 255, 255],
-        textColor: MUTED,
+        fillColor: HEAD_BG,
+        textColor: DARK,
         fontStyle: 'bold',
-        fontSize: 8,
+        fontSize: 9,
+        cellPadding: { top: 4, bottom: 4, left: 6, right: 6 },
       },
       bodyStyles: {
         fillColor: [255, 255, 255],
+        textColor: TEXT,
+        fontSize: 9,
+        cellPadding: { top: 3, bottom: 3, left: 6, right: 6 },
       },
       alternateRowStyles: {
         fillColor: STRIPE,
       },
       columnStyles: {
-        0: { cellWidth: 120 },
-        1: { cellWidth: 50, halign: 'right' },
+        0: { cellWidth: cW * 0.7 },
+        1: { cellWidth: cW * 0.3, halign: 'right' },
       },
-      tableLineColor: LINE,
+      tableLineColor: [229, 231, 235],
       tableLineWidth: 0,
-      head: [['Наименование', 'Цена']],
+      head: [['Наименование', 'Стоимость']],
       body: items.map((r) => [r.name, fmt(r.price)]),
       didParseCell: (data) => {
-        // Only horizontal bottom lines
         data.cell.styles.lineWidth = { bottom: 0.3, top: 0, left: 0, right: 0 } as unknown as number;
       },
     });
@@ -165,7 +185,6 @@ export function generatePdf(state: WizardState): void {
   // ─── Subtotal line with thin line above ───
   function subtotalLine(label: string, value: number) {
     checkPage(10);
-    // Thin line above
     doc.setDrawColor(...LINE);
     doc.setLineWidth(0.3);
     doc.line(mL, y, pageW - mR, y);
@@ -193,29 +212,23 @@ export function generatePdf(state: WizardState): void {
   // PAGE 1: TITLE + CLIENT INFO
   // ═══════════════════════════════════════════════
 
-  y = 25;
+  y = 34;
 
   // Title centered
-  doc.setFontSize(20);
+  doc.setFontSize(16);
   doc.setFont(F, 'bold');
   doc.setTextColor(...DARK);
-  doc.text('КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ', pageW / 2, y, { align: 'center' });
-  y += 3;
-
-  // Thin blue line full width
-  doc.setDrawColor(...BLUE);
-  doc.setLineWidth(0.5);
-  doc.line(mL, y, pageW - mR, y);
+  doc.text('\u041A\u041E\u041C\u041C\u0415\u0420\u0427\u0415\u0421\u041A\u041E\u0415 \u041F\u0420\u0415\u0414\u041B\u041E\u0416\u0415\u041D\u0418\u0415', pageW / 2, y, { align: 'center' });
   y += 6;
 
   // Subtitle: object type
   const objectLabel = d.isTruck ? 'Грузовая мойка' : d.isRobot ? 'Роботизированная мойка' : 'Мойка самообслуживания';
-  doc.setFontSize(12);
+  doc.setFontSize(11);
   doc.setFont(F, 'normal');
   doc.setTextColor(...MUTED);
   doc.text(objectLabel, pageW / 2, y, { align: 'center' });
   doc.setTextColor(...TEXT);
-  y += 10;
+  y += 12;
 
   // Client info
   infoTable([
@@ -232,39 +245,56 @@ export function generatePdf(state: WizardState): void {
 
   if (d.isTruck && d.truck) {
     sectionTitle('Грузовая мойка');
-    textLine(`Тип: ${d.truck.typeName} — ${fmt(d.truck.typePrice)}`);
+    priceTable('Основное оборудование', [
+      { name: d.truck.typeName, price: d.truck.typePrice },
+    ]);
     priceTable('Опции', d.truck.options);
-    priceTable('Ручной пост', d.truck.manualPost);
-    if (d.truck.manualPostMontage > 0) {
-      textLine(`Монтаж ручного поста: ${fmt(d.truck.manualPostMontage)}`);
+    if (d.truck.manualPost.length > 0) {
+      priceTable('Ручной пост', d.truck.manualPost);
+      if (d.truck.manualPostMontage > 0) {
+        textLine(`Монтаж ручного поста: ${fmt(d.truck.manualPostMontage)}`);
+      }
     }
     if (d.truck.waterPrice > 0) {
-      textLine(`Водоочистка: ${d.truck.waterLabel} — ${fmt(d.truck.waterPrice)}`);
+      priceTable('Водоочистка', [
+        { name: d.truck.waterLabel, price: d.truck.waterPrice },
+      ]);
     }
     subtotalLine('Итого грузовая мойка:', d.truck.truckTotal);
 
   } else if (d.isRobot && d.robot) {
     sectionTitle('Робот');
-    textLine(`Модель: ${d.robot.modelName} — ${fmt(d.robot.modelPrice)}`);
-    textLine(`БУР: ${d.robot.burName} — ${fmt(d.robot.burPrice)}`);
+    priceTable('Основное оборудование', [
+      { name: d.robot.modelName, price: d.robot.modelPrice },
+      { name: `БУР: ${d.robot.burName}`, price: d.robot.burPrice },
+    ]);
     priceTable('Опции робота', d.robot.options);
     subtotalLine('Итого робот:', d.robot.robotTotal);
 
   } else {
     d.posts.forEach((post) => {
       sectionTitle(post.title);
-      textLine(`Профиль: ${post.profileName}`);
-      textLine(`Базовая комплектация: ${fmt(post.basePrice)}`);
-      textLine(`Терминал: ${post.bumName}${post.bumPrice > 0 ? ' — доплата ' + fmt(post.bumPrice) : ' (в комплекте)'}`);
+
+      // Base equipment as table
+      const baseRows: PostRow[] = [
+        { name: `Базовая комплектация (${post.profileName})`, price: post.basePrice },
+      ];
+      if (post.bumPrice > 0) {
+        baseRows.push({ name: `Терминал: ${post.bumName} (доплата)`, price: post.bumPrice });
+      } else {
+        baseRows.push({ name: `Терминал: ${post.bumName} (в комплекте)`, price: 0 });
+      }
+      priceTable('Основное оборудование', baseRows);
+
+      priceTable('Системы оплаты', post.payments);
+      priceTable('Аксессуары', post.accessories);
 
       if (post.baseFunctions.length > 0) {
         textLine(`Базовые функции: ${post.baseFunctions.map((f) => f.name).join(', ')} (входят в комплект)`);
       }
 
-      priceTable('Системы оплаты', post.payments);
-      priceTable('Аксессуары', post.accessories);
-      priceTable('Функции', post.functions);
-      priceTable('Помпы (АВД)', post.pumps);
+      priceTable('Функции мойки', post.functions);
+      priceTable('АВД (помпы)', post.pumps);
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
@@ -286,11 +316,11 @@ export function generatePdf(state: WizardState): void {
     }
 
     if (d.wash.vacuumPrice > 0) {
-      textLine(`Пылесосы: ${d.wash.vacuumLabel} — ${fmt(d.wash.vacuumPrice)}`);
+      priceTable('Пылесосы', [{ name: d.wash.vacuumLabel, price: d.wash.vacuumPrice }]);
     }
 
     if (d.wash.extras.length > 0) {
-      priceTable('Другое оборудование', d.wash.extras);
+      priceTable('Доп. оборудование мойки', d.wash.extras);
     }
 
     const pipRows: PostRow[] = [];
@@ -305,75 +335,77 @@ export function generatePdf(state: WizardState): void {
   }
 
   // ═══════════════════════════════════════════════
-  // TOTALS
+  // TOTALS — block with background
   // ═══════════════════════════════════════════════
 
-  sectionTitle('Итоговый расчёт');
+  y += 8;
 
-  const totalsRows: [string, string][] = [
-    ['Стоимость оборудования', fmt(d.totals.subtotal)],
-  ];
+  // Collect totals rows
+  const totalsLines: { label: string; value: string; bold?: boolean }[] = [];
+  totalsLines.push({ label: 'Итого оборудование', value: fmt(d.totals.subtotal) });
 
   if (d.totals.discountAmount > 0) {
-    totalsRows.push([`Скидка (${d.totals.discountPct}%)`, `\u2212 ${fmt(d.totals.discountAmount)}`]);
+    totalsLines.push({ label: `Скидка (${d.totals.discountPct}%)`, value: `\u2212 ${fmt(d.totals.discountAmount)}` });
     if (d.totals.discountWarning) {
-      totalsRows.push(['', '\u26A0 Требует согласования у руководства']);
+      totalsLines.push({ label: '', value: '\u26A0 Требует согласования' });
     }
-    totalsRows.push(['После скидки', fmt(d.totals.afterDiscount)]);
+    totalsLines.push({ label: 'После скидки', value: fmt(d.totals.afterDiscount) });
   }
 
   if (d.totals.montageAmount > 0) {
-    totalsRows.push([`Монтаж (${d.totals.montageType})`, fmt(d.totals.montageFromSubtotal)]);
+    totalsLines.push({ label: `Монтаж (${d.totals.montageType})`, value: fmt(d.totals.montageFromSubtotal) });
     if (d.totals.montageExtra > 0) {
-      totalsRows.push(['Доп. работы по монтажу', fmt(d.totals.montageExtra)]);
+      totalsLines.push({ label: 'Доп. работы по монтажу', value: fmt(d.totals.montageExtra) });
     }
   } else {
-    totalsRows.push(['Монтаж', 'Нет']);
+    totalsLines.push({ label: 'Монтаж', value: 'Нет' });
   }
 
   if (d.totals.vatEnabled) {
-    totalsRows.push([`НДС (${d.totals.vatPct}%)`, fmt(d.totals.vatAmount)]);
+    totalsLines.push({ label: `НДС (${d.totals.vatPct}%)`, value: fmt(d.totals.vatAmount) });
   } else {
-    totalsRows.push(['НДС', 'Участник Сколково — не применяется']);
+    totalsLines.push({ label: 'НДС', value: 'Не применяется (Сколково)' });
   }
 
-  autoTable(doc, {
-    startY: y,
-    margin: { left: mL, right: mR },
-    theme: 'plain',
-    styles: {
-      fontSize: 9.5,
-      cellPadding: { top: 2.5, bottom: 2.5, left: 0, right: 4 },
-      font: F,
-      textColor: TEXT,
-      lineWidth: 0,
-    },
-    columnStyles: {
-      0: { cellWidth: cW - 55, textColor: MUTED },
-      1: { cellWidth: 55, halign: 'right', fontStyle: 'bold' },
-    },
-    body: totalsRows,
-  });
-  y = getLastY(doc) + 5;
+  const lineH = 6.5;
+  const blockPad = 10;
+  const blockH = blockPad * 2 + totalsLines.length * lineH + 2 + lineH + 4; // rows + separator + ИТОГО
+  checkPage(blockH + 4);
 
-  // ─── ИТОГО block: line above, text, line below ───
-  checkPage(18);
-  doc.setDrawColor(...DARK);
-  doc.setLineWidth(1);
-  doc.line(mL, y, pageW - mR, y);
-  y += 7;
+  // Draw background block
+  doc.setFillColor(...BLOCK_BG);
+  doc.roundedRect(mL, y, cW, blockH, 3, 3, 'F');
+
+  let by = y + blockPad;
+  doc.setFontSize(10);
+
+  totalsLines.forEach((line) => {
+    doc.setFont(F, 'normal');
+    doc.setTextColor(...SUBTLE);
+    doc.text(line.label, mL + blockPad, by);
+    doc.text(line.value, mL + cW - blockPad, by, { align: 'right' });
+    by += lineH;
+    // thin gray divider
+    doc.setDrawColor(200, 205, 215);
+    doc.setLineWidth(0.2);
+    doc.line(mL + blockPad, by - 2.5, mL + cW - blockPad, by - 2.5);
+  });
+
+  // Bold blue line before ИТОГО
+  by += 2;
+  doc.setDrawColor(...BLUE);
+  doc.setLineWidth(0.8);
+  doc.line(mL + blockPad, by - 2, mL + cW - blockPad, by - 2);
+
+  // ИТОГО line
   doc.setFontSize(14);
   doc.setFont(F, 'bold');
-  doc.setTextColor(...DARK);
-  doc.text('ИТОГО', mL, y);
   doc.setTextColor(...BLUE);
-  doc.text(fmt(d.totals.total), pageW - mR, y, { align: 'right' });
-  y += 4;
-  doc.setDrawColor(...DARK);
-  doc.setLineWidth(1);
-  doc.line(mL, y, pageW - mR, y);
+  doc.text('ИТОГО', mL + blockPad, by + 3);
+  doc.text(fmt(d.totals.total), mL + cW - blockPad, by + 3, { align: 'right' });
+
+  y = y + blockH + 8;
   doc.setTextColor(...TEXT);
-  y += 10;
 
   // ═══════════════════════════════════════════════
   // CONDITIONS
