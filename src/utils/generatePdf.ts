@@ -6,20 +6,21 @@ import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
 import { DKR_LOGO_BASE64 } from '../fonts/dkr-logo';
 
-// ─── Brand colors (RGB tuples) ───
-const DARK: [number, number, number] = [30, 41, 59];       // #1E293B
-const BLUE: [number, number, number] = [14, 165, 233];     // #0EA5E9
-const TEXT: [number, number, number] = [30, 41, 59];        // #1E293B
-const MUTED: [number, number, number] = [107, 114, 128];   // #6B7280
-const SUBTLE: [number, number, number] = [55, 65, 81];     // #374151
-const FOOTER_GRAY: [number, number, number] = [156, 163, 175]; // #9CA3AF
-const LINE: [number, number, number] = [226, 232, 240];    // #E2E8F0
-const HEAD_BG: [number, number, number] = [241, 245, 249]; // #F1F5F9
-const STRIPE: [number, number, number] = [248, 250, 252];  // #F8FAFC
-const BLOCK_BG: [number, number, number] = [241, 245, 249]; // #F1F5F9
+const DARK: [number, number, number] = [30, 41, 59];
+const BLUE: [number, number, number] = [14, 165, 233];
+const MUTED: [number, number, number] = [107, 114, 128];
+const SUBTLE: [number, number, number] = [55, 65, 81];
+const FOOTER_GRAY: [number, number, number] = [156, 163, 175];
+const LINE: [number, number, number] = [226, 232, 240];
+const BLOCK_BG: [number, number, number] = [248, 250, 252];
 
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' \u20BD';
+}
+
+function fmtPrice(n: number): string {
+  if (n === 0) return '\u0412 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435';
+  return fmt(n);
 }
 
 function getLastY(doc: jsPDF): number {
@@ -30,7 +31,6 @@ export function generatePdf(state: WizardState): void {
   const d = gatherDocData(state);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-  // Register Roboto
   doc.addFileToVFS('Roboto-Regular.ttf', robotoRegular);
   doc.addFont('Roboto-Regular.ttf', 'Roboto', 'normal');
   doc.addFileToVFS('Roboto-Bold.ttf', robotoBold);
@@ -43,10 +43,11 @@ export function generatePdf(state: WizardState): void {
   const mL = 14;
   const mR = 14;
   const cW = pageW - mL - mR;
-  const botY = pageH - 18;
+  const botY = pageH - 20;
+  const dateStr = d.header.date;
   let y = 30;
+  let headerFooterInstalled = false;
 
-  // ─── Page break check ───
   function checkPage(needed: number) {
     if (y + needed > botY) {
       doc.addPage();
@@ -54,90 +55,85 @@ export function generatePdf(state: WizardState): void {
     }
   }
 
-  // ─── Header/footer on all pages (called last) ───
+  // didDrawPage callback for autoTable — draws header + footer on every page
+  function getDidDrawPage() {
+    if (headerFooterInstalled) return undefined;
+    headerFooterInstalled = true;
+    return () => {
+      const pages = doc.getNumberOfPages();
+      for (let p = 1; p <= pages; p++) {
+        doc.setPage(p);
+        // Header
+        doc.addImage('data:image/png;base64,' + DKR_LOGO_BASE64, 'PNG', 14, 10, 45, 10);
+        doc.setFont(F, 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...MUTED);
+        doc.text(dateStr, pageW - mR, 16, { align: 'right' });
+        doc.setDrawColor(...LINE);
+        doc.setLineWidth(0.3);
+        doc.line(mL, 24, pageW - mR, 24);
+        // Footer
+        doc.setDrawColor(...LINE);
+        doc.setLineWidth(0.3);
+        doc.line(mL, pageH - 12, pageW - mR, pageH - 12);
+        doc.setFont(F, 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...FOOTER_GRAY);
+        doc.text('DKR Group \u00B7 dkrgroup.ru', mL, pageH - 8);
+        doc.text(`\u0421\u0442\u0440. ${p} \u0438\u0437 ${pages}`, pageW - mR, pageH - 8, { align: 'right' });
+      }
+      doc.setPage(pages);
+      doc.setTextColor(...DARK);
+    };
+  }
+
+  // Draw header/footer on all pages (called at the very end)
   function drawHeaderFooter() {
     const pages = doc.getNumberOfPages();
-    for (let i = 1; i <= pages; i++) {
-      doc.setPage(i);
-      // Logo image left
+    for (let p = 1; p <= pages; p++) {
+      doc.setPage(p);
       doc.addImage('data:image/png;base64,' + DKR_LOGO_BASE64, 'PNG', 14, 10, 45, 10);
-      // Date right
       doc.setFont(F, 'normal');
       doc.setFontSize(9);
       doc.setTextColor(...MUTED);
-      doc.text(d.header.date, pageW - mR, 18, { align: 'right' });
-      // Thin line under header
+      doc.text(dateStr, pageW - mR, 16, { align: 'right' });
       doc.setDrawColor(...LINE);
-      doc.setLineWidth(0.5);
-      doc.line(mL, 27, pageW - mR, 27);
-      // Footer line
+      doc.setLineWidth(0.3);
+      doc.line(mL, 24, pageW - mR, 24);
       doc.setDrawColor(...LINE);
-      doc.setLineWidth(0.5);
-      doc.line(mL, pageH - 14, pageW - mR, pageH - 14);
-      // Footer text
+      doc.setLineWidth(0.3);
+      doc.line(mL, pageH - 12, pageW - mR, pageH - 12);
       doc.setFont(F, 'normal');
       doc.setFontSize(8);
       doc.setTextColor(...FOOTER_GRAY);
-      doc.text('DKR Group \u00B7 dkrgroup.ru', mL, pageH - 9);
-      doc.text(`\u0421\u0442\u0440. ${i} \u0438\u0437 ${pages}`, pageW - mR, pageH - 9, { align: 'right' });
+      doc.text('DKR Group \u00B7 dkrgroup.ru', mL, pageH - 8);
+      doc.text(`\u0421\u0442\u0440. ${p} \u0438\u0437 ${pages}`, pageW - mR, pageH - 8, { align: 'right' });
     }
     doc.setPage(pages);
-    doc.setTextColor(...TEXT);
+    doc.setTextColor(...DARK);
   }
 
-  // ─── Section title: 11pt bold #1E293B + thin line #E2E8F0 ───
-  function sectionTitle(title: string) {
-    checkPage(16);
-    y += 10;
-    doc.setFontSize(11);
+  // ─── Section heading (12pt for post titles, 11pt for subsections) ───
+  function sectionHeading(title: string, size: number) {
+    checkPage(14);
+    y += 8;
+    doc.setFontSize(size);
     doc.setFont(F, 'bold');
     doc.setTextColor(...DARK);
     doc.text(title, mL, y);
     y += 2;
-    doc.setDrawColor(...LINE);
-    doc.setLineWidth(0.3);
-    doc.line(mL, y, pageW - mR, y);
-    doc.setTextColor(...TEXT);
-    y += 2;
   }
 
-  // ─── Info table (label : value pairs) ───
-  function infoTable(rows: [string, string][]) {
-    autoTable(doc, {
-      startY: y,
-      margin: { top: 30, left: mL, right: mR },
-      theme: 'plain',
-      styles: {
-        font: F,
-        fontSize: 10,
-        cellPadding: { top: 1.8, bottom: 1.8, left: 0, right: 4 },
-        textColor: TEXT,
-        lineWidth: 0,
-      },
-      columnStyles: {
-        0: { cellWidth: 50, fontSize: 9, textColor: MUTED },
-        1: { cellWidth: cW - 50, fontStyle: 'bold' },
-      },
-      body: rows,
-    });
-    y = getLastY(doc) + 2;
-  }
-
-  // ─── Price table with professional styling ───
+  // ─── Subsection heading (11pt) + table ───
   function priceTable(heading: string, items: PostRow[]) {
     if (items.length === 0) return;
-    checkPage(12 + items.length * 7);
+    checkPage(12 + items.length * 6);
 
-    // Sub-heading
     doc.setFontSize(11);
     doc.setFont(F, 'bold');
     doc.setTextColor(...DARK);
     doc.text(heading, mL, y);
     y += 2;
-    doc.setDrawColor(...LINE);
-    doc.setLineWidth(0.3);
-    doc.line(mL, y, pageW - mR, y);
-    y += 2;
 
     autoTable(doc, {
       startY: y,
@@ -146,56 +142,53 @@ export function generatePdf(state: WizardState): void {
       styles: {
         font: F,
         fontSize: 9,
-        cellPadding: { top: 3, bottom: 3, left: 6, right: 6 },
-        lineColor: [229, 231, 235],
-        lineWidth: 0.3,
-        textColor: TEXT,
+        textColor: DARK,
+        cellPadding: { top: 2, bottom: 2, left: 4, right: 4 },
       },
       headStyles: {
-        fillColor: HEAD_BG,
-        textColor: DARK,
+        fillColor: BLOCK_BG,
+        textColor: MUTED,
         fontStyle: 'bold',
-        fontSize: 9,
-        cellPadding: { top: 4, bottom: 4, left: 6, right: 6 },
+        fontSize: 8,
+        cellPadding: { top: 2.5, bottom: 2.5, left: 4, right: 4 },
       },
       bodyStyles: {
-        fillColor: [255, 255, 255],
-        textColor: TEXT,
+        textColor: DARK,
         fontSize: 9,
-        cellPadding: { top: 3, bottom: 3, left: 6, right: 6 },
+        cellPadding: { top: 2, bottom: 2, left: 4, right: 4 },
       },
-      alternateRowStyles: {
-        fillColor: STRIPE,
-      },
+      alternateRowStyles: { fillColor: [255, 255, 255] },
       columnStyles: {
-        0: { cellWidth: cW * 0.7 },
-        1: { cellWidth: cW * 0.3, halign: 'right' },
+        0: { cellWidth: 'auto' },
+        1: { cellWidth: 45, halign: 'right' },
       },
-      tableLineColor: [229, 231, 235],
-      tableLineWidth: 0,
-      head: [['Наименование', 'Стоимость']],
-      body: items.map((r) => [r.name, fmt(r.price)]),
+      tableLineColor: LINE,
+      tableLineWidth: 0.2,
+      head: [['\u041D\u0430\u0438\u043C\u0435\u043D\u043E\u0432\u0430\u043D\u0438\u0435', '\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C']],
+      body: items.map((r) => [r.name, fmtPrice(r.price)]),
       didParseCell: (data) => {
-        data.cell.styles.lineWidth = { bottom: 0.3, top: 0, left: 0, right: 0 } as unknown as number;
+        data.cell.styles.lineWidth = { bottom: 0.2, top: 0, left: 0, right: 0 } as unknown as number;
+        data.cell.styles.lineColor = LINE;
       },
+      didDrawPage: getDidDrawPage(),
     });
-    y = getLastY(doc) + 10;
+    y = getLastY(doc) + 6;
   }
 
-  // ─── Subtotal line with thin line above ───
+  // ─── Subtotal line ───
   function subtotalLine(label: string, value: number) {
     checkPage(10);
     doc.setDrawColor(...LINE);
     doc.setLineWidth(0.3);
     doc.line(mL, y, pageW - mR, y);
     y += 5;
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont(F, 'bold');
     doc.setTextColor(...DARK);
     doc.text(label, mL, y);
     doc.setTextColor(...BLUE);
     doc.text(fmt(value), pageW - mR, y, { align: 'right' });
-    doc.setTextColor(...TEXT);
+    doc.setTextColor(...DARK);
     y += 7;
   }
 
@@ -209,98 +202,135 @@ export function generatePdf(state: WizardState): void {
   }
 
   // ═══════════════════════════════════════════════
-  // PAGE 1: TITLE + CLIENT INFO
+  // PAGE 1: TITLE
   // ═══════════════════════════════════════════════
 
-  y = 34;
-
-  // Title centered
-  doc.setFontSize(16);
+  y = 32;
+  doc.setFontSize(14);
   doc.setFont(F, 'bold');
   doc.setTextColor(...DARK);
   doc.text('\u041A\u041E\u041C\u041C\u0415\u0420\u0427\u0415\u0421\u041A\u041E\u0415 \u041F\u0420\u0415\u0414\u041B\u041E\u0416\u0415\u041D\u0418\u0415', pageW / 2, y, { align: 'center' });
   y += 6;
 
-  // Subtitle: object type
-  const objectLabel = d.isTruck ? 'Грузовая мойка' : d.isRobot ? 'Роботизированная мойка' : 'Мойка самообслуживания';
-  doc.setFontSize(11);
+  const objectLabel = d.isTruck ? '\u0413\u0440\u0443\u0437\u043E\u0432\u0430\u044F \u043C\u043E\u0439\u043A\u0430' : d.isRobot ? '\u0420\u043E\u0431\u043E\u0442\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0430\u044F \u043C\u043E\u0439\u043A\u0430' : '\u041C\u043E\u0439\u043A\u0430 \u0441\u0430\u043C\u043E\u043E\u0431\u0441\u043B\u0443\u0436\u0438\u0432\u0430\u043D\u0438\u044F';
+  doc.setFontSize(10);
   doc.setFont(F, 'normal');
   doc.setTextColor(...MUTED);
   doc.text(objectLabel, pageW / 2, y, { align: 'center' });
-  doc.setTextColor(...TEXT);
-  y += 12;
+  doc.setTextColor(...DARK);
+  y += 8;
 
-  // Client info
-  infoTable([
-    ['Дата', d.header.date],
-    ['Менеджер', d.header.manager],
-    ['Клиент', d.header.client],
-    ['Тип транспорта', d.header.vehicleType],
-    ['Регион доставки', d.header.region],
-  ]);
+  // ═══════════════════════════════════════════════
+  // INFO BLOCK (plain text, no autoTable)
+  // ═══════════════════════════════════════════════
+
+  const valOrDash = (v: string) => v || '\u2014';
+  const infoLabelX = mL;
+  const infoValX = mL + 42;
+  const infoRightLabelX = pageW / 2 + 4;
+  const infoRightValX = pageW / 2 + 42;
+
+  // Row 1: Клиент + Менеджер
+  doc.setFontSize(9);
+  doc.setFont(F, 'normal');
+  doc.setTextColor(...MUTED);
+  doc.text('\u041A\u043B\u0438\u0435\u043D\u0442:', infoLabelX, y);
+  doc.setFont(F, 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(valOrDash(d.header.client), infoValX, y);
+  doc.setFont(F, 'normal');
+  doc.setTextColor(...MUTED);
+  doc.text('\u041C\u0435\u043D\u0435\u0434\u0436\u0435\u0440:', infoRightLabelX, y);
+  doc.setFont(F, 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(valOrDash(d.header.manager), infoRightValX, y);
+  y += 6;
+
+  // Row 2: Тип транспорта
+  doc.setFont(F, 'normal');
+  doc.setTextColor(...MUTED);
+  doc.text('\u0422\u0438\u043F \u0442\u0440\u0430\u043D\u0441\u043F\u043E\u0440\u0442\u0430:', infoLabelX, y);
+  doc.setFont(F, 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(valOrDash(d.header.vehicleType), infoValX, y);
+  y += 6;
+
+  // Row 3: Регион доставки
+  doc.setFont(F, 'normal');
+  doc.setTextColor(...MUTED);
+  doc.text('\u0420\u0435\u0433\u0438\u043E\u043D \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0438:', infoLabelX, y);
+  doc.setFont(F, 'bold');
+  doc.setTextColor(...DARK);
+  doc.text(valOrDash(d.header.region), infoValX, y);
+  y += 4;
+
+  // Separator
+  doc.setDrawColor(...LINE);
+  doc.setLineWidth(0.3);
+  doc.line(mL, y, pageW - mR, y);
+  y += 6;
 
   // ═══════════════════════════════════════════════
   // CONTENT: TRUCK / ROBOT / MSO
   // ═══════════════════════════════════════════════
 
   if (d.isTruck && d.truck) {
-    sectionTitle('Грузовая мойка');
-    priceTable('Основное оборудование', [
+    sectionHeading('\u0413\u0440\u0443\u0437\u043E\u0432\u0430\u044F \u043C\u043E\u0439\u043A\u0430', 12);
+    priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', [
       { name: d.truck.typeName, price: d.truck.typePrice },
     ]);
-    priceTable('Опции', d.truck.options);
+    priceTable('\u041E\u043F\u0446\u0438\u0438', d.truck.options);
     if (d.truck.manualPost.length > 0) {
-      priceTable('Ручной пост', d.truck.manualPost);
+      priceTable('\u0420\u0443\u0447\u043D\u043E\u0439 \u043F\u043E\u0441\u0442', d.truck.manualPost);
       if (d.truck.manualPostMontage > 0) {
-        textLine(`Монтаж ручного поста: ${fmt(d.truck.manualPostMontage)}`);
+        textLine(`\u041C\u043E\u043D\u0442\u0430\u0436 \u0440\u0443\u0447\u043D\u043E\u0433\u043E \u043F\u043E\u0441\u0442\u0430: ${fmt(d.truck.manualPostMontage)}`);
       }
     }
     if (d.truck.waterPrice > 0) {
-      priceTable('Водоочистка', [
+      priceTable('\u0412\u043E\u0434\u043E\u043E\u0447\u0438\u0441\u0442\u043A\u0430', [
         { name: d.truck.waterLabel, price: d.truck.waterPrice },
       ]);
     }
-    subtotalLine('Итого грузовая мойка:', d.truck.truckTotal);
+    subtotalLine('\u0418\u0442\u043E\u0433\u043E \u0433\u0440\u0443\u0437\u043E\u0432\u0430\u044F \u043C\u043E\u0439\u043A\u0430:', d.truck.truckTotal);
 
   } else if (d.isRobot && d.robot) {
-    sectionTitle('Робот');
-    priceTable('Основное оборудование', [
+    sectionHeading('\u0420\u043E\u0431\u043E\u0442', 12);
+    priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', [
       { name: d.robot.modelName, price: d.robot.modelPrice },
-      { name: `БУР: ${d.robot.burName}`, price: d.robot.burPrice },
+      { name: `\u0411\u0423\u0420: ${d.robot.burName}`, price: d.robot.burPrice },
     ]);
-    priceTable('Опции робота', d.robot.options);
-    subtotalLine('Итого робот:', d.robot.robotTotal);
+    priceTable('\u041E\u043F\u0446\u0438\u0438 \u0440\u043E\u0431\u043E\u0442\u0430', d.robot.options);
+    subtotalLine('\u0418\u0442\u043E\u0433\u043E \u0440\u043E\u0431\u043E\u0442:', d.robot.robotTotal);
 
   } else {
     d.posts.forEach((post) => {
-      sectionTitle(post.title);
+      sectionHeading(post.title, 12);
 
-      // Base equipment as table
       const baseRows: PostRow[] = [
-        { name: `Базовая комплектация (${post.profileName})`, price: post.basePrice },
+        { name: `\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.profileName})`, price: post.basePrice },
       ];
       if (post.bumPrice > 0) {
-        baseRows.push({ name: `Терминал: ${post.bumName} (доплата)`, price: post.bumPrice });
+        baseRows.push({ name: `\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0434\u043E\u043F\u043B\u0430\u0442\u0430)`, price: post.bumPrice });
       } else {
-        baseRows.push({ name: `Терминал: ${post.bumName} (в комплекте)`, price: 0 });
+        baseRows.push({ name: `\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)`, price: 0 });
       }
-      priceTable('Основное оборудование', baseRows);
+      priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', baseRows);
 
-      priceTable('Системы оплаты', post.payments);
-      priceTable('Аксессуары', post.accessories);
+      priceTable('\u0421\u0438\u0441\u0442\u0435\u043C\u044B \u043E\u043F\u043B\u0430\u0442\u044B', post.payments);
+      priceTable('\u0410\u043A\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044B', post.accessories);
 
       if (post.baseFunctions.length > 0) {
-        textLine(`Базовые функции: ${post.baseFunctions.map((f) => f.name).join(', ')} (входят в комплект)`);
+        textLine(`\u0411\u0430\u0437\u043E\u0432\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438: ${post.baseFunctions.map((f) => f.name).join(', ')} (\u0432\u0445\u043E\u0434\u044F\u0442 \u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442)`);
       }
 
-      priceTable('Функции мойки', post.functions);
-      priceTable('АВД (помпы)', post.pumps);
+      priceTable('\u0424\u0443\u043D\u043A\u0446\u0438\u0438 \u043C\u043E\u0439\u043A\u0438', post.functions);
+      priceTable('\u0410\u0412\u0414 (\u043F\u043E\u043C\u043F\u044B)', post.pumps);
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
-      priceTable('Доп. оборудование к посту', extrasWithPump);
+      priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043A \u043F\u043E\u0441\u0442\u0443', extrasWithPump);
 
-      subtotalLine('Итого по посту:', post.postTotal);
+      subtotalLine('\u0418\u0442\u043E\u0433\u043E \u043F\u043E \u043F\u043E\u0441\u0442\u0443:', post.postTotal);
     });
   }
 
@@ -309,115 +339,102 @@ export function generatePdf(state: WizardState): void {
   // ═══════════════════════════════════════════════
 
   if (!d.isTruck) {
-    sectionTitle('Оборудование на мойку');
+    sectionHeading('\u041E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043D\u0430 \u043C\u043E\u0439\u043A\u0443', 12);
 
     if (d.wash.waterRows.length > 0) {
-      priceTable('Водоподготовка', d.wash.waterRows);
+      priceTable('\u0412\u043E\u0434\u043E\u043F\u043E\u0434\u0433\u043E\u0442\u043E\u0432\u043A\u0430', d.wash.waterRows);
     }
-
     if (d.wash.vacuumPrice > 0) {
-      priceTable('Пылесосы', [{ name: d.wash.vacuumLabel, price: d.wash.vacuumPrice }]);
+      priceTable('\u041F\u044B\u043B\u0435\u0441\u043E\u0441\u044B', [{ name: d.wash.vacuumLabel, price: d.wash.vacuumPrice }]);
     }
-
     if (d.wash.extras.length > 0) {
-      priceTable('Доп. оборудование мойки', d.wash.extras);
+      priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043C\u043E\u0439\u043A\u0438', d.wash.extras);
     }
 
     const pipRows: PostRow[] = [];
-    if (d.wash.pipelines.air > 0) pipRows.push({ name: 'Магистрали воздушные', price: d.wash.pipelines.air });
-    if (d.wash.pipelines.water > 0) pipRows.push({ name: 'Магистрали водные', price: d.wash.pipelines.water });
-    if (d.wash.pipelines.chem > 0) pipRows.push({ name: 'Магистрали химические', price: d.wash.pipelines.chem });
+    if (d.wash.pipelines.air > 0) pipRows.push({ name: '\u041C\u0430\u0433\u0438\u0441\u0442\u0440\u0430\u043B\u0438 \u0432\u043E\u0437\u0434\u0443\u0448\u043D\u044B\u0435', price: d.wash.pipelines.air });
+    if (d.wash.pipelines.water > 0) pipRows.push({ name: '\u041C\u0430\u0433\u0438\u0441\u0442\u0440\u0430\u043B\u0438 \u0432\u043E\u0434\u043D\u044B\u0435', price: d.wash.pipelines.water });
+    if (d.wash.pipelines.chem > 0) pipRows.push({ name: '\u041C\u0430\u0433\u0438\u0441\u0442\u0440\u0430\u043B\u0438 \u0445\u0438\u043C\u0438\u0447\u0435\u0441\u043A\u0438\u0435', price: d.wash.pipelines.chem });
     if (pipRows.length > 0) {
-      priceTable('Магистрали', pipRows);
+      priceTable('\u041C\u0430\u0433\u0438\u0441\u0442\u0440\u0430\u043B\u0438', pipRows);
     }
 
-    subtotalLine('Итого на мойку:', d.wash.washTotal);
+    subtotalLine('\u0418\u0442\u043E\u0433\u043E \u043D\u0430 \u043C\u043E\u0439\u043A\u0443:', d.wash.washTotal);
   }
 
   // ═══════════════════════════════════════════════
-  // TOTALS — block with background
+  // TOTALS BLOCK
   // ═══════════════════════════════════════════════
 
-  y += 8;
-
-  // Collect totals rows
-  const totalsLines: { label: string; value: string; bold?: boolean }[] = [];
-  totalsLines.push({ label: 'Итого оборудование', value: fmt(d.totals.subtotal) });
+  const totalsRows: { label: string; value: string }[] = [];
+  totalsRows.push({ label: '\u0418\u0442\u043E\u0433\u043E \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', value: fmt(d.totals.subtotal) });
 
   if (d.totals.discountAmount > 0) {
-    totalsLines.push({ label: `Скидка (${d.totals.discountPct}%)`, value: `\u2212 ${fmt(d.totals.discountAmount)}` });
-    if (d.totals.discountWarning) {
-      totalsLines.push({ label: '', value: '\u26A0 Требует согласования' });
-    }
-    totalsLines.push({ label: 'После скидки', value: fmt(d.totals.afterDiscount) });
+    totalsRows.push({ label: `\u0421\u043A\u0438\u0434\u043A\u0430 ${d.totals.discountPct}%`, value: `\u2212 ${fmt(d.totals.discountAmount)}` });
   }
-
-  if (d.totals.montageAmount > 0) {
-    totalsLines.push({ label: `Монтаж (${d.totals.montageType})`, value: fmt(d.totals.montageFromSubtotal) });
+  if (d.totals.montageType !== 'none' && d.totals.montageAmount > 0) {
+    totalsRows.push({ label: `\u041C\u043E\u043D\u0442\u0430\u0436 (${d.totals.montageType})`, value: fmt(d.totals.montageFromSubtotal) });
     if (d.totals.montageExtra > 0) {
-      totalsLines.push({ label: 'Доп. работы по монтажу', value: fmt(d.totals.montageExtra) });
+      totalsRows.push({ label: '\u0414\u043E\u043F. \u0440\u0430\u0431\u043E\u0442\u044B \u043F\u043E \u043C\u043E\u043D\u0442\u0430\u0436\u0443', value: fmt(d.totals.montageExtra) });
     }
-  } else {
-    totalsLines.push({ label: 'Монтаж', value: 'Нет' });
   }
-
   if (d.totals.vatEnabled) {
-    totalsLines.push({ label: `НДС (${d.totals.vatPct}%)`, value: fmt(d.totals.vatAmount) });
-  } else {
-    totalsLines.push({ label: 'НДС', value: 'Не применяется (Сколково)' });
+    totalsRows.push({ label: `\u041D\u0414\u0421 ${d.totals.vatPct}%`, value: fmt(d.totals.vatAmount) });
   }
 
   const lineH = 6.5;
-  const blockPad = 10;
-  const blockH = blockPad * 2 + totalsLines.length * lineH + 2 + lineH + 4; // rows + separator + ИТОГО
-  checkPage(blockH + 4);
+  const blockPad = 8;
+  const blockH = blockPad * 2 + totalsRows.length * lineH + 4 + lineH;
+  checkPage(blockH + 8);
 
-  // Draw background block
+  y += 4;
   doc.setFillColor(...BLOCK_BG);
   doc.roundedRect(mL, y, cW, blockH, 3, 3, 'F');
 
   let by = y + blockPad;
   doc.setFontSize(10);
 
-  totalsLines.forEach((line) => {
+  totalsRows.forEach((row, i) => {
     doc.setFont(F, 'normal');
     doc.setTextColor(...SUBTLE);
-    doc.text(line.label, mL + blockPad, by);
-    doc.text(line.value, mL + cW - blockPad, by, { align: 'right' });
+    doc.text(row.label, mL + blockPad, by);
+    doc.text(row.value, mL + cW - blockPad, by, { align: 'right' });
     by += lineH;
-    // thin gray divider
-    doc.setDrawColor(200, 205, 215);
-    doc.setLineWidth(0.2);
-    doc.line(mL + blockPad, by - 2.5, mL + cW - blockPad, by - 2.5);
+    if (i < totalsRows.length - 1) {
+      doc.setDrawColor(...LINE);
+      doc.setLineWidth(0.15);
+      doc.line(mL + blockPad, by - 2.5, mL + cW - blockPad, by - 2.5);
+    }
   });
 
-  // Bold blue line before ИТОГО
+  // Bold blue separator
   by += 2;
   doc.setDrawColor(...BLUE);
-  doc.setLineWidth(0.8);
+  doc.setLineWidth(1.5);
   doc.line(mL + blockPad, by - 2, mL + cW - blockPad, by - 2);
 
-  // ИТОГО line
+  // ИТОГО
   doc.setFontSize(14);
   doc.setFont(F, 'bold');
   doc.setTextColor(...BLUE);
-  doc.text('ИТОГО', mL + blockPad, by + 3);
+  doc.text('\u0418\u0422\u041E\u0413\u041E', mL + blockPad, by + 3);
   doc.text(fmt(d.totals.total), mL + cW - blockPad, by + 3, { align: 'right' });
 
   y = y + blockH + 8;
-  doc.setTextColor(...TEXT);
+  doc.setTextColor(...DARK);
 
   // ═══════════════════════════════════════════════
   // CONDITIONS
   // ═══════════════════════════════════════════════
 
-  if (d.deliveryConditions !== '—' || d.paymentConditions !== '—') {
-    sectionTitle('Условия');
+  if (d.deliveryConditions !== '\u2014' || d.paymentConditions !== '\u2014') {
+    sectionHeading('\u0423\u0441\u043B\u043E\u0432\u0438\u044F', 11);
     doc.setFontSize(9);
 
-    if (d.deliveryConditions !== '—') {
+    if (d.deliveryConditions !== '\u2014') {
       doc.setFont(F, 'bold');
-      doc.text('Условия доставки:', mL, y);
+      doc.setTextColor(...DARK);
+      doc.text('\u0423\u0441\u043B\u043E\u0432\u0438\u044F \u0434\u043E\u0441\u0442\u0430\u0432\u043A\u0438:', mL, y);
       doc.setFont(F, 'normal');
       y += 4;
       const lines = doc.splitTextToSize(d.deliveryConditions, cW - 4);
@@ -425,10 +442,11 @@ export function generatePdf(state: WizardState): void {
       y += lines.length * 4 + 4;
     }
 
-    if (d.paymentConditions !== '—') {
+    if (d.paymentConditions !== '\u2014') {
       checkPage(12);
       doc.setFont(F, 'bold');
-      doc.text('Условия оплаты:', mL, y);
+      doc.setTextColor(...DARK);
+      doc.text('\u0423\u0441\u043B\u043E\u0432\u0438\u044F \u043E\u043F\u043B\u0430\u0442\u044B:', mL, y);
       doc.setFont(F, 'normal');
       y += 4;
       const lines = doc.splitTextToSize(d.paymentConditions, cW - 4);
@@ -437,7 +455,7 @@ export function generatePdf(state: WizardState): void {
     }
   }
 
-  // Draw header/footer on all pages (last, so page count is correct)
+  // Draw header/footer on all pages (last, so total page count is correct)
   drawHeaderFooter();
 
   doc.save(makeFileName(state, 'pdf'));
