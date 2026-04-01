@@ -290,6 +290,7 @@ export function Wizard() {
           <Step10Final
             data={state.step10}
             posts={state.posts}
+            wizardState={state}
             onChange={updateStep10}
             onEditPost={handleEditPost}
             onDuplicatePost={handleDuplicatePost}

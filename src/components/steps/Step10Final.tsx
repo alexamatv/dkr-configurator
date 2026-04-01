@@ -1,18 +1,21 @@
 'use client';
 
-import type { Step10Data, PostConfig } from '@/types';
+import type { Step10Data, PostConfig, WizardState } from '@/types';
 import { profiles, bumModels } from '@/data/mockData';
+import { generateXlsx } from '@/utils/generateXlsx';
+import { generatePdf } from '@/utils/generatePdf';
 
 interface Props {
   data: Step10Data;
   posts: PostConfig[];
+  wizardState: WizardState;
   onChange: (data: Step10Data) => void;
   onEditPost: (index: number) => void;
   onDuplicatePost: (index: number) => void;
   onDeletePost: (index: number) => void;
 }
 
-export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost, onDeletePost }: Props) {
+export function Step10Final({ data, posts, wizardState, onChange, onEditPost, onDuplicatePost, onDeletePost }: Props) {
   const update = (patch: Partial<Step10Data>) => onChange({ ...data, ...patch });
 
   return (
@@ -170,11 +173,17 @@ export function Step10Final({ data, posts, onChange, onEditPost, onDuplicatePost
         <button className="px-5 py-2.5 bg-accent text-white font-medium rounded hover:bg-accent-hover transition-colors">
           Сохранить черновик
         </button>
-        <button className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors text-muted">
-          Скачать PDF (заглушка)
+        <button
+          onClick={() => generatePdf(wizardState)}
+          className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors"
+        >
+          Скачать PDF
         </button>
-        <button className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors text-muted">
-          Скачать Excel (заглушка)
+        <button
+          onClick={() => generateXlsx(wizardState)}
+          className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors"
+        >
+          Скачать Excel
         </button>
         <button className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors text-muted">
           Сохранить как шаблон (заглушка)
