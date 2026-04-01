@@ -427,8 +427,8 @@ export const truckWashTypes = [
   {
     id: 'smartbot_track',
     name: 'SmartBot Track (проездная)',
-    price: 100950,
-    currency: 'USD' as const,
+    price: 8202000,
+    currency: 'RUB' as const,
     features: [
       'Роботизированная проездная мойка для грузовых ТС',
       'Бесконтактная мойка высоким давлением',

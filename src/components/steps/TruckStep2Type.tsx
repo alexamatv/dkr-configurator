@@ -23,7 +23,7 @@ export function TruckStep2Type({ data, onChange }: Props) {
             <div className="flex items-center justify-between mb-2">
               <div className="font-bold text-lg">{t.name}</div>
               <div className="text-accent font-bold">
-                {t.price.toLocaleString('ru-RU')} {t.currency === 'USD' ? '$' : '₽'}
+                {t.price.toLocaleString('ru-RU')} ₽
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 mt-3">

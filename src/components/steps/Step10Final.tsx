@@ -86,15 +86,9 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
         </div>
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Валюта</label>
-          <select
-            value={data.currency}
-            onChange={(e) => update({ currency: e.target.value as Step10Data['currency'] })}
-            className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
-          >
-            <option value="RUB">RUB</option>
-            <option value="USD">USD</option>
-            <option value="EUR">EUR</option>
-          </select>
+          <div className="w-full bg-surface border border-border rounded px-3 py-2 text-sm text-muted">
+            RUB (₽)
+          </div>
         </div>
         <div>
           <label className="block text-sm font-medium text-muted mb-2">Скидка %</label>

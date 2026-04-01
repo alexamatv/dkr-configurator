@@ -71,7 +71,7 @@ export function TruckStep3Options({ data, selectedType, onChange }: Props) {
               placeholder="0"
               className="w-48 bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
             />
-            <span className="text-sm text-muted">$</span>
+            <span className="text-sm text-muted">₽</span>
           </div>
         </div>
       )}

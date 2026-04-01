@@ -43,15 +43,11 @@ export function generateXlsx(state: WizardState): void {
   addRow('Тип транспорта', d.header.vehicleType);
   addRow('Тип объекта', d.header.objectType);
   addRow('Регион доставки', d.header.region);
-  addRow('Валюта', d.header.currency);
 
   // ─── TRUCK, ROBOT, or POSTS ───
   if (d.isTruck && d.truck) {
     addSection('Грузовая мойка');
     addRow('Тип мойки', d.truck.typeName, d.truck.typePrice);
-    if (d.truck.currency !== 'RUB') {
-      addRow('Валюта мойки', d.truck.currency);
-    }
     if (d.truck.options.length > 0) {
       addRow('Опции');
       d.truck.options.forEach((r) => addRow('', r.name, r.price));

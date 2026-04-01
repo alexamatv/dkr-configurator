@@ -91,7 +91,6 @@ export function generatePdf(state: WizardState): void {
     ['Тип транспорта', d.header.vehicleType],
     ['Тип объекта', d.header.objectType],
     ['Регион доставки', d.header.region],
-    ['Валюта', d.header.currency],
   ]);
 
   // ─── TRUCK, ROBOT, or POSTS ───
@@ -100,8 +99,7 @@ export function generatePdf(state: WizardState): void {
     checkPage(20);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    const currSymbol = d.truck.currency === 'USD' ? '$' : '₽';
-    doc.text(`Тип: ${d.truck.typeName} — ${d.truck.typePrice.toLocaleString('ru-RU')} ${currSymbol}`, marginL + 2, y);
+    doc.text(`Тип: ${d.truck.typeName} — ${fmt(d.truck.typePrice)}`, marginL + 2, y);
     y += 5;
 
     priceTable('Опции', d.truck.options);
