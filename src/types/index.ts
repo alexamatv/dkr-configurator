@@ -48,6 +48,7 @@ export interface PostFunction {
   vacuumType?: VacuumType;
   requiresDosator?: boolean;
   selectedDosator?: DosatorChoice;
+  premiumOnly?: boolean;
   buttonPrice: number;
   kitPrice: number;
 }

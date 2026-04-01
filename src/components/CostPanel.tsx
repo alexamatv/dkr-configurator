@@ -80,9 +80,14 @@ function useCostCalc(state: WizardState) {
     secondPumpPrice = defaultAvd ? (defaultAvd.price > 0 ? defaultAvd.price : 85000) : 0;
   }
 
+  const isPremium = state.step2.profile === 'premium';
+  const premiumIncludedExtras = ['freq_converter'];
   const postExtrasPrice = state.step8.extras
     .filter((e) => e.selected)
-    .reduce((sum, e) => sum + e.price * e.quantity, 0) + secondPumpPrice;
+    .reduce((sum, e) => {
+      const price = (isPremium && premiumIncludedExtras.includes(e.id)) ? 0 : e.price;
+      return sum + price * e.quantity;
+    }, 0) + secondPumpPrice;
 
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
   const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;

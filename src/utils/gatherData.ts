@@ -271,7 +271,12 @@ export function gatherDocData(state: WizardState): DocData {
     const da = ds ? avdKits.find((k) => k.id === ds.avdId) : null;
     cpSecondPumpPrice = da ? (da.price > 0 ? da.price : 85000) : 0;
   }
-  const cpPostExtras = state.step8.extras.filter((e) => e.selected).reduce((s, e) => s + e.price * e.quantity, 0) + cpSecondPumpPrice;
+  const gIsPremium = state.step2.profile === 'premium';
+  const gPremiumIncluded = ['freq_converter'];
+  const cpPostExtras = state.step8.extras.filter((e) => e.selected).reduce((s, e) => {
+    const p = (gIsPremium && gPremiumIncluded.includes(e.id)) ? 0 : e.price;
+    return s + p * e.quantity;
+  }, 0) + cpSecondPumpPrice;
   const cpOsmosPrice = osmos?.price ?? 0;
   const cpWashExtras = state.step9.extras.filter((e) => e.selected).reduce((s, e) => s + e.price * e.quantity, 0);
   const cpPipelines = pipAir + pipWater + pipChem;

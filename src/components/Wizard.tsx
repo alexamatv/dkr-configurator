@@ -35,9 +35,26 @@ import { Step8PostExtras } from './steps/Step8PostExtras';
 import { Step9WashExtras } from './steps/Step9WashExtras';
 import { Step10Final } from './steps/Step10Final';
 
+// Функции, которые входят в комплект Премиум (становятся isBase + enabled)
+const premiumIncludedFunctions = [
+  'osmos', 'turbo_water', 'active_chem', 'call_operator',
+];
+
 function applyProfileDefaults(profileId: string) {
   const profile = profiles.find((p) => p.id === profileId);
   if (!profile) return null;
+  const isPremium = profileId === 'premium';
+
+  const step4Functions = [
+    ...defaultBaseFunctions.map((f) => ({ ...f })),
+    ...defaultExtraFunctions.map((f) => {
+      if (isPremium && premiumIncludedFunctions.includes(f.id)) {
+        return { ...f, isBase: true, enabled: true, option: undefined };
+      }
+      return { ...f };
+    }),
+  ];
+
   return {
     step2: {
       profile: profileId as WizardState['step2']['profile'],
@@ -50,6 +67,9 @@ function applyProfileDefaults(profileId: string) {
       bumModel: profile.defaultTerminal,
       paymentSystems: [...profile.defaultPayments],
       customDesign: false,
+    },
+    step4: {
+      functions: step4Functions,
     },
     step5: {
       avdSelections: [
@@ -71,12 +91,7 @@ function createInitialState(): WizardState {
     },
     step2: defaults.step2,
     step3: defaults.step3,
-    step4: {
-      functions: [
-        ...defaultBaseFunctions.map((f) => ({ ...f })),
-        ...defaultExtraFunctions.map((f) => ({ ...f })),
-      ],
-    },
+    step4: defaults.step4,
     step5: defaults.step5,
     posts: [],
     currentPostIndex: -1,
@@ -128,6 +143,7 @@ export function Wizard() {
             ...s,
             step2: defaults.step2,
             step3: { ...defaults.step3, customDesign: s.step3.customDesign },
+            step4: defaults.step4,
             step5: defaults.step5,
           };
         }
@@ -240,12 +256,7 @@ export function Wizard() {
       currentPostIndex: -1,
       step2: defaults.step2,
       step3: defaults.step3,
-      step4: {
-        functions: [
-          ...defaultBaseFunctions.map((f) => ({ ...f })),
-          ...defaultExtraFunctions.map((f) => ({ ...f })),
-        ],
-      },
+      step4: defaults.step4,
       step5: defaults.step5,
     }));
   }, [saveCurrentPostToList]);
@@ -263,7 +274,7 @@ export function Wizard() {
       case 3:
         return <Step3Terminals data={state.step3} onChange={updateStep3} />;
       case 4:
-        return <Step4Functions data={state.step4} bumModelId={state.step3.bumModel} onChange={updateStep4} />;
+        return <Step4Functions data={state.step4} bumModelId={state.step3.bumModel} profileId={state.step2.profile} onChange={updateStep4} />;
       case 5:
         return <Step5Equipment data={state.step5} profileId={state.step2.profile} onChange={updateStep5} />;
       case 6:
@@ -282,7 +293,7 @@ export function Wizard() {
       case 7:
         return <Step7Water data={state.step7} onChange={updateStep7} />;
       case 8:
-        return <Step8PostExtras data={state.step8} avdSelections={state.step5.avdSelections} onChange={updateStep8} />;
+        return <Step8PostExtras data={state.step8} avdSelections={state.step5.avdSelections} profileId={state.step2.profile} onChange={updateStep8} />;
       case 9:
         return <Step9WashExtras data={state.step9} onChange={updateStep9} />;
       case 10:

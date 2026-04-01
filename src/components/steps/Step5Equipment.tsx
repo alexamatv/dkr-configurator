@@ -11,6 +11,8 @@ interface Props {
 
 export function Step5Equipment({ data, profileId, onChange }: Props) {
   const profile = profiles.find((p) => p.id === profileId);
+  const isPremium = profileId === 'premium';
+  const filteredAvdKits = avdKits.filter((k) => !(k as { premiumOnly?: boolean }).premiumOnly || isPremium);
 
   const updateSelection = (id: string, avdId: string) => {
     onChange({
@@ -63,7 +65,7 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
                   className="flex-1 bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
                 >
                   <option value="" disabled>— Выберите помпу —</option>
-                  {avdKits.map((k) => (
+                  {filteredAvdKits.map((k) => (
                     <option key={k.id} value={k.id}>
                       {k.name}
                     </option>

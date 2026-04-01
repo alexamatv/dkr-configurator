@@ -6,10 +6,13 @@ import { dosatorOptions } from '@/data/mockData';
 interface Props {
   data: Step4Data;
   bumModelId: string;
+  profileId: string;
   onChange: (data: Step4Data) => void;
 }
 
-export function Step4Functions({ data, bumModelId, onChange }: Props) {
+export function Step4Functions({ data, bumModelId, profileId, onChange }: Props) {
+  const isPremium = profileId === 'premium';
+
   const updateFunc = (id: string, patch: Partial<PostFunction>) => {
     onChange({
       functions: data.functions.map((f) => (f.id === id ? { ...f, ...patch } : f)),
@@ -17,7 +20,7 @@ export function Step4Functions({ data, bumModelId, onChange }: Props) {
   };
 
   const baseFunctions = data.functions.filter((f) => f.isBase);
-  const extraFunctions = data.functions.filter((f) => !f.isBase);
+  const extraFunctions = data.functions.filter((f) => !f.isBase && (!f.premiumOnly || isPremium));
 
   return (
     <div className="space-y-8">
