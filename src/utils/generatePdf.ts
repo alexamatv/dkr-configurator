@@ -65,7 +65,7 @@ export function generatePdf(state: WizardState): void {
     try {
       doc.addImage(
         'data:image/png;base64,' + DKR_LOGO_BASE64,
-        'PNG', mL, 6, 48, 12
+        'PNG', mL, 5, 50, 14
       );
     } catch {
       doc.setFontSize(14);
@@ -78,12 +78,12 @@ export function generatePdf(state: WizardState): void {
     doc.setFont(F, 'normal');
     doc.setFontSize(9);
     doc.setTextColor(...MUTED);
-    doc.text(dateStr, pageW - mR, 14, { align: 'right' });
+    doc.text(dateStr, pageW - mR, 16, { align: 'right' });
 
     // Line under header
     doc.setDrawColor(...LINE);
     doc.setLineWidth(0.3);
-    doc.line(mL, 22, pageW - mR, 22);
+    doc.line(mL, 24, pageW - mR, 24);
 
     // Footer line
     doc.setDrawColor(...LINE);
