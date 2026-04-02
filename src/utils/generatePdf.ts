@@ -65,7 +65,7 @@ export function generatePdf(state: WizardState): void {
     try {
       doc.addImage(
         'data:image/png;base64,' + DKR_LOGO_BASE64,
-        'PNG', mL, 8, 45, 10
+        'PNG', mL, 6, 48, 12
       );
     } catch {
       doc.setFontSize(14);
@@ -375,7 +375,13 @@ export function generatePdf(state: WizardState): void {
   // ═══════════════════════════════════════════════════════
 
   const totalsRows: { label: string; value: string }[] = [];
-  totalsRows.push({ label: '\u0418\u0442\u043E\u0433\u043E \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', value: fmt(d.totals.subtotal) });
+  const hasExtras = d.totals.discountAmount > 0
+    || (d.totals.montageType !== '\u041D\u0435\u0442' && d.totals.montageAmount > 0)
+    || (d.totals.vatEnabled && d.totals.vatAmount > 0);
+
+  if (hasExtras) {
+    totalsRows.push({ label: '\u0418\u0442\u043E\u0433\u043E \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', value: fmt(d.totals.subtotal) });
+  }
 
   if (d.totals.discountAmount > 0) {
     totalsRows.push({ label: '\u0421\u043A\u0438\u0434\u043A\u0430 ' + d.totals.discountPct + '%', value: '\u2212 ' + fmt(d.totals.discountAmount) });
