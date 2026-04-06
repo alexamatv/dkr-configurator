@@ -188,6 +188,10 @@ function useTruckCalc(state: WizardState): CalcResult {
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
 
+  // BUR
+  const bur = burModels.find((b) => b.id === state.truckBur.burModel);
+  const burPrice = bur?.price ?? 0;
+
   // Options
   let optionsPrice = 0;
   if (isKompak) {
@@ -213,11 +217,12 @@ function useTruckCalc(state: WizardState): CalcResult {
   const waterSys = truckWaterSystems.find((w) => w.id === state.truckStep5.selectedWater);
   const waterPrice = (waterSys?.price ?? 0) + (state.truckStep5.selectedWater === 'custom' ? (state.truckStep5.customWaterPrice || 0) : 0);
 
-  const subtotal = basePrice + optionsPrice + manualPostPrice + waterPrice;
+  const subtotal = basePrice + burPrice + optionsPrice + manualPostPrice + waterPrice;
 
   // For КОМПАК: fixed montage instead of percentage
   const lines: [string, number][] = [
     ['Мойка', basePrice],
+    ['БУР', burPrice],
     ['Опции', optionsPrice],
     ['Ручной пост', manualPostPrice],
     ['Водоочистка', waterPrice],

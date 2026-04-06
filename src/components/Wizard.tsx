@@ -17,6 +17,7 @@ import type {
   RobotStep3Data,
   RobotStep4Data,
   TruckStep2Data,
+  TruckBurData,
   TruckStep3Data,
   TruckStep4Data,
   TruckStep5Data,
@@ -45,6 +46,7 @@ import { RobotStep2Model } from './steps/RobotStep2Model';
 import { RobotStep3Bur } from './steps/RobotStep3Bur';
 import { RobotStep4Options } from './steps/RobotStep4Options';
 import { TruckStep2Type } from './steps/TruckStep2Type';
+import { TruckStep3Bur } from './steps/TruckStep3Bur';
 import { TruckStep3Options } from './steps/TruckStep3Options';
 import { TruckStep4ManualPost } from './steps/TruckStep4ManualPost';
 import { TruckStep5Water } from './steps/TruckStep5Water';
@@ -149,6 +151,7 @@ function createInitialState(): WizardState {
     robotStep4: { sideBlowerEnabled: false, sideBlowerPrice: 0, guidesEnabled: false, guidesPrice: 0 },
     // Truck
     truckStep2: { selectedType: '' },
+    truckBur: { burModel: 'bur_2' },
     truckStep3: { selectedOptions: [], customOptionsPrice: 0 },
     truckStep4: { manualPostEnabled: false, avdCount: 0, hangerCount: 0 },
     truckStep5: { selectedWater: '', customWaterPrice: 0 },
@@ -160,7 +163,7 @@ export function Wizard() {
 
   const isRobot = state.step1.objectType === 'robotic';
   const isTruck = state.step1.objectType === 'truck';
-  const maxStep = isTruck ? 6 : isRobot ? 7 : 10;
+  const maxStep = isTruck ? 7 : isRobot ? 7 : 10;
 
   const setStep = (step: number) => setState((s) => ({ ...s, currentStep: Math.min(step, maxStep) }));
 
@@ -203,6 +206,7 @@ export function Wizard() {
 
   // Truck updaters
   const updateTruckStep2 = useCallback((data: TruckStep2Data) => setState((s) => ({ ...s, truckStep2: data })), []);
+  const updateTruckBur = useCallback((data: TruckBurData) => setState((s) => ({ ...s, truckBur: data })), []);
   const updateTruckStep3 = useCallback((data: TruckStep3Data) => setState((s) => ({ ...s, truckStep3: data })), []);
   const updateTruckStep4 = useCallback((data: TruckStep4Data) => setState((s) => ({ ...s, truckStep4: data })), []);
   const updateTruckStep5 = useCallback((data: TruckStep5Data) => setState((s) => ({ ...s, truckStep5: data })), []);
@@ -396,12 +400,14 @@ export function Wizard() {
       case 2:
         return <TruckStep2Type data={state.truckStep2} onChange={updateTruckStep2} />;
       case 3:
-        return <TruckStep3Options data={state.truckStep3} selectedType={state.truckStep2.selectedType} onChange={updateTruckStep3} />;
+        return <TruckStep3Bur data={state.truckBur} onChange={updateTruckBur} />;
       case 4:
-        return <TruckStep4ManualPost data={state.truckStep4} onChange={updateTruckStep4} />;
+        return <TruckStep3Options data={state.truckStep3} selectedType={state.truckStep2.selectedType} onChange={updateTruckStep3} />;
       case 5:
-        return <TruckStep5Water data={state.truckStep5} onChange={updateTruckStep5} />;
+        return <TruckStep4ManualPost data={state.truckStep4} onChange={updateTruckStep4} />;
       case 6:
+        return <TruckStep5Water data={state.truckStep5} onChange={updateTruckStep5} />;
+      case 7:
         return (
           <Step10Final
             data={state.step10}
@@ -411,7 +417,7 @@ export function Wizard() {
             onEditPost={() => {}}
             onDuplicatePost={() => {}}
             onDeletePost={() => {}}
-            title="Шаг 6. Финализация"
+            title="Шаг 7. Финализация"
           />
         );
       default:
@@ -437,7 +443,7 @@ export function Wizard() {
 
   // Water validation: for MSO on step 7, for Robot on step 5, for Truck on step 5
   const waterValid = (() => {
-    if (isTruck && state.currentStep === 5) {
+    if (isTruck && state.currentStep === 6) {
       return state.truckStep5.selectedWater !== '';
     }
     const waterStep = isRobot ? 5 : 7;

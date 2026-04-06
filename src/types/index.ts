@@ -244,6 +244,10 @@ export interface TruckStep5Data {
   customWaterPrice: number;
 }
 
+export interface TruckBurData {
+  burModel: string;
+}
+
 // ─── Wizard state ───
 
 export interface WizardState {
@@ -266,6 +270,7 @@ export interface WizardState {
   robotStep4: RobotStep4Data;
   // Truck branch
   truckStep2: TruckStep2Data;
+  truckBur: TruckBurData;
   truckStep3: TruckStep3Data;
   truckStep4: TruckStep4Data;
   truckStep5: TruckStep5Data;

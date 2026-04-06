@@ -98,6 +98,8 @@ export interface RobotBlock {
 export interface TruckBlock {
   typeName: string;
   typePrice: number;
+  burName: string;
+  burPrice: number;
   options: PostRow[];
   optionsTotal: number;
   manualPost: PostRow[];
@@ -422,6 +424,11 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
 
+  // BUR
+  const bur = burModels.find((b) => b.id === state.truckBur.burModel);
+  const burName = bur?.name ?? '—';
+  const burPrice = bur?.price ?? 0;
+
   // Options
   const options: PostRow[] = [];
   let optionsTotal = 0;
@@ -468,11 +475,13 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
     waterLabel = 'Своя стоимость';
   }
 
-  const truckTotal = basePrice + optionsTotal + manualPostTotal + waterPrice;
+  const truckTotal = basePrice + burPrice + optionsTotal + manualPostTotal + waterPrice;
 
   const truckBlock: TruckBlock = {
     typeName: truckType?.name ?? '—',
     typePrice: basePrice,
+    burName,
+    burPrice,
     options,
     optionsTotal,
     manualPost,

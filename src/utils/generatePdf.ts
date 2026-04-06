@@ -270,6 +270,11 @@ export function generatePdf(state: WizardState): void {
     priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', [
       { name: d.truck.typeName, price: d.truck.typePrice },
     ]);
+    if (d.truck.burPrice > 0) {
+      priceTable('\u0411\u0423\u0420', [
+        { name: d.truck.burName, price: d.truck.burPrice },
+      ]);
+    }
     if (d.truck.options.length > 0) {
       priceTable('\u041E\u043F\u0446\u0438\u0438', d.truck.options);
     }

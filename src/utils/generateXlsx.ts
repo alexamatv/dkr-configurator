@@ -262,6 +262,9 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     const priceRows: number[] = [];
 
     priceRows.push(addPriceRow(d.truck.typeName, d.truck.typePrice));
+    if (d.truck.burPrice > 0) {
+      priceRows.push(addPriceRow(`БУР: ${d.truck.burName}`, d.truck.burPrice));
+    }
     priceRows.push(...addPriceBlock('Опции', d.truck.options));
 
     if (d.truck.manualPost.length > 0) {
