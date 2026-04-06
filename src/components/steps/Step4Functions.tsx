@@ -19,7 +19,7 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
   };
 
   const baseFunctions = data.functions.filter((f) => f.isBase);
-  const extraFunctions = data.functions.filter((f) => !f.isBase && (!f.premiumOnly || isPremium));
+  const extraFunctions = data.functions.filter((f) => !f.isBase);
 
   return (
     <div className="space-y-8">

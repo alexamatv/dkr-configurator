@@ -12,7 +12,7 @@ interface Props {
 export function Step5Equipment({ data, profileId, onChange }: Props) {
   const profile = profiles.find((p) => p.id === profileId);
   const isPremium = profileId === 'premium';
-  const filteredAvdKits = avdKits.filter((k) => !(k as { premiumOnly?: boolean }).premiumOnly || isPremium);
+  const filteredAvdKits = avdKits;
 
   const updateSelection = (id: string, avdId: string) => {
     onChange({
