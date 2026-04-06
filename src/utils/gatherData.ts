@@ -2,6 +2,7 @@ import type { WizardState, PostConfig, PaymentSystem } from '@/types';
 import {
   profiles,
   bumModels,
+  calcBumPrice,
   paymentSystemLabels,
   avdKits,
   osmosOptions,
@@ -137,7 +138,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
 
   const bum = bumModels.find((b) => b.id === post.bumModel);
   const bumName = bum?.name ?? '—';
-  const bumPrice = bum?.price ?? 0;
+  const bumPrice = calcBumPrice(post.bumModel, post.profile);
 
   // Payment systems: show all selected + removal discounts for deselected base items
   const payments: PostRow[] = post.paymentSystems.map((ps) => ({

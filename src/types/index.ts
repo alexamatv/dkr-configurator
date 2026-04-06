@@ -17,6 +17,7 @@ export interface BumModel {
   description: string;
   maxButtons: number;
   price: number;
+  realPrice: number;
 }
 
 export interface ProfileConfig {

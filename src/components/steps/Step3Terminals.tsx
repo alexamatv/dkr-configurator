@@ -1,16 +1,18 @@
 'use client';
 
 import type { Step3Data, PaymentSystem } from '@/types';
-import { bumModels, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
+import { bumModels, calcBumPrice, getDefaultBumForProfile, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
 
 interface Props {
   data: Step3Data;
   onChange: (data: Step3Data) => void;
+  profile: string;
 }
 
 const paymentSystems: PaymentSystem[] = ['bill_acceptor', 'coin_acceptor', 'loyalty_reader', 'acquiring', 'qr_payment'];
 
-export function Step3Terminals({ data, onChange }: Props) {
+export function Step3Terminals({ data, onChange, profile }: Props) {
+  const defaultBumId = getDefaultBumForProfile(profile);
   const togglePayment = (ps: PaymentSystem) => {
     const has = data.paymentSystems.includes(ps);
     onChange({
@@ -28,21 +30,30 @@ export function Step3Terminals({ data, onChange }: Props) {
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Модель БУМа</label>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {bumModels.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => onChange({ ...data, bumModel: b.id })}
-              className={`radio-card ${data.bumModel === b.id ? 'selected' : ''}`}
-            >
-              <div className="w-full h-24 bg-border/30 rounded mb-3 flex items-center justify-center text-3xl text-muted">
-                📟
-              </div>
-              <div className="font-bold">{b.name}</div>
-              <div className="text-xs text-muted mt-1">{b.description}</div>
-              <div className="text-xs text-accent mt-1">До {b.maxButtons} кнопок</div>
-              <div className="text-accent font-bold mt-2">{b.price.toLocaleString('ru-RU')} ₽</div>
-            </button>
-          ))}
+          {bumModels.map((b) => {
+            const isDefault = b.id === defaultBumId;
+            const bumCost = calcBumPrice(b.id, profile);
+            return (
+              <button
+                key={b.id}
+                onClick={() => onChange({ ...data, bumModel: b.id })}
+                className={`radio-card ${data.bumModel === b.id ? 'selected' : ''}`}
+              >
+                <div className="w-full h-24 bg-border/30 rounded mb-3 flex items-center justify-center text-3xl text-muted">
+                  📟
+                </div>
+                <div className="font-bold">{b.name}</div>
+                <div className="text-xs text-muted mt-1">{b.description}</div>
+                <div className="text-xs text-accent mt-1">До {b.maxButtons} кнопок</div>
+                <div className="text-xs text-muted mt-1">Терминал: {b.realPrice.toLocaleString('ru-RU')} ₽</div>
+                {isDefault ? (
+                  <div className="text-success font-bold mt-1">Входит в комплект</div>
+                ) : (
+                  <div className="text-accent font-bold mt-1">{bumCost.toLocaleString('ru-RU')} ₽</div>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

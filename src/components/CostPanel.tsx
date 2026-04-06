@@ -5,6 +5,7 @@ import type { WizardState, Step10Data, MontageType } from '@/types';
 import {
   profiles,
   bumModels,
+  calcBumPrice,
   avdKits,
   osmosOptions,
   arasModels,
@@ -61,8 +62,7 @@ function useMsoCalc(state: WizardState): CalcResult {
 
   const kitPrice = basePrice + accessoriesPrice;
 
-  const bum = bumModels.find((b) => b.id === state.step3.bumModel);
-  const bumUpgrade = bum?.price ?? 0;
+  const bumUpgrade = calcBumPrice(state.step3.bumModel, state.step2.profile);
 
   const paymentUpgrade = calcPaymentCost(state.step3.paymentSystems);
 

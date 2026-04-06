@@ -136,18 +136,36 @@ export const defaultAccessories: Accessory[] = [
 ];
 
 export const bumModels: BumModel[] = [
-  { id: 'model_20', name: 'БУМ №20', description: 'Входит в комплект (145 000 ₽)', maxButtons: 5, price: 0 },
-  { id: 'model_3', name: 'БУМ №3', description: 'Базовый терминал (170 000 ₽)', maxButtons: 8, price: 25000 },
-  { id: 'model_4', name: 'БУМ №4', description: 'Терминал (182 000 ₽)', maxButtons: 8, price: 37000 },
-  { id: 'model_6', name: 'БУМ №6', description: 'Компактный терминал (192 000 ₽)', maxButtons: 8, price: 47000 },
-  { id: 'model_7', name: 'БУМ №7', description: 'Терминал (352 000 ₽)', maxButtons: 12, price: 207000 },
-  { id: 'model_11', name: 'БУМ №11', description: 'Терминал (182 000 ₽)', maxButtons: 8, price: 37000 },
-  { id: 'model_12', name: 'БУМ №12', description: 'Терминал (215 000 ₽)', maxButtons: 10, price: 70000 },
-  { id: 'model_13', name: 'БУМ №13', description: 'Сенсорный терминал (395 000 ₽)', maxButtons: 10, price: 250000 },
-  { id: 'model_15_buttons', name: 'БУМ №15 (кнопки)', description: 'С кнопками, экран не сенсорный (330 000 ₽)', maxButtons: 12, price: 185000 },
-  { id: 'model_15_screen', name: 'БУМ №15 (строчный экран)', description: 'Строчный экран (220 000 ₽)', maxButtons: 12, price: 75000 },
-  { id: 'model_27', name: 'БУМ №27', description: 'Терминал (215 000 ₽)', maxButtons: 10, price: 70000 },
+  { id: 'model_20', name: 'БУМ №20', description: 'Входит в комплект (145 000 ₽)', maxButtons: 5, price: 0, realPrice: 145000 },
+  { id: 'model_3', name: 'БУМ №3', description: 'Базовый терминал (170 000 ₽)', maxButtons: 8, price: 25000, realPrice: 170000 },
+  { id: 'model_4', name: 'БУМ №4', description: 'Терминал (182 000 ₽)', maxButtons: 8, price: 37000, realPrice: 182000 },
+  { id: 'model_6', name: 'БУМ №6', description: 'Компактный терминал (192 000 ₽)', maxButtons: 8, price: 47000, realPrice: 192000 },
+  { id: 'model_7', name: 'БУМ №7', description: 'Терминал (352 000 ₽)', maxButtons: 12, price: 207000, realPrice: 352000 },
+  { id: 'model_11', name: 'БУМ №11', description: 'Терминал (182 000 ₽)', maxButtons: 8, price: 37000, realPrice: 182000 },
+  { id: 'model_12', name: 'БУМ №12', description: 'Терминал (215 000 ₽)', maxButtons: 10, price: 70000, realPrice: 215000 },
+  { id: 'model_13', name: 'БУМ №13', description: 'Сенсорный терминал (395 000 ₽)', maxButtons: 10, price: 250000, realPrice: 395000 },
+  { id: 'model_15_buttons', name: 'БУМ №15 (кнопки)', description: 'С кнопками, экран не сенсорный (330 000 ₽)', maxButtons: 12, price: 185000, realPrice: 330000 },
+  { id: 'model_15_screen', name: 'БУМ №15 (строчный экран)', description: 'Строчный экран (220 000 ₽)', maxButtons: 12, price: 75000, realPrice: 220000 },
+  { id: 'model_27', name: 'БУМ №27', description: 'Терминал (215 000 ₽)', maxButtons: 10, price: 70000, realPrice: 215000 },
 ];
+
+const defaultBumByProfile: Record<string, string> = {
+  start: 'model_20',
+  standard: 'model_20',
+  premium: 'model_13',
+};
+
+export function calcBumPrice(bumId: string, profileId: string): number {
+  const bum = bumModels.find((b) => b.id === bumId);
+  if (!bum) return 0;
+  const defaultBumId = defaultBumByProfile[profileId] || 'model_20';
+  if (bumId === defaultBumId) return 0;
+  return bum.realPrice;
+}
+
+export function getDefaultBumForProfile(profileId: string): string {
+  return defaultBumByProfile[profileId] || 'model_20';
+}
 
 export const paymentSystemLabels: Record<string, string> = {
   bill_acceptor: 'Купюроприемник ICT A7',

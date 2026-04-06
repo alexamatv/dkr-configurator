@@ -320,7 +320,7 @@ export function Wizard() {
       case 2:
         return <Step2BaseConfig data={state.step2} onChange={updateStep2} />;
       case 3:
-        return <Step3Terminals data={state.step3} onChange={updateStep3} />;
+        return <Step3Terminals data={state.step3} onChange={updateStep3} profile={state.step2.profile} />;
       case 4:
         return <Step4Functions data={state.step4} bumModelId={state.step3.bumModel} profileId={state.step2.profile} onChange={updateStep4} />;
       case 5:
