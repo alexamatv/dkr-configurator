@@ -477,6 +477,17 @@ export const truckManualPostMontage = 200000;
 
 export const kompakMontagePrice = 1080000;
 
+export const robotExtraEquipment = [
+  { id: 'foam_lava', name: 'Пена лава', price: 220000, note: '1 и 2 комплектация' },
+  { id: 'extra_chem', name: 'Доп. вид химии', price: 50000, note: 'бюджетный' },
+  { id: 'underbody_wash', name: 'Мойка днища', price: 120000, note: 'бюджетный' },
+  { id: 'side_wash', name: 'Боковая мойка', price: 75000, note: 'бюджетный' },
+  { id: 'belt_protection', name: 'Защита обрыва ремня', price: 75000, note: '1-2 комплектации' },
+  { id: 'side_dryer', name: 'Боковая сушка', price: 250000, note: 'все комплектации' },
+  { id: 'motor_22kw', name: 'Двигатель 22,5 кВт', price: 80000, note: '' },
+  { id: 'dry_run_control', name: 'Контроль сухого хода помпы', price: 40000, note: 'бюджетный' },
+];
+
 export const truckWaterSystems = [
   { id: 'none', name: 'Не нужно', price: 0 },
   { id: 'cyclone7', name: 'Циклон 7 (7 м³/час)', price: 5250000 },

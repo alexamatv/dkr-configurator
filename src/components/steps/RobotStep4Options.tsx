@@ -1,6 +1,7 @@
 'use client';
 
 import type { RobotStep4Data } from '@/types';
+import { robotExtraEquipment } from '@/data/mockData';
 
 interface Props {
   data: RobotStep4Data;
@@ -102,6 +103,44 @@ export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
               <span className="text-xs text-muted">₽</span>
             </div>
           )}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-muted mb-3">Дополнительное оборудование</label>
+        <div className="space-y-3">
+          {robotExtraEquipment.map((item) => {
+            const entry = data.extras?.find((e) => e.id === item.id);
+            const selected = entry?.selected ?? false;
+            const toggleExtra = () => {
+              const newExtras = (data.extras ?? []).map((e) =>
+                e.id === item.id ? { ...e, selected: !e.selected } : e,
+              );
+              onChange({ ...data, extras: newExtras });
+            };
+            return (
+              <label
+                key={item.id}
+                className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
+                  selected ? 'border-accent bg-accent/10' : 'border-border bg-surface hover:border-accent/50'
+                }`}
+              >
+                <input type="checkbox" checked={selected} onChange={toggleExtra} className="sr-only" />
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                  selected ? 'border-accent bg-accent' : 'border-border'
+                }`}>
+                  {selected && <span className="text-white text-xs">✓</span>}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-medium">{item.name}</div>
+                  {item.note && <div className="text-xs text-muted">{item.note}</div>}
+                </div>
+                <div className="text-accent font-bold text-sm shrink-0">
+                  {item.price.toLocaleString('ru-RU')} ₽
+                </div>
+              </label>
+            );
+          })}
         </div>
       </div>
     </div>

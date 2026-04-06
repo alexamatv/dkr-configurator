@@ -29,6 +29,7 @@ import {
   profiles,
   defaultPostExtras,
   defaultWashExtras,
+  robotExtraEquipment,
 } from '@/data/mockData';
 import { StepNavigation } from './StepNavigation';
 import { CostPanel } from './CostPanel';
@@ -148,7 +149,7 @@ function createInitialState(): WizardState {
     // Robot
     robotStep2: { robotModel: '' },
     robotStep3: { burModel: '' },
-    robotStep4: { sideBlowerEnabled: false, sideBlowerPrice: 0, guidesEnabled: false, guidesPrice: 0 },
+    robotStep4: { sideBlowerEnabled: false, sideBlowerPrice: 0, guidesEnabled: false, guidesPrice: 0, extras: robotExtraEquipment.map((e) => ({ id: e.id, selected: false })) },
     // Truck
     truckStep2: { selectedType: '' },
     truckBur: { burModel: 'bur_2' },

@@ -220,6 +220,7 @@ export interface RobotStep4Data {
   sideBlowerPrice: number;
   guidesEnabled: boolean;
   guidesPrice: number;
+  extras: { id: string; selected: boolean }[];
 }
 
 // ─── Truck types ───

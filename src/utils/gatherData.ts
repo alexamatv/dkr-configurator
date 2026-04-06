@@ -23,6 +23,7 @@ import {
   truckManualPostMontage,
   truckWaterSystems,
   kompakMontagePrice,
+  robotExtraEquipment,
 } from '@/data/mockData';
 
 // ─── Shared types ───
@@ -92,6 +93,8 @@ export interface RobotBlock {
   burPrice: number;
   options: PostRow[];
   optionsTotal: number;
+  extras: PostRow[];
+  extrasTotal: number;
   robotTotal: number;
 }
 
@@ -384,7 +387,16 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
     options.push({ name: 'Направляющие', price: state.robotStep4.guidesPrice || 0 });
   }
   const optionsTotal = options.reduce((s, r) => s + r.price, 0);
-  const robotTotal = robotPrice + burPrice + optionsTotal;
+
+  const extras: PostRow[] = (state.robotStep4.extras ?? [])
+    .filter((e) => e.selected)
+    .map((e) => {
+      const item = robotExtraEquipment.find((r) => r.id === e.id);
+      return { name: item?.name ?? e.id, price: item?.price ?? 0 };
+    });
+  const extrasTotal = extras.reduce((s, r) => s + r.price, 0);
+
+  const robotTotal = robotPrice + burPrice + optionsTotal + extrasTotal;
 
   const robotBlock: RobotBlock = {
     modelName: robot?.name ?? '—',
@@ -394,6 +406,8 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
     burPrice,
     options,
     optionsTotal,
+    extras,
+    extrasTotal,
     robotTotal,
   };
 

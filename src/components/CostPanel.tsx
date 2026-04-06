@@ -21,6 +21,7 @@ import {
   truckManualPostMontage,
   truckWaterSystems,
   kompakMontagePrice,
+  robotExtraEquipment,
 } from '@/data/mockData';
 
 interface CostPanelProps {
@@ -147,7 +148,13 @@ function useRobotCalc(state: WizardState): CalcResult {
   const guidesIncluded = ['premium_360', 'cosmo_360'].includes(state.robotStep2.robotModel);
   const sideBlowerCost = state.robotStep4.sideBlowerEnabled ? (state.robotStep4.sideBlowerPrice || 0) : 0;
   const guidesCost = (!guidesIncluded && state.robotStep4.guidesEnabled) ? (state.robotStep4.guidesPrice || 0) : 0;
-  const optionsTotal = sideBlowerCost + guidesCost;
+  const robotExtrasTotal = (state.robotStep4.extras ?? [])
+    .filter((e) => e.selected)
+    .reduce((sum, e) => {
+      const item = robotExtraEquipment.find((r) => r.id === e.id);
+      return sum + (item?.price ?? 0);
+    }, 0);
+  const optionsTotal = sideBlowerCost + guidesCost + robotExtrasTotal;
 
   // Water (reuses step7)
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);

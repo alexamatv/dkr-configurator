@@ -300,6 +300,9 @@ export function generatePdf(state: WizardState): void {
     if (d.robot.options.length > 0) {
       priceTable('\u041E\u043F\u0446\u0438\u0438 \u0440\u043E\u0431\u043E\u0442\u0430', d.robot.options);
     }
+    if (d.robot.extras && d.robot.extras.length > 0) {
+      priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', d.robot.extras);
+    }
     subtotalLine('\u0418\u0442\u043E\u0433\u043E \u0440\u043E\u0431\u043E\u0442:', d.robot.robotTotal);
 
   } else {

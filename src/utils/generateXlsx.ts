@@ -289,6 +289,9 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     }
     priceRows.push(addPriceRow(`БУР: ${d.robot.burName}`, d.robot.burPrice));
     priceRows.push(...addPriceBlock('Опции робота', d.robot.options));
+    if (d.robot.extras && d.robot.extras.length > 0) {
+      priceRows.push(...addPriceBlock('Доп. оборудование', d.robot.extras));
+    }
 
     equipmentSubtotalRows.push(addFormulaSubtotal('Итого робот', priceRows, d.robot.robotTotal));
 
