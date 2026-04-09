@@ -50,12 +50,12 @@ export function Step2BaseConfig({ data, onChange }: Props) {
   const isHose = (id: string) => id === 'hose_4m' || id === 'hose_5m';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 2. Базовая комплектация</h2>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Профиль</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[900px]">
           {profiles.map((p) => {
             const isSelected = data.profile === p.id;
             const isExpanded = expandedProfile === p.id;
@@ -70,7 +70,7 @@ export function Step2BaseConfig({ data, onChange }: Props) {
                 >
                   <div className="font-bold text-lg">{p.name}</div>
                   <div className="text-xs text-muted mt-1">{p.description}</div>
-                  <div className="text-accent font-bold mt-3">
+                  <div className="text-accent font-bold text-xl mt-3">
                     {p.price.toLocaleString('ru-RU')} ₽
                   </div>
                 </button>
@@ -139,9 +139,9 @@ export function Step2BaseConfig({ data, onChange }: Props) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">{acc.name}</div>
-                    <div className="text-xs text-muted">
-                      {effectivePrice.toLocaleString('ru-RU')} ₽
-                      {inKit && acc.selected ? ' (в комплекте)' : ''}
+                    <div className="text-sm">
+                      <span className="font-bold text-accent">{effectivePrice.toLocaleString('ru-RU')} ₽</span>
+                      {inKit && acc.selected && <span className="text-muted italic text-xs ml-1">(в комплекте)</span>}
                     </div>
                   </div>
                 </label>

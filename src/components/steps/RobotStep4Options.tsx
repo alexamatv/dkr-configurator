@@ -16,7 +16,7 @@ export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
   const guidesIncluded = guidesIncludedIn.includes(robotModelId);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 4. Дополнительные опции робота</h2>
 
       <div className="space-y-3">

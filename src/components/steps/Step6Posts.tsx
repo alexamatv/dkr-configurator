@@ -87,7 +87,7 @@ export function Step6Posts({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 6. Формирование постов</h2>
 
       <div className="flex items-center gap-3 px-4 py-3 bg-accent/10 border border-accent/30 rounded-lg">

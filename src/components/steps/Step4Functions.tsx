@@ -22,7 +22,7 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
   const extraFunctions = data.functions.filter((f) => !f.isBase);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 4. Функции на посту</h2>
 
       <div>

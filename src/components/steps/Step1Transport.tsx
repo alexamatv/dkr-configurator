@@ -12,12 +12,12 @@ export function Step1Transport({ data, onChange }: Props) {
   const update = (patch: Partial<Step1Data>) => onChange({ ...data, ...patch });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 1. Тип транспорта и объекта</h2>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Тип транспортного средства</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[820px]">
           {([['passenger', 'Легковой (коммерческий)'], ['truck', 'Грузовой']] as const).map(([value, label]) => (
             <button
               key={value}
@@ -25,7 +25,6 @@ export function Step1Transport({ data, onChange }: Props) {
                 if (value === 'truck') {
                   update({ vehicleType: 'truck', objectType: 'truck' });
                 } else {
-                  // Switching back to passenger — reset objectType so user picks MSO/Robot
                   update({ vehicleType: 'passenger', objectType: 'self_service' });
                 }
               }}
@@ -41,7 +40,7 @@ export function Step1Transport({ data, onChange }: Props) {
       {data.vehicleType === 'passenger' && (
         <div>
           <label className="block text-sm font-medium text-muted mb-3">Тип объекта</label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[820px]">
             {([
               ['self_service', 'Мойка самообслуживания'],
               ['robotic', 'Роботизированная мойка'],
@@ -58,7 +57,7 @@ export function Step1Transport({ data, onChange }: Props) {
         </div>
       )}
 
-      <div>
+      <div className="max-w-[480px]">
         <label className="block text-sm font-medium text-muted mb-2">Клиент</label>
         <div className="flex gap-2">
           <input
@@ -66,20 +65,20 @@ export function Step1Transport({ data, onChange }: Props) {
             value={data.clientSearch}
             onChange={(e) => update({ clientSearch: e.target.value })}
             placeholder="Поиск клиента..."
-            className="flex-1 bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
+            className="flex-1 h-11 bg-surface border border-border rounded-lg px-3 text-sm focus:outline-none focus:border-accent"
           />
-          <button className="px-4 py-2 bg-accent text-white text-sm rounded hover:bg-accent-hover transition-colors">
+          <button className="w-[120px] h-11 bg-accent text-white text-sm rounded-lg hover:bg-accent-hover transition-colors">
             + Добавить
           </button>
         </div>
       </div>
 
-      <div>
+      <div className="max-w-[480px]">
         <label className="block text-sm font-medium text-muted mb-2">Менеджер</label>
         <select
           value={data.manager}
           onChange={(e) => update({ manager: e.target.value })}
-          className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
+          className="w-full h-11 bg-surface border border-border rounded-lg px-3 text-sm focus:outline-none focus:border-accent"
         >
           <option value="">Выберите менеджера</option>
           {managers.map((m) => (

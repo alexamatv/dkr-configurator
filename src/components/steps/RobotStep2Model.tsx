@@ -13,7 +13,7 @@ export function RobotStep2Model({ data, onChange }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(data.robotModel || null);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 2. Модель робота</h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

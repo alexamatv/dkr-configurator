@@ -17,7 +17,7 @@ export function TruckStep4ManualPost({ data, onChange }: Props) {
   const totalMontage = data.manualPostEnabled ? truckManualPostMontage : 0;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 4. Ручной пост</h2>
 
       <label className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-colors ${

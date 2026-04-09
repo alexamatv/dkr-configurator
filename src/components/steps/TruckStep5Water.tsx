@@ -13,7 +13,7 @@ export function TruckStep5Water({ data, onChange }: Props) {
   const isCustom = data.selectedWater === 'custom';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 5. Водоочистка</h2>
 
       <div>

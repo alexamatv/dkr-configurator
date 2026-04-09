@@ -21,7 +21,7 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
   const update = (patch: Partial<Step10Data>) => onChange({ ...data, ...patch });
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">{title ?? 'Шаг 10. Финализация'}</h2>
 
       {posts.length > 0 && (
@@ -166,23 +166,20 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
       </div>
 
       <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
-        <button className="px-5 py-2.5 bg-accent text-white font-medium rounded hover:bg-accent-hover transition-colors">
+        <button className="w-[200px] h-11 bg-accent text-white font-medium rounded-lg hover:bg-accent-hover transition-colors text-sm">
           Сохранить черновик
         </button>
         <button
           onClick={() => generatePdf(wizardState)}
-          className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors"
+          className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm"
         >
           Скачать PDF
         </button>
         <button
           onClick={() => { generateXlsx(wizardState); }}
-          className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors"
+          className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm"
         >
           Скачать Excel
-        </button>
-        <button className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors text-muted">
-          Сохранить как шаблон (заглушка)
         </button>
       </div>
     </div>

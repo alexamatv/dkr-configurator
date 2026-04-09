@@ -27,7 +27,7 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">{title ?? 'Шаг 9. Доп. оборудование на мойку'}</h2>
 
       <div>

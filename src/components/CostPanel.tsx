@@ -338,9 +338,9 @@ function CostContent({
   return (
     <div className="p-4 space-y-3 text-sm">
       {lines.map(([label, value]) => (
-        <div key={label} className="flex justify-between">
+        <div key={label} className="flex justify-between text-sm">
           <span className="text-muted">{label}</span>
-          <span className="font-medium">{fmt(value)}</span>
+          <span className="font-medium tabular-nums">{fmt(value)}</span>
         </div>
       ))}
 
@@ -358,7 +358,7 @@ function CostContent({
             />
             <span className="text-muted text-xs">%</span>
           </div>
-          <span className={`font-medium ${discountAmount > 0 ? 'text-success' : ''}`}>
+          <span className={`font-medium tabular-nums ${discountAmount > 0 ? 'text-success' : ''}`}>
             −{fmt(discountAmount)}
           </span>
         </div>
@@ -392,7 +392,7 @@ function CostContent({
                 </>
               )}
             </label>
-            <span className="font-medium">
+            <span className="font-medium tabular-nums">
               {vatEnabled ? fmt(vatAmount) : 'не применяется'}
             </span>
           </div>
@@ -401,7 +401,7 @@ function CostContent({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-muted">Монтаж</span>
-            <span className="font-medium">{fmt(montageAmount)}</span>
+            <span className="font-medium tabular-nums">{fmt(montageAmount)}</span>
           </div>
           <div className="flex gap-1">
             {montageOptions.map((opt) => (
@@ -442,15 +442,15 @@ function CostContent({
 
       </div>
 
-      <div className="border-t border-border pt-3">
-        <div className="flex justify-between text-lg font-bold">
-          <span>ИТОГО</span>
-          <span className="text-accent">{fmt(total)}</span>
+      <div className="border-t-2 border-accent/30 pt-4">
+        <div className="flex justify-between items-baseline">
+          <span className="text-lg font-bold">ИТОГО</span>
+          <span className="text-2xl font-bold text-accent tabular-nums">{fmt(total)}</span>
         </div>
-        {postCount > 0 && (
+        {postCount > 1 && (
           <div className="flex justify-between text-xs text-muted mt-1">
-            <span>{postCount > 1 ? `Цена на 1 ${unitLabel}` : ''}</span>
-            <span>{postCount > 1 ? fmt(total / postCount) : ''}</span>
+            <span>Цена на 1 {unitLabel}</span>
+            <span className="tabular-nums">{fmt(total / postCount)}</span>
           </div>
         )}
       </div>

@@ -14,7 +14,7 @@ export function Step7Water({ data, onChange, title }: Props) {
   const notReady = (data.osmosOption === '' || data.arasModel === '') && !(data.customWaterPrice > 0);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">{title ?? 'Шаг 7. Водоподготовка'}</h2>
 
       <div>

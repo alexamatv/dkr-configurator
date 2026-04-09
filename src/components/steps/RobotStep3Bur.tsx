@@ -10,7 +10,7 @@ interface Props {
 
 export function RobotStep3Bur({ data, onChange }: Props) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 3. Выбор БУР</h2>
 
       <div>

@@ -24,12 +24,12 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 3. Терминалы / БУМы</h2>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Модель БУМа</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[820px]">
           {bumModels.map((b) => {
             const isDefault = b.id === defaultBumId;
             const bumCost = calcBumPrice(b.id, profile);
@@ -47,10 +47,10 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
                 <div className="text-xs text-accent mt-1">До {b.maxButtons} кнопок</div>
                 <div className="text-xs text-muted mt-1">Терминал: {b.realPrice.toLocaleString('ru-RU')} ₽</div>
                 {isDefault ? (
-                  <div className="text-success font-bold mt-1">Входит в комплект</div>
+                  <div className="text-success font-bold text-lg mt-2">Входит в комплект</div>
                 ) : (
-                  <div className="text-accent font-bold mt-1">
-                    Замена БУМа: {bumCost >= 0 ? '+' : ''}{bumCost.toLocaleString('ru-RU')} ₽
+                  <div className="text-accent font-bold text-lg mt-2">
+                    {bumCost >= 0 ? '+' : ''}{bumCost.toLocaleString('ru-RU')} ₽
                   </div>
                 )}
               </button>

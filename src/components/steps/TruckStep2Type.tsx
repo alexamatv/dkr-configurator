@@ -10,7 +10,7 @@ interface Props {
 
 export function TruckStep2Type({ data, onChange }: Props) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 2. Тип грузовой мойки</h2>
 
       <div className="grid grid-cols-1 gap-4">

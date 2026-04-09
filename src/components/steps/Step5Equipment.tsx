@@ -41,7 +41,7 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 5. Выбор помпы</h2>
 
       {profile && (

@@ -45,7 +45,7 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
   const secondPumpName = defaultAvd?.name?.replace(' (входит в комплект)', '') ?? 'Не выбрана';
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 8. Доп. оборудование к посту</h2>
 
       <div className="space-y-2">
