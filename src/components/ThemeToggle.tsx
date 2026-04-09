@@ -19,7 +19,7 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className="flex items-center h-8 w-40 rounded-full bg-border p-0.5 shrink-0">
+    <div className="flex items-center h-7 w-full max-w-[160px] rounded-full bg-border p-0.5 shrink-0">
       <button
         onClick={() => select('light')}
         className={`flex-1 h-full rounded-full text-xs font-semibold transition-all duration-200 ${

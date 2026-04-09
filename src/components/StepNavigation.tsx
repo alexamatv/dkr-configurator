@@ -67,7 +67,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:flex w-[250px] shrink-0 bg-surface border-r border-border overflow-y-auto flex-col">
-        <div className="p-4 border-b border-border flex items-center justify-between">
+        <div className="p-4 border-b border-border space-y-3">
           <div>
             <h2 className="text-lg font-bold text-accent">{title}</h2>
             <p className="text-xs text-muted mt-1">DKR Group</p>
