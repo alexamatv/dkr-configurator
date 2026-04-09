@@ -462,10 +462,13 @@ export const truckWashTypes = [
 ];
 
 export const kompakOptions = [
-  { id: 'active_chem', name: 'Система нанесения активной химии', price: 1755000 },
-  { id: 'lower_hd', name: 'Нижний контур высокого давления', price: 740000 },
-  { id: 'underbody', name: 'Мойка днища ВД', price: 720000 },
-  { id: 'hd_block', name: 'Блок высокого давления 16.5 кВт', price: 1820000 },
+  { id: 'active_chem', name: 'Система нанесения активной химии', price: 1010000 },
+  { id: 'lower_hd', name: 'Нижний контур высокого давления', price: 452000 },
+  { id: 'underbody', name: 'Мойка днища высоким давлением', price: 764000 },
+  { id: 'hd_block', name: 'Блок высокого давления 16.5 кВт', price: 1073000 },
+  { id: 'wax', name: 'Нанесение воска', price: 58000 },
+  { id: 'filter', name: 'Магистральный фильтр с промывкой', price: 32000 },
+  { id: 'emergency_btn', name: 'Доп. кнопка аварийного отключения', price: 21000 },
 ];
 
 export const truckManualPostEquipment = [
