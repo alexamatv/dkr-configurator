@@ -466,7 +466,13 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const isRobot = state.step1.objectType === 'robotic';
   const isTruck = state.step1.objectType === 'truck';
-  const calc = isTruck ? useTruckCalc(state) : isRobot ? useRobotCalc(state) : useMsoCalc(state);
+  const rawCalc = isTruck ? useTruckCalc(state) : isRobot ? useRobotCalc(state) : useMsoCalc(state);
+  // Show zeros on step 1 before any configuration
+  const calc = state.currentStep === 1 ? {
+    ...rawCalc,
+    lines: rawCalc.lines.map(([label]) => [label, 0] as [string, number]),
+    subtotal: 0, discountAmount: 0, vatAmount: 0, montageAmount: 0, montagePct: 0, montageExtra: 0, total: 0,
+  } : rawCalc;
 
   return (
     <>

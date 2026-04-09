@@ -71,10 +71,16 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
           <p className="text-xs text-muted mt-1">DKR Group</p>
         </div>
         <nav className="py-2">
-          {steps.map((step) => {
+          {steps.map((step, idx) => {
             const isActive = currentStep === step.number;
             const isPast = currentStep > step.number;
+            const prevStep = idx > 0 ? steps[idx - 1] : null;
+            const showDivider = prevStep && prevStep.scope !== 'wash' && step.scope === 'wash';
             return (
+              <div key={step.number}>
+              {showDivider && (
+                <div className="mx-4 my-2 border-t border-[#333]" />
+              )}
               <button
                 key={step.number}
                 onClick={() => onStepClick(step.number)}
@@ -89,7 +95,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
                     isActive
                       ? 'bg-accent text-white'
                       : isPast
-                        ? 'bg-success/20 text-success'
+                        ? 'bg-success text-white'
                         : 'bg-border text-muted'
                   }`}
                 >
@@ -109,6 +115,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
                   )}
                 </div>
               </button>
+              </div>
             );
           })}
         </nav>
@@ -137,7 +144,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
                     isActive
                       ? 'bg-accent text-white'
                       : isPast
-                        ? 'bg-success/20 text-success'
+                        ? 'bg-success text-white'
                         : 'bg-border text-muted'
                   }`}
                 >

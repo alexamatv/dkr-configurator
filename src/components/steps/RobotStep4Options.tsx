@@ -23,7 +23,7 @@ export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
         {/* Боковая сушка */}
         <div
           className={`p-4 rounded-lg border-2 transition-colors ${
-            data.sideBlowerEnabled ? 'border-accent bg-accent/5' : 'border-border bg-surface'
+            data.sideBlowerEnabled ? 'border-accent bg-accent/10' : 'border-border bg-surface'
           }`}
         >
           <label className="flex items-center gap-3 cursor-pointer">
@@ -63,7 +63,7 @@ export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
         {/* Направляющие для заезда */}
         <div
           className={`p-4 rounded-lg border-2 transition-colors ${
-            data.guidesEnabled || guidesIncluded ? 'border-accent bg-accent/5' : 'border-border bg-surface'
+            data.guidesEnabled || guidesIncluded ? 'border-accent bg-accent/10' : 'border-border bg-surface'
           }`}
         >
           <label className="flex items-center gap-3 cursor-pointer">

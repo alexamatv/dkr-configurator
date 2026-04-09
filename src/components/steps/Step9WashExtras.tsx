@@ -67,7 +67,7 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
             <div
               key={item.id}
               className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
-                item.selected ? 'border-accent bg-accent/5' : 'border-border bg-surface'
+                item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
               }`}
             >
               <label className="flex items-center gap-3 flex-1 cursor-pointer">
@@ -103,7 +103,7 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Магистрали</label>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {([
             ['pipelinesAirPrice', 'Воздушные, ₽'],
             ['pipelinesWaterPrice', 'Водные, ₽'],

@@ -1,15 +1,15 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0B1120;
-  --foreground: #E2E8F0;
-  --surface: #1E293B;
-  --surface-hover: #334155;
-  --border: #334155;
-  --accent: #3B82F6;
-  --accent-hover: #2563EB;
-  --muted: #94A3B8;
-  --success: #22C55E;
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --surface: #111111;
+  --surface-hover: #1A1A1A;
+  --border: #333333;
+  --accent: #0061FE;
+  --accent-hover: #2979FF;
+  --muted: #B0B0B0;
+  --success: #00C853;
   --danger: #EF4444;
 }
 
@@ -73,5 +73,7 @@ body {
 }
 .radio-card.selected {
   border-color: var(--accent);
-  background: rgba(59, 130, 246, 0.1);
+  border-width: 3px;
+  background: rgba(0, 97, 254, 0.08);
+  box-shadow: 0 0 12px rgba(0, 97, 254, 0.4);
 }

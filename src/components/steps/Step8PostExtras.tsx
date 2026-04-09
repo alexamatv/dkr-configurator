@@ -53,7 +53,7 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
         {defaultAvd && (
           <div
             className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-colors ${
-              data.secondPumpEnabled ? 'border-accent bg-accent/5' : 'border-border bg-surface'
+              data.secondPumpEnabled ? 'border-accent bg-accent/10' : 'border-border bg-surface'
             }`}
           >
             <label className="flex items-center gap-3 flex-1 cursor-pointer">
@@ -84,7 +84,7 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
             <div
               key={item.id}
               className={`flex items-center gap-4 p-4 rounded-lg border-2 transition-colors ${
-                item.selected ? 'border-accent bg-accent/5' : 'border-border bg-surface'
+                item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
               }`}
             >
               <label className="flex items-center gap-3 flex-1 cursor-pointer">

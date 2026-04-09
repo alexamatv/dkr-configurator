@@ -67,7 +67,7 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
               <div
                 key={f.id}
                 className={`p-4 rounded-lg border-2 transition-colors ${
-                  isActive ? 'border-accent bg-accent/5' : 'border-border bg-surface'
+                  isActive ? 'border-accent bg-accent/10' : 'border-border bg-surface'
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
