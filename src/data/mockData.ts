@@ -160,7 +160,16 @@ export function calcBumPrice(bumId: string, profileId: string): number {
   if (!bum) return 0;
   const defaultBumId = defaultBumByProfile[profileId] || 'model_20';
   if (bumId === defaultBumId) return 0;
-  return bum.realPrice;
+  // Swap logic: subtract default BUM, add selected BUM
+  const defaultBum = bumModels.find((b) => b.id === defaultBumId);
+  const defaultPrice = defaultBum?.realPrice ?? 0;
+  return bum.realPrice - defaultPrice;
+}
+
+export function getDefaultBumName(profileId: string): string {
+  const defaultBumId = defaultBumByProfile[profileId] || 'model_20';
+  const bum = bumModels.find((b) => b.id === defaultBumId);
+  return bum?.name ?? '—';
 }
 
 export function getDefaultBumForProfile(profileId: string): string {

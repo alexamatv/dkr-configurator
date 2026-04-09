@@ -49,7 +49,9 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
                 {isDefault ? (
                   <div className="text-success font-bold mt-1">Входит в комплект</div>
                 ) : (
-                  <div className="text-accent font-bold mt-1">{bumCost.toLocaleString('ru-RU')} ₽</div>
+                  <div className="text-accent font-bold mt-1">
+                    Замена БУМа: {bumCost >= 0 ? '+' : ''}{bumCost.toLocaleString('ru-RU')} ₽
+                  </div>
                 )}
               </button>
             );

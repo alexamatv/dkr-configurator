@@ -352,8 +352,8 @@ export async function generateXlsx(state: WizardState): Promise<void> {
       priceRows.push(addPriceRow('\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F', post.basePrice));
       addIncludedItems(post.includedItems);
 
-      if (post.bumPrice > 0) {
-        priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0434\u043E\u043F\u043B\u0430\u0442\u0430)`, post.bumPrice));
+      if (post.bumSwapped) {
+        priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.defaultBumName} \u2192 ${post.bumName} (\u0437\u0430\u043C\u0435\u043D\u0430)`, post.bumPrice));
       } else {
         priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)`, 0));
       }

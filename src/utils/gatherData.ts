@@ -3,6 +3,7 @@ import {
   profiles,
   bumModels,
   calcBumPrice,
+  getDefaultBumForProfile,
   paymentSystemLabels,
   avdKits,
   osmosOptions,
@@ -40,6 +41,8 @@ export interface PostBlock {
   includedItems: string[];
   bumName: string;
   bumPrice: number;
+  defaultBumName: string;
+  bumSwapped: boolean;
   payments: PostRow[];
   accessories: PostRow[];
   baseFunctions: PostRow[];
@@ -146,6 +149,10 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
   const bum = bumModels.find((b) => b.id === post.bumModel);
   const bumName = bum?.name ?? '—';
   const bumPrice = calcBumPrice(post.bumModel, post.profile);
+  const defaultBumId = getDefaultBumForProfile(post.profile);
+  const defaultBum = bumModels.find((b) => b.id === defaultBumId);
+  const defaultBumName = defaultBum?.name ?? '—';
+  const bumSwapped = post.bumModel !== defaultBumId;
 
   // Payment systems: show all selected + removal discounts for deselected base items
   const payments: PostRow[] = post.paymentSystems.map((ps) => ({
@@ -245,6 +252,8 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
     includedItems: profile?.includedComponents ?? [],
     bumName,
     bumPrice,
+    defaultBumName,
+    bumSwapped,
     payments,
     accessories,
     baseFunctions,
