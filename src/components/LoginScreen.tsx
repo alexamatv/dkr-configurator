@@ -17,7 +17,7 @@ export function LoginScreen({ onLogin }: Props) {
           DKR GROUP
         </div>
         <h1 className="text-2xl font-bold text-white">
-          Калькулятор КП DKR GROUP
+          Калькулятор КП
         </h1>
 
         <div className="space-y-4">
