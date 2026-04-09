@@ -1,4 +1,4 @@
-import PptxGenJS from 'pptxgenjs';
+import type PptxGenJS from 'pptxgenjs';
 import type { WizardState } from '@/types';
 import { gatherDocData, makeFileName } from './gatherData';
 import type { DocData, RobotBlock, TotalsBlock, PostRow } from './gatherData';
@@ -297,6 +297,9 @@ function addTotalsSlide(pptx: PptxGenJS, totals: TotalsBlock, slideNum: number, 
 
 // ─── Main export ───
 export async function generatePptx(state: WizardState) {
+  const PptxGenJSModule = await import('pptxgenjs');
+  const PptxGenJSClass = PptxGenJSModule.default;
+
   const data = gatherDocData(state);
   const robot = data.robot;
   if (!robot) return;
@@ -304,7 +307,7 @@ export async function generatePptx(state: WizardState) {
   const hasExtras = robot.extras.length > 0;
   const totalSlides = hasExtras ? 4 : 3;
 
-  const pptx = new PptxGenJS();
+  const pptx = new PptxGenJSClass();
   pptx.layout = 'LAYOUT_WIDE';
   pptx.author = 'DKR Group';
   pptx.title = `КП — ${data.header.client}`;

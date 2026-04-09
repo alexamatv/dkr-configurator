@@ -4,7 +4,7 @@ import type { Step10Data, PostConfig, WizardState } from '@/types';
 import { profiles, bumModels } from '@/data/mockData';
 import { generateXlsx } from '@/utils/generateXlsx';
 import { generatePdf } from '@/utils/generatePdf';
-import { generatePptx } from '@/utils/generatePptx';
+// generatePptx is dynamically imported on click to avoid SSR issues with pptxgenjs
 
 interface Props {
   data: Step10Data;
@@ -183,7 +183,7 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
         </button>
         {wizardState.step1.objectType === 'robotic' && (
           <button
-            onClick={() => { generatePptx(wizardState); }}
+            onClick={async () => { const { generatePptx } = await import('@/utils/generatePptx'); generatePptx(wizardState); }}
             className="px-5 py-2.5 bg-surface border border-border rounded hover:bg-surface-hover transition-colors"
           >
             Скачать презентацию
