@@ -17,6 +17,17 @@ export const metadata: Metadata = {
   description: "Конфигуратор моек самообслуживания",
 };
 
+const themeScript = `
+  (function() {
+    var t = localStorage.getItem('theme');
+    if (t === 'light' || t === 'dark') {
+      document.documentElement.setAttribute('data-theme', t);
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -25,8 +36,12 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
+      data-theme="dark"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

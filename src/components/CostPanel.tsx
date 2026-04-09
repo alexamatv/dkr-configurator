@@ -500,7 +500,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col">
           <div
-            className="flex-shrink-0 bg-black/60"
+            className="flex-shrink-0 bg-overlay"
             style={{ height: '60px' }}
             onClick={() => setMobileOpen(false)}
           />

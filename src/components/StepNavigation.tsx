@@ -2,6 +2,7 @@
 
 import { useRef, useEffect } from 'react';
 import type { ObjectType } from '@/types';
+import { ThemeToggle } from './ThemeToggle';
 
 interface StepInfo {
   number: number;
@@ -66,9 +67,12 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
     <>
       {/* Desktop sidebar */}
       <div className="hidden lg:flex w-[250px] shrink-0 bg-surface border-r border-border overflow-y-auto flex-col">
-        <div className="p-4 border-b border-border">
-          <h2 className="text-lg font-bold text-accent">{title}</h2>
-          <p className="text-xs text-muted mt-1">DKR Group</p>
+        <div className="p-4 border-b border-border flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold text-accent">{title}</h2>
+            <p className="text-xs text-muted mt-1">DKR Group</p>
+          </div>
+          <ThemeToggle />
         </div>
         <nav className="py-2">
           {steps.map((step, idx) => {
@@ -79,7 +83,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
             return (
               <div key={step.number}>
               {showDivider && (
-                <div className="mx-4 my-2 border-t border-[#333]" />
+                <div className="mx-4 my-2 border-t border-border" />
               )}
               <button
                 key={step.number}
@@ -127,6 +131,9 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
           ref={scrollRef}
           className="flex items-center gap-2 px-3 py-2.5 overflow-x-auto scrollbar-hide"
         >
+          <div className="shrink-0">
+            <ThemeToggle />
+          </div>
           {steps.map((step) => {
             const isActive = currentStep === step.number;
             const isPast = currentStep > step.number;
