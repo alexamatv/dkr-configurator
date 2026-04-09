@@ -382,11 +382,7 @@ export function generatePdf(state: WizardState): void {
       sectionTitle(title);
 
       const baseRows: PostRow[] = [
-        { name: '\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (' + post.profileName + ')', price: post.basePrice },
-        { name: post.bumSwapped
-            ? `\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.defaultBumName} \u2192 ${post.bumName} (\u0437\u0430\u043C\u0435\u043D\u0430)`
-            : `\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)`,
-          price: post.bumPrice },
+        { name: `\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.profileName}, ${post.bumName})`, price: post.basePrice },
       ];
       priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', baseRows);
 

@@ -237,21 +237,22 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
     secondPump = { name: `Вторая помпа — ${spName}`, price: spPrice };
   }
 
+  const basePriceWithBum = basePrice + bumPrice;
   const accTotal = accessories.reduce((s, r) => s + r.price, 0);
   const payTotal = payments.reduce((s, r) => s + r.price, 0);
   const funTotal = functions.reduce((s, r) => s + r.price, 0);
   const pmpTotal = pumps.reduce((s, r) => s + r.price, 0);
   const extTotal = postExtras.reduce((s, r) => s + r.price, 0);
   const spTotal = secondPump?.price ?? 0;
-  const postTotal = basePrice + accTotal + bumPrice + payTotal + funTotal + pmpTotal + extTotal + spTotal;
+  const postTotal = basePriceWithBum + accTotal + payTotal + funTotal + pmpTotal + extTotal + spTotal;
 
   return {
     title: getPostName(post, idx),
     profileName: profile?.name ?? '—',
-    basePrice,
+    basePrice: basePriceWithBum,
     includedItems: profile?.includedComponents ?? [],
     bumName,
-    bumPrice,
+    bumPrice: 0,
     defaultBumName,
     bumSwapped,
     payments,

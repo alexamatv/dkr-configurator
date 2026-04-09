@@ -118,8 +118,9 @@ function useMsoCalc(state: WizardState): CalcResult {
     (state.step9.pipelinesWaterPrice || 0) +
     (state.step9.pipelinesChemPrice || 0);
 
-  const upgradesPerPost = bumUpgrade + paymentUpgrade + functionsPrice + avdUpgrade;
-  const equipmentTotal = (kitPrice + upgradesPerPost) * postCount;
+  const basePriceWithBum = kitPrice + bumUpgrade;
+  const upgradesPerPost = paymentUpgrade + functionsPrice + avdUpgrade;
+  const equipmentTotal = (basePriceWithBum + upgradesPerPost) * postCount;
   const customWaterPrice = state.step7.customWaterPrice || 0;
   const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
   const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
@@ -129,8 +130,8 @@ function useMsoCalc(state: WizardState): CalcResult {
   const subtotal = equipmentTotal + washTotal;
 
   return calcTotals(state, subtotal, postCount, 'пост(ов)', [
-    ['Базовая комплектация', kitPrice * postCount],
-    ['Оборудование (доплата)', (avdUpgrade + bumUpgrade) * postCount],
+    ['Базовая комплектация', basePriceWithBum * postCount],
+    ['Оборудование (доплата)', avdUpgrade * postCount],
     ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
     ['Водоподготовка', waterTotal],
     ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],

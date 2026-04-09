@@ -1,7 +1,7 @@
 'use client';
 
 import type { Step3Data, PaymentSystem } from '@/types';
-import { bumModels, calcBumPrice, getDefaultBumForProfile, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
+import { bumModels, getDefaultBumForProfile, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
 
 interface Props {
   data: Step3Data;
@@ -32,7 +32,6 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[820px]">
           {bumModels.map((b) => {
             const isDefault = b.id === defaultBumId;
-            const bumCost = calcBumPrice(b.id, profile);
             return (
               <button
                 key={b.id}
@@ -50,7 +49,7 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
                   <div className="text-success font-bold text-lg mt-2">Входит в комплект</div>
                 ) : (
                   <div className="text-accent font-bold text-lg mt-2">
-                    {bumCost >= 0 ? '+' : ''}{bumCost.toLocaleString('ru-RU')} ₽
+                    {b.realPrice.toLocaleString('ru-RU')} ₽
                   </div>
                 )}
               </button>

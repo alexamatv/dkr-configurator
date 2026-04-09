@@ -349,14 +349,8 @@ export async function generateXlsx(state: WizardState): Promise<void> {
       addInfoRow('\u041F\u0440\u043E\u0444\u0438\u043B\u044C', post.profileName);
       const priceRows: number[] = [];
 
-      priceRows.push(addPriceRow('\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F', post.basePrice));
+      priceRows.push(addPriceRow(`\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.bumName})`, post.basePrice));
       addIncludedItems(post.includedItems);
-
-      if (post.bumSwapped) {
-        priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.defaultBumName} \u2192 ${post.bumName} (\u0437\u0430\u043C\u0435\u043D\u0430)`, post.bumPrice));
-      } else {
-        priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)`, 0));
-      }
 
       priceRows.push(...addPriceBlock('\u0421\u0438\u0441\u0442\u0435\u043C\u044B \u043E\u043F\u043B\u0430\u0442\u044B', post.payments));
       priceRows.push(...addPriceBlock('\u0410\u043A\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044B', post.accessories));
