@@ -1,6 +1,32 @@
 import ExcelJS from 'exceljs';
 import type { WizardState } from '@/types';
-import { gatherDocData, makeFileName, type PostRow } from './gatherData';
+import { gatherDocData, makeFileName, type PostRow, type PostBlock } from './gatherData';
+
+/* ─── Post grouping (shared with PDF) ─── */
+interface PostGroup { post: PostBlock; count: number; }
+
+function groupPosts(posts: PostBlock[]): PostGroup[] {
+  const groups: PostGroup[] = [];
+  for (const post of posts) {
+    const key = postFingerprint(post);
+    const existing = groups.find((g) => postFingerprint(g.post) === key);
+    if (existing) existing.count++;
+    else groups.push({ post, count: 1 });
+  }
+  return groups;
+}
+
+function postFingerprint(p: PostBlock): string {
+  return [
+    p.profileName, p.basePrice, p.bumName, p.bumPrice,
+    p.payments.map((r) => r.name + ':' + r.price).join('|'),
+    p.accessories.map((r) => r.name + ':' + r.price).join('|'),
+    p.functions.map((r) => r.name + ':' + r.price).join('|'),
+    p.pumps.map((r) => r.name + ':' + r.price).join('|'),
+    p.postExtras.map((r) => r.name + ':' + r.price).join('|'),
+    p.secondPump ? p.secondPump.name + ':' + p.secondPump.price : '',
+  ].join('//');
+}
 
 // ─── Palette (ARGB without alpha prefix — ExcelJS adds FF) ───
 const DARK = '1E293B';
@@ -203,6 +229,22 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     ws.getRow(r).getCell(3).value = { formula, result: fallback };
   }
 
+  // ─── Included items list ───
+  const includedFont: Partial<ExcelJS.Font> = { size: 9, name: FONT, color: { argb: LABEL_GRAY } };
+  const includedBoldFont: Partial<ExcelJS.Font> = { bold: true, size: 9, name: FONT, color: { argb: LABEL_GRAY } };
+
+  function addIncludedItems(items: string[]) {
+    if (items.length === 0) return;
+    const row = nextRow();
+    row.getCell(2).value = '\u0427\u0442\u043E \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442:';
+    row.getCell(2).font = includedBoldFont;
+    for (const item of items) {
+      const r = nextRow();
+      r.getCell(2).value = '\u2022  ' + item;
+      r.getCell(2).font = includedFont;
+    }
+  }
+
   // ─── Formula helpers ───
   function sumOf(rows: number[]): string {
     if (rows.length === 0) return '0';
@@ -262,6 +304,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     const priceRows: number[] = [];
 
     priceRows.push(addPriceRow(d.truck.typeName, d.truck.typePrice));
+    addIncludedItems(d.truck.includedItems);
     if (d.truck.burPrice > 0) {
       priceRows.push(addPriceRow(`БУР: ${d.truck.burName}`, d.truck.burPrice));
     }
@@ -284,9 +327,7 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     const priceRows: number[] = [];
 
     priceRows.push(addPriceRow(d.robot.modelName, d.robot.modelPrice));
-    if (d.robot.includedComponents.length > 0) {
-      addInfoRow('В комплекте', d.robot.includedComponents.join(', '));
-    }
+    addIncludedItems(d.robot.includedComponents);
     priceRows.push(addPriceRow(`БУР: ${d.robot.burName}`, d.robot.burPrice));
     priceRows.push(...addPriceBlock('Опции робота', d.robot.options));
     if (d.robot.extras && d.robot.extras.length > 0) {
@@ -296,33 +337,53 @@ export async function generateXlsx(state: WizardState): Promise<void> {
     equipmentSubtotalRows.push(addFormulaSubtotal('Итого робот', priceRows, d.robot.robotTotal));
 
   } else {
-    d.posts.forEach((post) => {
-      addSectionRow(post.title);
-      addInfoRow('Профиль', post.profileName);
+    const groups = groupPosts(d.posts);
+
+    groups.forEach((group) => {
+      const { post, count } = group;
+      const title = count > 1
+        ? `\u041F\u043E\u0441\u0442 \u2014 ${post.profileName} (\u00D7${count})`
+        : (groups.length === 1 ? `\u041F\u043E\u0441\u0442 \u2014 ${post.profileName}` : post.title);
+
+      addSectionRow(title);
+      addInfoRow('\u041F\u0440\u043E\u0444\u0438\u043B\u044C', post.profileName);
       const priceRows: number[] = [];
 
-      priceRows.push(addPriceRow('Базовая комплектация', post.basePrice));
+      priceRows.push(addPriceRow('\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F', post.basePrice));
+      addIncludedItems(post.includedItems);
 
       if (post.bumPrice > 0) {
-        priceRows.push(addPriceRow(`Терминал: ${post.bumName} (доплата)`, post.bumPrice));
+        priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0434\u043E\u043F\u043B\u0430\u0442\u0430)`, post.bumPrice));
       } else {
-        priceRows.push(addPriceRow(`Терминал: ${post.bumName} (в комплекте)`, 0));
+        priceRows.push(addPriceRow(`\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ${post.bumName} (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)`, 0));
       }
 
-      priceRows.push(...addPriceBlock('Системы оплаты', post.payments));
-      priceRows.push(...addPriceBlock('Аксессуары', post.accessories));
+      priceRows.push(...addPriceBlock('\u0421\u0438\u0441\u0442\u0435\u043C\u044B \u043E\u043F\u043B\u0430\u0442\u044B', post.payments));
+      priceRows.push(...addPriceBlock('\u0410\u043A\u0441\u0435\u0441\u0441\u0443\u0430\u0440\u044B', post.accessories));
 
       if (post.baseFunctions.length > 0) {
-        priceRows.push(...addPriceBlock('Базовые функции (в комплекте)', post.baseFunctions));
+        priceRows.push(...addPriceBlock('\u0411\u0430\u0437\u043E\u0432\u044B\u0435 \u0444\u0443\u043D\u043A\u0446\u0438\u0438 (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)', post.baseFunctions));
       }
-      priceRows.push(...addPriceBlock('Функции мойки', post.functions));
-      priceRows.push(...addPriceBlock('АВД (помпы)', post.pumps));
+      priceRows.push(...addPriceBlock('\u0424\u0443\u043D\u043A\u0446\u0438\u0438 \u043C\u043E\u0439\u043A\u0438', post.functions));
+      priceRows.push(...addPriceBlock('\u0410\u0412\u0414 (\u043F\u043E\u043C\u043F\u044B)', post.pumps));
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
-      priceRows.push(...addPriceBlock('Доп. оборудование к посту', extrasWithPump));
+      priceRows.push(...addPriceBlock('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043A \u043F\u043E\u0441\u0442\u0443', extrasWithPump));
 
-      equipmentSubtotalRows.push(addFormulaSubtotal('Итого по посту', priceRows, post.postTotal));
+      const perPostSubtotalRow = addFormulaSubtotal('\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C 1 \u043F\u043E\u0441\u0442\u0430', priceRows, post.postTotal);
+
+      if (count > 1) {
+        const groupRow = addFormulaRow(
+          `\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C ${count} \u043F\u043E\u0441\u0442\u043E\u0432`,
+          `${cellC(perPostSubtotalRow)}*${count}`,
+          post.postTotal * count,
+          subtotalFont,
+        );
+        equipmentSubtotalRows.push(groupRow);
+      } else {
+        equipmentSubtotalRows.push(perPostSubtotalRow);
+      }
     });
   }
 

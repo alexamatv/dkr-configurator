@@ -37,6 +37,7 @@ export interface PostBlock {
   title: string;
   profileName: string;
   basePrice: number;
+  includedItems: string[];
   bumName: string;
   bumPrice: number;
   payments: PostRow[];
@@ -101,6 +102,7 @@ export interface RobotBlock {
 export interface TruckBlock {
   typeName: string;
   typePrice: number;
+  includedItems: string[];
   burName: string;
   burPrice: number;
   options: PostRow[];
@@ -240,6 +242,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
     title: getPostName(post, idx),
     profileName: profile?.name ?? '—',
     basePrice,
+    includedItems: profile?.includedComponents ?? [],
     bumName,
     bumPrice,
     payments,
@@ -493,6 +496,7 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
   const truckBlock: TruckBlock = {
     typeName: truckType?.name ?? '—',
     typePrice: basePrice,
+    includedItems: truckType?.features ?? [],
     burName,
     burPrice,
     options,

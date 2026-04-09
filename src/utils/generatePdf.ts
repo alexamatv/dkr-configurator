@@ -1,10 +1,46 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { WizardState } from '@/types';
-import { gatherDocData, makeFileName, type PostRow } from './gatherData';
+import { gatherDocData, makeFileName, type PostRow, type PostBlock } from './gatherData';
 import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
 import { DKR_LOGO_BASE64 } from '../fonts/dkr-logo';
+
+/* ─── Post grouping ─── */
+interface PostGroup {
+  post: PostBlock;
+  count: number;
+}
+
+function groupPosts(posts: PostBlock[]): PostGroup[] {
+  const groups: PostGroup[] = [];
+  for (const post of posts) {
+    const key = postFingerprint(post);
+    const existing = groups.find((g) => postFingerprint(g.post) === key);
+    if (existing) {
+      existing.count++;
+    } else {
+      groups.push({ post, count: 1 });
+    }
+  }
+  return groups;
+}
+
+function postFingerprint(p: PostBlock): string {
+  const parts = [
+    p.profileName,
+    p.basePrice,
+    p.bumName,
+    p.bumPrice,
+    p.payments.map((r) => r.name + ':' + r.price).join('|'),
+    p.accessories.map((r) => r.name + ':' + r.price).join('|'),
+    p.functions.map((r) => r.name + ':' + r.price).join('|'),
+    p.pumps.map((r) => r.name + ':' + r.price).join('|'),
+    p.postExtras.map((r) => r.name + ':' + r.price).join('|'),
+    p.secondPump ? p.secondPump.name + ':' + p.secondPump.price : '',
+  ];
+  return parts.join('//');
+}
 
 /* ─── Color palette ─── */
 const DARK: [number, number, number] = [30, 41, 59];
@@ -207,6 +243,32 @@ export function generatePdf(state: WizardState): void {
     y += 3;
   }
 
+  /* ─── Included items list ─── */
+  function includedItemsList(items: string[]) {
+    if (items.length === 0) return;
+    const lineH = 3.5;
+    const estimatedH = 6 + items.length * lineH;
+    checkPage(estimatedH);
+
+    y += 3;
+    doc.setFontSize(8);
+    doc.setFont(F, 'bold');
+    doc.setTextColor(...MUTED);
+    doc.text('\u0427\u0442\u043E \u0432\u0445\u043E\u0434\u0438\u0442 \u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442:', mL + 4, y);
+    y += 4;
+
+    doc.setFont(F, 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...SUBTLE);
+    for (const item of items) {
+      checkPage(lineH + 2);
+      doc.text('\u2022  ' + item, mL + 6, y);
+      y += lineH;
+    }
+    doc.setTextColor(...DARK);
+    y += 2;
+  }
+
   // ═══════════════════════════════════════════════════════
   //  PAGE 1: TITLE BLOCK
   // ═══════════════════════════════════════════════════════
@@ -270,6 +332,7 @@ export function generatePdf(state: WizardState): void {
     priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', [
       { name: d.truck.typeName, price: d.truck.typePrice },
     ]);
+    includedItemsList(d.truck.includedItems);
     if (d.truck.burPrice > 0) {
       priceTable('\u0411\u0423\u0420', [
         { name: d.truck.burName, price: d.truck.burPrice },
@@ -297,6 +360,7 @@ export function generatePdf(state: WizardState): void {
       { name: d.robot.modelName, price: d.robot.modelPrice },
       { name: '\u0411\u0423\u0420: ' + d.robot.burName, price: d.robot.burPrice },
     ]);
+    includedItemsList(d.robot.includedComponents);
     if (d.robot.options.length > 0) {
       priceTable('\u041E\u043F\u0446\u0438\u0438 \u0440\u043E\u0431\u043E\u0442\u0430', d.robot.options);
     }
@@ -306,15 +370,25 @@ export function generatePdf(state: WizardState): void {
     subtotalLine('\u0418\u0442\u043E\u0433\u043E \u0440\u043E\u0431\u043E\u0442:', d.robot.robotTotal);
 
   } else {
-    // MSO
-    d.posts.forEach((post) => {
-      sectionTitle(post.title);
+    // MSO — group identical posts
+    const groups = groupPosts(d.posts);
+
+    groups.forEach((group, gIdx) => {
+      const { post, count } = group;
+      const title = count > 1
+        ? `\u041F\u043E\u0441\u0442 \u2014 ${post.profileName} (\u00D7${count})`
+        : (groups.length === 1 ? `\u041F\u043E\u0441\u0442 \u2014 ${post.profileName}` : post.title);
+
+      sectionTitle(title);
 
       const baseRows: PostRow[] = [
         { name: '\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (' + post.profileName + ')', price: post.basePrice },
         { name: '\u0422\u0435\u0440\u043C\u0438\u043D\u0430\u043B: ' + post.bumName + (post.bumPrice === 0 ? ' (\u0432 \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0435)' : ''), price: post.bumPrice },
       ];
       priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', baseRows);
+
+      // Included items
+      includedItemsList(post.includedItems);
 
       if (post.payments.length > 0) {
         priceTable('\u0421\u0438\u0441\u0442\u0435\u043C\u044B \u043E\u043F\u043B\u0430\u0442\u044B', post.payments);
@@ -342,7 +416,11 @@ export function generatePdf(state: WizardState): void {
         priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043A \u043F\u043E\u0441\u0442\u0443', extrasWithPump);
       }
 
-      subtotalLine('\u0418\u0442\u043E\u0433\u043E \u043F\u043E \u043F\u043E\u0441\u0442\u0443:', post.postTotal);
+      // Subtotal: show per-post and total for group
+      subtotalLine('\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C 1 \u043F\u043E\u0441\u0442\u0430:', post.postTotal);
+      if (count > 1) {
+        subtotalLine(`\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C ${count} \u043F\u043E\u0441\u0442\u043E\u0432:`, post.postTotal * count);
+      }
     });
   }
 
