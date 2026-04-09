@@ -443,20 +443,19 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
   const burName = bur?.name ?? '—';
   const burPrice = bur?.price ?? 0;
 
-  // Options
+  // Options (checkboxes available for both КОМПАК and SmartBot Track)
   const options: PostRow[] = [];
   let optionsTotal = 0;
-  if (isKompak) {
-    state.truckStep3.selectedOptions.forEach((optId) => {
-      const opt = kompakOptions.find((o) => o.id === optId);
-      if (opt) {
-        options.push({ name: opt.name, price: opt.price });
-        optionsTotal += opt.price;
-      }
-    });
-  } else if (state.truckStep3.customOptionsPrice > 0) {
+  state.truckStep3.selectedOptions.forEach((optId) => {
+    const opt = kompakOptions.find((o) => o.id === optId);
+    if (opt) {
+      options.push({ name: opt.name, price: opt.price });
+      optionsTotal += opt.price;
+    }
+  });
+  if (!isKompak && state.truckStep3.customOptionsPrice > 0) {
     options.push({ name: 'Дополнительные опции', price: state.truckStep3.customOptionsPrice });
-    optionsTotal = state.truckStep3.customOptionsPrice;
+    optionsTotal += state.truckStep3.customOptionsPrice;
   }
 
   // Manual post

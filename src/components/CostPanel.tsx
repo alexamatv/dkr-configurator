@@ -199,15 +199,13 @@ function useTruckCalc(state: WizardState): CalcResult {
   const bur = burModels.find((b) => b.id === state.truckBur.burModel);
   const burPrice = bur?.price ?? 0;
 
-  // Options
-  let optionsPrice = 0;
-  if (isKompak) {
-    optionsPrice = state.truckStep3.selectedOptions.reduce((sum, optId) => {
-      const opt = kompakOptions.find((o) => o.id === optId);
-      return sum + (opt?.price ?? 0);
-    }, 0);
-  } else {
-    optionsPrice = state.truckStep3.customOptionsPrice || 0;
+  // Options (checkboxes for both types + custom price for SmartBot Track)
+  let optionsPrice = state.truckStep3.selectedOptions.reduce((sum, optId) => {
+    const opt = kompakOptions.find((o) => o.id === optId);
+    return sum + (opt?.price ?? 0);
+  }, 0);
+  if (!isKompak) {
+    optionsPrice += state.truckStep3.customOptionsPrice || 0;
   }
 
   // Manual post
