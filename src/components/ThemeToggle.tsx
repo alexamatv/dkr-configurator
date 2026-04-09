@@ -12,20 +12,34 @@ export function ThemeToggle() {
     if (stored) setTheme(stored);
   }, []);
 
-  const toggle = () => {
-    const next: Theme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('theme', next);
+  const select = (t: Theme) => {
+    setTheme(t);
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
   };
 
   return (
-    <button
-      onClick={toggle}
-      className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-hover hover:bg-border transition-colors text-lg"
-      title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-    >
-      {theme === 'dark' ? '☀️' : '🌙'}
-    </button>
+    <div className="flex items-center h-8 w-40 rounded-full bg-border p-0.5 shrink-0">
+      <button
+        onClick={() => select('light')}
+        className={`flex-1 h-full rounded-full text-xs font-semibold transition-all duration-200 ${
+          theme === 'light'
+            ? 'bg-accent text-white'
+            : 'bg-transparent text-muted'
+        }`}
+      >
+        Светлая
+      </button>
+      <button
+        onClick={() => select('dark')}
+        className={`flex-1 h-full rounded-full text-xs font-semibold transition-all duration-200 ${
+          theme === 'dark'
+            ? 'bg-accent text-white'
+            : 'bg-transparent text-muted'
+        }`}
+      >
+        Тёмная
+      </button>
+    </div>
   );
 }
