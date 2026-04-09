@@ -55,7 +55,7 @@ export function Step2BaseConfig({ data, onChange }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Профиль</label>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[900px]">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[900px] items-stretch">
           {profiles.map((p) => {
             const isSelected = data.profile === p.id;
             const isExpanded = expandedProfile === p.id;
@@ -66,10 +66,10 @@ export function Step2BaseConfig({ data, onChange }: Props) {
                     onChange({ ...data, profile: p.id as Step2Data['profile'] });
                     setExpandedProfile(isExpanded && isSelected ? null : p.id);
                   }}
-                  className={`radio-card ${isSelected ? 'selected' : ''}`}
+                  className={`radio-card flex flex-col h-full ${isSelected ? 'selected' : ''}`}
                 >
                   <div className="font-bold text-lg">{p.name}</div>
-                  <div className="text-xs text-muted mt-1">{p.description}</div>
+                  <div className="text-xs text-muted mt-1 flex-1">{p.description}</div>
                   <div className="text-accent font-bold text-xl mt-3">
                     {p.price.toLocaleString('ru-RU')} ₽
                   </div>

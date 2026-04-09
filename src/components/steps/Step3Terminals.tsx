@@ -29,27 +29,24 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Модель БУМа</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-[820px]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {bumModels.map((b) => {
             const isDefault = b.id === defaultBumId;
             return (
               <button
                 key={b.id}
                 onClick={() => onChange({ ...data, bumModel: b.id })}
-                className={`radio-card ${data.bumModel === b.id ? 'selected' : ''}`}
+                className={`radio-card flex flex-col h-full ${data.bumModel === b.id ? 'selected' : ''}`}
               >
-                <div className="w-full h-24 bg-border/30 rounded mb-3 flex items-center justify-center text-3xl text-muted">
-                  📟
-                </div>
                 <div className="font-bold">{b.name}</div>
-                <div className="text-xs text-muted mt-1">{b.description}</div>
+                <div className="text-xs text-muted mt-1 flex-1">{b.description}</div>
                 <div className="text-xs text-accent mt-1">До {b.maxButtons} кнопок</div>
-                <div className="text-xs text-muted mt-1">Терминал: {b.realPrice.toLocaleString('ru-RU')} ₽</div>
-                {isDefault ? (
-                  <div className="text-success font-bold text-lg mt-2">Входит в комплект</div>
-                ) : (
-                  <div className="text-accent font-bold text-lg mt-2">
-                    {b.realPrice.toLocaleString('ru-RU')} ₽
+                <div className="text-accent font-bold text-lg mt-2">
+                  {b.realPrice.toLocaleString('ru-RU')} ₽
+                </div>
+                {isDefault && (
+                  <div className="mt-1 text-xs font-medium text-success bg-success/10 px-2 py-0.5 rounded inline-block">
+                    Входит в комплект
                   </div>
                 )}
               </button>

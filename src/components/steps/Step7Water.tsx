@@ -19,38 +19,38 @@ export function Step7Water({ data, onChange, title }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Система осмоса</label>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <button
             onClick={() => update({ osmosOption: 'none' })}
-            className={`radio-card text-center ${data.osmosOption === 'none' ? 'selected' : ''}`}
+            className={`radio-card text-center !p-3 ${data.osmosOption === 'none' ? 'selected' : ''}`}
           >
-            <div className="font-medium">Не нужно</div>
+            <div className="font-medium text-sm">Не нужно</div>
             <div className="text-xs text-muted mt-1">клиент докупит самостоятельно</div>
           </button>
           {osmosOptions.map((o) => (
             <button
               key={o.id}
               onClick={() => update({ osmosOption: o.id })}
-              className={`radio-card ${data.osmosOption === o.id ? 'selected' : ''}`}
+              className={`radio-card text-center !p-3 ${data.osmosOption === o.id ? 'selected' : ''}`}
             >
-              <div className="font-bold">{o.capacity} л/ч</div>
-              <div className={`text-xs mt-1 px-2 py-0.5 rounded inline-block ${
+              <div className="font-bold text-sm">{o.capacity} л/ч</div>
+              <div className={`text-[10px] mt-1 px-1.5 py-0.5 rounded inline-block ${
                 o.level === 'premium' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-accent/20 text-accent'
               }`}>
                 {o.level === 'premium' ? 'Премиум' : 'Стандарт'}
               </div>
-              <div className="text-accent font-bold mt-2">{o.price.toLocaleString('ru-RU')} ₽</div>
+              <div className="text-accent font-bold text-sm mt-2">{o.price.toLocaleString('ru-RU')} ₽</div>
             </button>
           ))}
         </div>
       </div>
 
-      <div>
+      <div className="max-w-md">
         <label className="block text-sm font-medium text-muted mb-2">Модель ARAS</label>
         <select
           value={data.arasModel}
           onChange={(e) => update({ arasModel: e.target.value })}
-          className="w-full bg-surface border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-accent"
+          className="w-full h-11 bg-surface border border-border rounded-lg px-3 text-sm focus:outline-none focus:border-accent"
         >
           <option value="" disabled>— Выберите —</option>
           <option value="none">Не нужно</option>

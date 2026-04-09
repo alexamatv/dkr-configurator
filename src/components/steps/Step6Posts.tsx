@@ -208,12 +208,17 @@ export function Step6Posts({
       </div>
 
       {posts.length > 0 && (
-        <button
-          onClick={onFinish}
-          className="w-full py-3 bg-success text-white font-medium rounded-lg hover:bg-success/90 transition-colors"
-        >
-          Завершить формирование постов →
-        </button>
+        <div>
+          <button
+            onClick={onFinish}
+            className="w-full max-w-sm h-11 bg-success text-white font-medium text-sm rounded-lg hover:bg-success/90 transition-colors"
+          >
+            Завершить формирование постов →
+          </button>
+          <p className="text-xs text-muted mt-2 max-w-sm">
+            После нажатия вы перейдёте к этапу дополнительного оборудования (водоподготовка, химия и др.)
+          </p>
+        </div>
       )}
     </div>
   );
