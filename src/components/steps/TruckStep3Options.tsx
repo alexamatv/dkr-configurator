@@ -21,7 +21,7 @@ export function TruckStep3Options({ data, selectedType, onChange }: Props) {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-xl font-bold">Шаг 3. Дополнительные опции</h2>
+      <h2 className="text-xl font-bold">Шаг 4. Дополнительные опции</h2>
 
       {isKompak ? (
         <div className="space-y-3">
