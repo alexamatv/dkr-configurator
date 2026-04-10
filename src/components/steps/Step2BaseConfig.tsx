@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Step2Data } from '@/types';
+import { StepHint } from '../StepHint';
 import { profiles } from '@/data/mockData';
 
 interface Props {
@@ -52,6 +53,10 @@ export function Step2BaseConfig({ data, onChange }: Props) {
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 2. Базовая комплектация</h2>
+
+      <StepHint>
+        Выберите профиль комплектации поста. «Старт» — базовый набор, «Стандарт» — расширенный с клапанами НД, «Премиум» — полная комплектация с сенсорным терминалом, эквайрингом и всеми аксессуарами в комплекте. Ниже можно добавить или убрать отдельные аксессуары.
+      </StepHint>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Профиль</label>

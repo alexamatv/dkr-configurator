@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step1Data } from '@/types';
+import { StepHint } from '../StepHint';
 import { managers } from '@/data/mockData';
 
 interface Props {
@@ -14,6 +15,10 @@ export function Step1Transport({ data, onChange }: Props) {
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 1. Тип транспорта и объекта</h2>
+
+      <StepHint>
+        Выберите тип транспорта, для которого формируете КП. От этого зависит набор оборудования и доступные опции на следующих шагах.
+      </StepHint>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Тип транспортного средства</label>

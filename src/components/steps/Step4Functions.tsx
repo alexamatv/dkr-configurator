@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step4Data, PostFunction, FunctionOption } from '@/types';
+import { StepHint } from '../StepHint';
 
 interface Props {
   data: Step4Data;
@@ -24,6 +25,10 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 4. Функции на посту</h2>
+
+      <StepHint>
+        Выберите функции мойки для этого поста. Базовые функции уже включены в профиль. Дополнительные (пена, воск, осмос и др.) добавляют стоимость. Каждая функция — это отдельный клапан/модуль на посту.
+      </StepHint>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Базовые функции (входят в комплект)</label>

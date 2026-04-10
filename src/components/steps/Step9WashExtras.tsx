@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step9Data } from '@/types';
+import { StepHint } from '../StepHint';
 import { vacuumOptions } from '@/data/mockData';
 
 interface Props {
@@ -29,6 +30,10 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">{title ?? 'Шаг 9. Доп. оборудование на мойку'}</h2>
+
+      <StepHint>
+        Дополнительное оборудование на всю мойку целиком (не на отдельный пост): пылесосы, магистрали, дополнительные модули. Можно выбрать из списка или добавить своё с ручным вводом цены.
+      </StepHint>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Уличные пылесосы</label>

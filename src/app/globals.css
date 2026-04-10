@@ -13,6 +13,8 @@
   --danger: #EF4444;
   --overlay: rgba(0, 0, 0, 0.6);
   --placeholder: #666666;
+  --hint-bg: rgba(59, 130, 246, 0.1);
+  --hint-text: #CBD5E1;
 }
 
 [data-theme="light"] {
@@ -28,6 +30,8 @@
   --danger: #EF4444;
   --overlay: rgba(0, 0, 0, 0.3);
   --placeholder: #999999;
+  --hint-bg: #EFF6FF;
+  --hint-text: #374151;
 }
 
 @theme inline {

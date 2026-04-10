@@ -3,6 +3,7 @@
 import { useRef, useEffect } from 'react';
 import type { ObjectType } from '@/types';
 import { ThemeToggle } from './ThemeToggle';
+import { HintsToggle } from './HintsToggle';
 
 interface StepInfo {
   number: number;
@@ -73,6 +74,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
             <p className="text-xs text-muted mt-1">DKR Group</p>
           </div>
           <ThemeToggle />
+          <HintsToggle />
         </div>
         <nav className="py-2">
           {steps.map((step, idx) => {

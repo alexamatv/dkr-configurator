@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step7Data } from '@/types';
+import { StepHint } from '../StepHint';
 import { osmosOptions, arasModels, boosterPumpPrice } from '@/data/mockData';
 
 interface Props {
@@ -16,6 +17,10 @@ export function Step7Water({ data, onChange, title }: Props) {
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">{title ?? 'Шаг 7. Водоподготовка'}</h2>
+
+      <StepHint>
+        Выберите систему осмоса (обязательный этап — нужна для функции «Осмос» на постах). Производительность зависит от количества постов. Также выберите модель АРОС (система очистки воды). Если точная модель неизвестна — можно выбрать ближайшую по параметрам.
+      </StepHint>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Система осмоса</label>

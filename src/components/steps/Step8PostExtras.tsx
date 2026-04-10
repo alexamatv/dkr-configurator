@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step8Data, AvdSelection } from '@/types';
+import { StepHint } from '../StepHint';
 import { avdKits } from '@/data/mockData';
 
 interface Props {
@@ -47,6 +48,10 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 8. Доп. оборудование к посту</h2>
+
+      <StepHint>
+        Здесь можно добавить дополнительное оборудование к каждому посту: частотный преобразователь, вторая помпа и т.д. Количество и состав зависят от выбранного профиля.
+      </StepHint>
 
       <div className="space-y-2">
         {/* Вторая помпа */}

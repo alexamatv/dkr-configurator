@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { PostConfig } from '@/types';
+import { StepHint } from '../StepHint';
 import {
   profiles,
   bumModels,
@@ -89,6 +90,10 @@ export function Step6Posts({
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 6. Формирование постов</h2>
+
+      <StepHint>
+        Здесь собраны все сформированные посты. Вы можете скопировать пост, создать новый с другими параметрами или отредактировать существующий. Когда все посты готовы — нажмите кнопку завершения.
+      </StepHint>
 
       <div className="flex items-center gap-3 px-4 py-3 bg-accent/10 border border-accent/30 rounded-lg">
         <span className="text-2xl font-bold text-accent">{posts.length}</span>
@@ -215,9 +220,9 @@ export function Step6Posts({
           >
             Завершить формирование постов →
           </button>
-          <p className="text-xs text-muted mt-2 max-w-sm">
-            После нажатия вы перейдёте к этапу дополнительного оборудования (водоподготовка, химия и др.)
-          </p>
+          <StepHint>
+            После завершения вы перейдёте к выбору общего оборудования на всю мойку: водоподготовка, химия, дополнительное оборудование. Вернуться и изменить посты можно в любой момент.
+          </StepHint>
         </div>
       )}
     </div>

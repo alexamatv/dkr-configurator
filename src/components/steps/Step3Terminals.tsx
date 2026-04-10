@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step3Data, PaymentSystem } from '@/types';
+import { StepHint } from '../StepHint';
 import { bumModels, getDefaultBumForProfile, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
 
 interface Props {
@@ -26,6 +27,10 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 3. Терминалы / БУМы</h2>
+
+      <StepHint>
+        Выберите модель терминала (БУМ). У каждого профиля есть терминал по умолчанию (помечен «Входит в комплект»). Если выбрать другой — базовая цена комплектации пересчитается. Ниже можно выбрать способы оплаты: эквайринг, QR, карты лояльности.
+      </StepHint>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Модель БУМа</label>

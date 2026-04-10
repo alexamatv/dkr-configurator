@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step10Data, PostConfig, WizardState } from '@/types';
+import { StepHint } from '../StepHint';
 import { profiles, bumModels } from '@/data/mockData';
 import { generateXlsx } from '@/utils/generateXlsx';
 import { generatePdf } from '@/utils/generatePdf';
@@ -23,6 +24,10 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">{title ?? 'Шаг 10. Финализация'}</h2>
+
+      <StepHint>
+        Почти готово! Проверьте данные клиента, выберите условия доставки и монтажа, установите скидку если нужно. После этого можно скачать КП в PDF или Excel.
+      </StepHint>
 
       {posts.length > 0 && (
         <div>

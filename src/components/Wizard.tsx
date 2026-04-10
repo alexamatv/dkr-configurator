@@ -31,6 +31,7 @@ import {
   defaultWashExtras,
   robotExtraEquipment,
 } from '@/data/mockData';
+import { HintsProvider } from '@/context/HintsContext';
 import { StepNavigation } from './StepNavigation';
 import { CostPanel } from './CostPanel';
 import { Step1Transport } from './steps/Step1Transport';
@@ -454,6 +455,7 @@ export function Wizard() {
   const nextDisabled = state.currentStep === maxStep || !waterValid;
 
   return (
+    <HintsProvider>
     <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
       <StepNavigation currentStep={state.currentStep} objectType={state.step1.objectType} onStepClick={setStep} />
 
@@ -492,5 +494,6 @@ export function Wizard() {
 
       <CostPanel state={state} onUpdateStep10={updateStep10} />
     </div>
+    </HintsProvider>
   );
 }

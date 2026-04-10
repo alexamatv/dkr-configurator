@@ -1,6 +1,7 @@
 'use client';
 
 import type { Step5Data, AvdSelection } from '@/types';
+import { StepHint } from '../StepHint';
 import { avdKits, profiles } from '@/data/mockData';
 
 interface Props {
@@ -43,6 +44,10 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 5. Выбор помпы</h2>
+
+      <StepHint>
+        Выберите помпу (АВД) для поста. Помпа по умолчанию уже включена в профиль. Если выберете другую — разница в цене отобразится в расчёте.
+      </StepHint>
 
       {profile && (
         <div className="px-4 py-3 bg-accent/10 border border-accent/30 rounded-lg text-sm">
