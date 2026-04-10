@@ -55,17 +55,22 @@ function useMsoCalc(state: WizardState): CalcResult {
   const postCount = Math.max(posts.length, 1);
 
   const profile = profiles.find((p) => p.id === state.step2.profile);
-  const basePrice = profile?.basePrice ?? 0;
+  // Use profile.price (bundle price) as base — it includes default accessories, AVD, and payments
+  const profilePrice = profile?.price ?? 0;
+  const defaultAccIds = profile?.defaultAccessories ?? [];
 
-  const accessoriesPrice = state.step2.accessories
-    .filter((a) => a.selected)
+  // Only count accessories that are selected but NOT included in the profile bundle
+  const extraAccessoriesPrice = state.step2.accessories
+    .filter((a) => a.selected && !defaultAccIds.includes(a.id))
     .reduce((sum, a) => sum + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
-
-  const kitPrice = basePrice + accessoriesPrice;
 
   const bumUpgrade = calcBumPrice(state.step3.bumModel, state.step2.profile);
 
-  const paymentUpgrade = calcPaymentCost(state.step3.paymentSystems);
+  // Payment delta: current cost minus default cost
+  const defaultPayments = profile?.defaultPayments ?? [];
+  const currentPayCost = calcPaymentCost(state.step3.paymentSystems);
+  const defaultPayCost = calcPaymentCost(defaultPayments);
+  const paymentDelta = currentPayCost - defaultPayCost;
 
   const functionsPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
@@ -79,10 +84,14 @@ function useMsoCalc(state: WizardState): CalcResult {
       return sum + price;
     }, 0);
 
-  const avdUpgrade = state.step5.avdSelections.reduce((sum, sel) => {
+  // AVD delta: current cost minus default AVD cost
+  const defaultAvdKit = avdKits.find((a) => a.id === profile?.defaultAvd);
+  const defaultAvdPrice = defaultAvdKit?.price ?? 0;
+  const currentAvdPrice = state.step5.avdSelections.reduce((sum, sel) => {
     const kit = avdKits.find((a) => a.id === sel.avdId);
     return sum + (kit?.price ?? 0);
   }, 0) + (state.step5.customPumpPrice || 0);
+  const avdDelta = currentAvdPrice - defaultAvdPrice;
 
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
   const osmosPrice = osmos?.price ?? 0;
@@ -118,8 +127,8 @@ function useMsoCalc(state: WizardState): CalcResult {
     (state.step9.pipelinesWaterPrice || 0) +
     (state.step9.pipelinesChemPrice || 0);
 
-  const basePriceWithBum = kitPrice + bumUpgrade;
-  const upgradesPerPost = paymentUpgrade + functionsPrice + avdUpgrade;
+  const basePriceWithBum = profilePrice + extraAccessoriesPrice + bumUpgrade;
+  const upgradesPerPost = paymentDelta + functionsPrice + avdDelta;
   const equipmentTotal = (basePriceWithBum + upgradesPerPost) * postCount;
   const customWaterPrice = state.step7.customWaterPrice || 0;
   const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
@@ -131,8 +140,8 @@ function useMsoCalc(state: WizardState): CalcResult {
 
   return calcTotals(state, subtotal, postCount, 'пост(ов)', [
     ['Базовая комплектация', basePriceWithBum * postCount],
-    ['Оборудование (доплата)', avdUpgrade * postCount],
-    ['Функции и опции', (functionsPrice + paymentUpgrade) * postCount],
+    ['Оборудование (доплата)', avdDelta * postCount],
+    ['Функции и опции', (functionsPrice + paymentDelta) * postCount],
     ['Водоподготовка', waterTotal],
     ['Доп. оборудование', postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice],
   ]);

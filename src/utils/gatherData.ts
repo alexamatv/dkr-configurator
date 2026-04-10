@@ -604,16 +604,27 @@ export function gatherDocData(state: WizardState): DocData {
 
   const wash = calcWashBlock(state);
 
-  // Mirror CostPanel subtotal logic exactly
+  // Mirror CostPanel subtotal logic exactly (delta-based pricing)
   const postCount = Math.max(postBlocks.length, 1);
 
   const profileObj = profiles.find((p) => p.id === state.step2.profile);
-  const cpBasePrice = profileObj?.basePrice ?? 0;
-  const cpAccPrice = state.step2.accessories.filter((a) => a.selected)
+  // Use profile.price (bundle) as base — includes default accessories, AVD, and payments
+  const cpProfilePrice = profileObj?.price ?? 0;
+  const cpDefaultAccIds = profileObj?.defaultAccessories ?? [];
+
+  // Only count accessories NOT included in profile bundle
+  const cpExtraAccPrice = state.step2.accessories
+    .filter((a) => a.selected && !cpDefaultAccIds.includes(a.id))
     .reduce((s, a) => s + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
-  const cpKitPrice = cpBasePrice + cpAccPrice;
-  const cpBumUpgrade = bumModels.find((b) => b.id === state.step3.bumModel)?.price ?? 0;
-  const cpPayUpgrade = calcPaymentCost(state.step3.paymentSystems);
+
+  const cpBumUpgrade = calcBumPrice(state.step3.bumModel, state.step2.profile);
+
+  // Payment delta: current minus default
+  const cpDefaultPayments = profileObj?.defaultPayments ?? [];
+  const cpCurrentPayCost = calcPaymentCost(state.step3.paymentSystems);
+  const cpDefaultPayCost = calcPaymentCost(cpDefaultPayments);
+  const cpPaymentDelta = cpCurrentPayCost - cpDefaultPayCost;
+
   const cpFuncPrice = state.step4.functions
     .filter((f) => !f.isBase && f.option && f.option !== 'none')
     .reduce((s, f) => {
@@ -623,9 +634,14 @@ export function gatherDocData(state: WizardState): DocData {
       if (f.requiresDosator && f.selectedDosator) p += dosatorOptions.find((d) => d.id === f.selectedDosator)?.price ?? 0;
       return s + p;
     }, 0);
-  const cpAvdUpgrade = state.step5.avdSelections.reduce((s, sel) => {
+
+  // AVD delta: current minus default AVD
+  const cpDefaultAvdKit = avdKits.find((a) => a.id === profileObj?.defaultAvd);
+  const cpDefaultAvdPrice = cpDefaultAvdKit?.price ?? 0;
+  const cpCurrentAvdPrice = state.step5.avdSelections.reduce((s, sel) => {
     return s + (avdKits.find((a) => a.id === sel.avdId)?.price ?? 0);
   }, 0) + (state.step5.customPumpPrice || 0);
+  const cpAvdDelta = cpCurrentAvdPrice - cpDefaultAvdPrice;
 
   let cpSecondPumpPrice = 0;
   if (state.step8.secondPumpEnabled) {
@@ -640,8 +656,9 @@ export function gatherDocData(state: WizardState): DocData {
     return s + p * e.quantity;
   }, 0) + cpSecondPumpPrice;
 
-  const cpUpgradesPerPost = cpBumUpgrade + cpPayUpgrade + cpFuncPrice + cpAvdUpgrade;
-  const cpEquipmentTotal = (cpKitPrice + cpUpgradesPerPost) * postCount;
+  const cpBasePriceWithBum = cpProfilePrice + cpExtraAccPrice + cpBumUpgrade;
+  const cpUpgradesPerPost = cpPaymentDelta + cpFuncPrice + cpAvdDelta;
+  const cpEquipmentTotal = (cpBasePriceWithBum + cpUpgradesPerPost) * postCount;
   const cpWashTotal = wash.waterTotal + cpPostExtras + wash.vacuumPrice
     + wash.extras.reduce((s, r) => s + r.price, 0)
     + (wash.pipelines.air + wash.pipelines.water + wash.pipelines.chem);
