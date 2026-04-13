@@ -382,6 +382,38 @@ function calcSharedTotals(state: WizardState, subtotal: number): TotalsBlock {
   };
 }
 
+function calcRobotTotals(state: WizardState, subtotal: number, robotMontagePrice: number): TotalsBlock {
+  const discountPct = state.step10.discount;
+  const discountAmount = subtotal * (discountPct / 100);
+  const afterDiscount = subtotal - discountAmount;
+
+  const montageAmount = state.step10.robotMontage ? robotMontagePrice : 0;
+  const montageTypeLabel = state.step10.robotMontage ? `Монтаж (фикс. ${robotMontagePrice.toLocaleString('ru-RU')} \u20BD)` : 'Нет';
+
+  const vatEnabled = state.step10.vatEnabled;
+  const vatPct = state.step10.vat;
+  const vatBase = afterDiscount + montageAmount;
+  const vatAmount = vatEnabled ? vatBase * (vatPct / 100) : 0;
+  const total = vatBase + vatAmount;
+
+  return {
+    subtotal,
+    discountPct,
+    discountAmount,
+    discountWarning: discountPct > 3,
+    afterDiscount,
+    montageType: montageTypeLabel,
+    montageFromSubtotal: montageAmount,
+    montageExtra: 0,
+    montageAmount,
+    vatEnabled,
+    vatPct,
+    vatBase,
+    vatAmount,
+    total,
+  };
+}
+
 // ─── Robot branch ───
 
 function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
@@ -427,7 +459,9 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
   const wash = calcWashBlock(state);
 
   const subtotal = robotTotal + wash.washTotal;
-  const totals = calcSharedTotals(state, subtotal);
+  // Robot: fixed montage 370k instead of percentage-based
+  const robotMontagePrice = 370_000;
+  const totals = calcRobotTotals(state, subtotal, robotMontagePrice);
 
   return {
     isRobot: true,

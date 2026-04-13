@@ -33,6 +33,8 @@ function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' ₽';
 }
 
+const ROBOT_MONTAGE_PRICE = 370_000;
+
 interface CalcResult {
   postCount: number;
   unitLabel: string;
@@ -191,13 +193,28 @@ function useRobotCalc(state: WizardState): CalcResult {
 
   const subtotal = robotPrice + burPrice + optionsTotal + waterTotal + equipTotal;
 
-  return calcTotals(state, subtotal, 1, 'робот', [
+  const result = calcTotals(state, subtotal, 1, 'робот', [
     ['Модель робота', robotPrice],
     ['БУР', burPrice],
     ['Опции робота', optionsTotal],
     ['Водоподготовка', waterTotal],
     ['Доп. оборудование', equipTotal],
   ]);
+
+  // Robot: fixed montage price instead of percentage-based
+  const robotMontageAmount = state.step10.robotMontage ? ROBOT_MONTAGE_PRICE : 0;
+  const beforeVat = result.subtotal - result.discountAmount + robotMontageAmount;
+  const vatAmount = result.vatEnabled ? beforeVat * (result.vatPct / 100) : 0;
+
+  return {
+    ...result,
+    montage: state.step10.robotMontage ? 'full' : 'none',
+    montagePct: robotMontageAmount,
+    montageExtra: 0,
+    montageAmount: robotMontageAmount,
+    total: beforeVat + vatAmount,
+    vatAmount,
+  };
 }
 
 function useTruckCalc(state: WizardState): CalcResult {
@@ -332,10 +349,12 @@ function CostContent({
   state,
   onUpdateStep10,
   calc,
+  isRobot,
 }: {
   state: WizardState;
   onUpdateStep10: (data: Step10Data) => void;
   calc: CalcResult;
+  isRobot?: boolean;
 }) {
   const {
     postCount, unitLabel, lines, discountPct, discountAmount,
@@ -413,40 +432,54 @@ function CostContent({
             <span className="text-muted">Монтаж</span>
             <span className="font-medium tabular-nums">{fmt(montageAmount)}</span>
           </div>
-          <div className="flex gap-1">
-            {montageOptions.map((opt) => (
-              <button
-                key={opt.value}
-                onClick={() => update10({ montage: opt.value, montageExtra: opt.value !== 'full' ? 0 : state.step10.montageExtra })}
-                className={`flex-1 text-[11px] py-1 rounded transition-colors ${
-                  montage === opt.value
-                    ? 'bg-accent text-white'
-                    : 'bg-background border border-border text-muted hover:border-accent/50'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          {montage === 'full' && montageExtra > 0 && (
-            <div className="text-[10px] text-muted">
-              10%: {fmt(montagePct)} + доп. работы: {fmt(montageExtra)} = {fmt(montageAmount)}
-            </div>
-          )}
-          {montage === 'full' && (
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-[11px] text-muted whitespace-nowrap">Доп. работы</span>
+          {isRobot ? (
+            <label className="flex items-center gap-2 cursor-pointer">
               <input
-                type="number"
-                min={0}
-                step={1000}
-                value={state.step10.montageExtra || ''}
-                onChange={(e) => update10({ montageExtra: parseFloat(e.target.value) || 0 })}
-                placeholder="0"
-                className="w-24 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-right focus:outline-none focus:border-accent"
+                type="checkbox"
+                checked={state.step10.robotMontage}
+                onChange={(e) => update10({ robotMontage: e.target.checked })}
+                className="w-3.5 h-3.5 accent-accent"
               />
-              <span className="text-[10px] text-muted">₽</span>
-            </div>
+              <span className="text-[11px] text-muted">Монтаж — {fmt(ROBOT_MONTAGE_PRICE)}</span>
+            </label>
+          ) : (
+            <>
+              <div className="flex gap-1">
+                {montageOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => update10({ montage: opt.value, montageExtra: opt.value !== 'full' ? 0 : state.step10.montageExtra })}
+                    className={`flex-1 text-[11px] py-1 rounded transition-colors ${
+                      montage === opt.value
+                        ? 'bg-accent text-white'
+                        : 'bg-background border border-border text-muted hover:border-accent/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {montage === 'full' && montageExtra > 0 && (
+                <div className="text-[10px] text-muted">
+                  10%: {fmt(montagePct)} + доп. работы: {fmt(montageExtra)} = {fmt(montageAmount)}
+                </div>
+              )}
+              {montage === 'full' && (
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-[11px] text-muted whitespace-nowrap">Доп. работы</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1000}
+                    value={state.step10.montageExtra || ''}
+                    onChange={(e) => update10({ montageExtra: parseFloat(e.target.value) || 0 })}
+                    placeholder="0"
+                    className="w-24 bg-background border border-border rounded px-1.5 py-0.5 text-xs text-right focus:outline-none focus:border-accent"
+                  />
+                  <span className="text-[10px] text-muted">₽</span>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -494,7 +527,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
             {isTruck ? '1 грузовая мойка' : isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
           </p>
         </div>
-        <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} />
+        <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} isRobot={isRobot} />
       </div>
 
       {/* Mobile floating button */}
@@ -529,7 +562,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
                 ✕
               </button>
             </div>
-            <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} />
+            <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} isRobot={isRobot} />
           </div>
         </div>
       )}

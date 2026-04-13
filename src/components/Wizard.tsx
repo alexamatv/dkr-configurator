@@ -145,6 +145,7 @@ function createInitialState(): WizardState {
       vat: 22,
       montage: 'none',
       montageExtra: 0,
+      robotMontage: false,
       language: 'ru',
     },
     // Robot
