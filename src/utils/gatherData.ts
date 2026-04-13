@@ -168,13 +168,17 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
       }
     });
 
-  // Accessories (including customPrice)
+  // Accessories (including customPrice); kit items show "в комплекте" with price 0
+  const defaultAccIds = profile?.defaultAccessories ?? [];
   const accessories: PostRow[] = post.accessories
     .filter((a) => a.selected)
-    .map((a) => ({
-      name: a.name,
-      price: a.customPrice !== undefined ? a.customPrice : a.price,
-    }));
+    .map((a) => {
+      const inKit = defaultAccIds.includes(a.id);
+      return {
+        name: inKit ? `${a.name} (в комплекте)` : a.name,
+        price: inKit ? 0 : (a.customPrice !== undefined ? a.customPrice : a.price),
+      };
+    });
 
   // Base functions (enabled, входит в комплект)
   const baseFunctions: PostRow[] = post.functions

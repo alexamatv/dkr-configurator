@@ -145,8 +145,11 @@ export function Step2BaseConfig({ data, onChange }: Props) {
                   <div className="min-w-0 flex-1">
                     <div className="text-sm font-medium truncate">{acc.name}</div>
                     <div className="text-sm">
-                      <span className="font-bold text-accent">{effectivePrice.toLocaleString('ru-RU')} ₽</span>
-                      {inKit && acc.selected && <span className="text-muted italic text-xs ml-1">(в комплекте)</span>}
+                      {inKit ? (
+                        <span className="text-muted italic text-xs">в комплекте</span>
+                      ) : (
+                        <span className="font-bold text-accent">{effectivePrice.toLocaleString('ru-RU')} ₽</span>
+                      )}
                     </div>
                   </div>
                 </label>
