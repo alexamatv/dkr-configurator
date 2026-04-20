@@ -326,6 +326,28 @@ export const vacuumOptions: VacuumOption[] = [
   { id: 'none', name: 'Нет', price: 0 },
 ];
 
+export const vacuumSubOptionsConfig = {
+  payment: [
+    { id: 'coin_acceptor', name: 'Монетоприёмник', price: 1, defaultOn: true },
+    { id: 'loyalty_reader', name: 'Считыватель карт лояльности', price: 1, defaultOn: true },
+  ],
+  baseButtons: [
+    { id: 'vacuum_btn', name: 'Пылесос', price: 1, defaultOn: true },
+    { id: 'pause_btn', name: 'Пауза', price: 1, defaultOn: true },
+  ],
+  extraButtons: [
+    { id: 'air_btn', name: 'Воздух', price: 1, defaultOn: false },
+    { id: 'blackener_btn', name: 'Чернитель', price: 1, defaultOn: false },
+    { id: 'dry_cleaning_btn', name: 'Химчистка', price: 1, defaultOn: false },
+  ],
+} as const;
+
+export const defaultVacuumSubOptions = [
+  ...vacuumSubOptionsConfig.payment,
+  ...vacuumSubOptionsConfig.baseButtons,
+  ...vacuumSubOptionsConfig.extraButtons,
+].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn }));
+
 export const defaultWashExtras: WashExtra[] = [
   { id: 'tank_1m3', name: 'Ёмкость накопительная (1 куб)', selected: false, quantity: 0, price: 50000 },
   { id: 'hose_reel', name: 'Катушка инерционная для шланга пылесоса', selected: false, quantity: 0, price: 17000 },

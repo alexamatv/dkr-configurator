@@ -161,9 +161,17 @@ export interface Step8Data {
   secondPumpEnabled?: boolean;
 }
 
+export interface VacuumSubOption {
+  id: string;
+  name: string;
+  price: number;
+  selected: boolean;
+}
+
 export interface Step9Data {
   vacuumOption: string;
   vacuumQuantity: number;
+  vacuumSubOptions: VacuumSubOption[];
   extras: WashExtra[];
   pipelinesAirPrice?: number;
   pipelinesWaterPrice?: number;

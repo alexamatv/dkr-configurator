@@ -118,7 +118,13 @@ function useMsoCalc(state: WizardState): CalcResult {
     }, 0) + secondPumpPrice;
 
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
-  const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
+  const vacuumBasePrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
+  const vacuumSubPrice = state.step9.vacuumOption !== 'none'
+    ? (state.step9.vacuumSubOptions ?? [])
+        .filter((o) => o.selected)
+        .reduce((s, o) => s + o.price, 0) * state.step9.vacuumQuantity
+    : 0;
+  const vacuumPrice = vacuumBasePrice + vacuumSubPrice;
 
   const washExtrasPrice = state.step9.extras
     .filter((e) => e.selected)
@@ -181,7 +187,13 @@ function useRobotCalc(state: WizardState): CalcResult {
 
   // Wash extras (reuses step9)
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
-  const vacuumPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
+  const vacuumBasePrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
+  const vacuumSubPrice = state.step9.vacuumOption !== 'none'
+    ? (state.step9.vacuumSubOptions ?? [])
+        .filter((o) => o.selected)
+        .reduce((s, o) => s + o.price, 0) * state.step9.vacuumQuantity
+    : 0;
+  const vacuumPrice = vacuumBasePrice + vacuumSubPrice;
   const washExtrasPrice = state.step9.extras
     .filter((e) => e.selected)
     .reduce((sum, e) => sum + e.price * e.quantity, 0);

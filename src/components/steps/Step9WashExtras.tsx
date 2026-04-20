@@ -2,7 +2,7 @@
 
 import type { Step9Data } from '@/types';
 import { StepHint } from '../StepHint';
-import { vacuumOptions } from '@/data/mockData';
+import { vacuumOptions, vacuumSubOptionsConfig } from '@/data/mockData';
 
 interface Props {
   data: Step9Data;
@@ -26,6 +26,16 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
       extras: data.extras.map((e) => (e.id === id ? { ...e, quantity: Math.max(0, qty) } : e)),
     });
   };
+
+  const toggleSubOption = (id: string) => {
+    update({
+      vacuumSubOptions: (data.vacuumSubOptions ?? []).map((o) =>
+        o.id === id ? { ...o, selected: !o.selected } : o
+      ),
+    });
+  };
+
+  const getSubOption = (id: string) => (data.vacuumSubOptions ?? []).find((o) => o.id === id);
 
   return (
     <div className="space-y-10">
@@ -52,16 +62,123 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
           ))}
         </div>
         {data.vacuumOption !== 'none' && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-sm text-muted">Количество:</span>
-            <input
-              type="number"
-              min={1}
-              value={data.vacuumQuantity}
-              onChange={(e) => update({ vacuumQuantity: parseInt(e.target.value) || 1 })}
-              className="w-20 bg-surface border border-border rounded px-3 py-1 text-sm"
-            />
-          </div>
+          <>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-sm text-muted">Количество:</span>
+              <input
+                type="number"
+                min={1}
+                value={data.vacuumQuantity}
+                onChange={(e) => update({ vacuumQuantity: parseInt(e.target.value) || 1 })}
+                className="w-20 bg-surface border border-border rounded px-3 py-1 text-sm"
+              />
+            </div>
+
+            {/* Vacuum sub-options */}
+            <div className="mt-4 ml-4 pl-4 border-l-2 border-accent/30 space-y-4">
+              {/* Payment section */}
+              <div>
+                <div className="text-sm font-medium text-foreground">Система оплаты</div>
+                <div className="text-[11px] text-muted mb-2">
+                  Встроены по умолчанию. Снимите галочку, если не нужно.
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {vacuumSubOptionsConfig.payment.map((cfg) => {
+                    const opt = getSubOption(cfg.id);
+                    const sel = opt?.selected ?? cfg.defaultOn;
+                    return (
+                      <label
+                        key={cfg.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-xs transition-colors ${
+                          sel ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={sel}
+                          onChange={() => toggleSubOption(cfg.id)}
+                          className="sr-only"
+                        />
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                          sel ? 'border-accent bg-accent' : 'border-border'
+                        }`}>
+                          {sel && <span className="text-white text-[10px]">✓</span>}
+                        </div>
+                        <span>{cfg.name}</span>
+                        <span className="text-muted">— {cfg.price} ₽</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Base buttons section */}
+              <div>
+                <div className="text-sm font-medium text-foreground mb-2">Базовые кнопки</div>
+                <div className="flex flex-wrap gap-2">
+                  {vacuumSubOptionsConfig.baseButtons.map((cfg) => {
+                    const opt = getSubOption(cfg.id);
+                    const sel = opt?.selected ?? cfg.defaultOn;
+                    return (
+                      <label
+                        key={cfg.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-xs transition-colors ${
+                          sel ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={sel}
+                          onChange={() => toggleSubOption(cfg.id)}
+                          className="sr-only"
+                        />
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                          sel ? 'border-accent bg-accent' : 'border-border'
+                        }`}>
+                          {sel && <span className="text-white text-[10px]">✓</span>}
+                        </div>
+                        <span>{cfg.name}</span>
+                        <span className="text-muted">— {cfg.price} ₽</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Extra buttons section */}
+              <div>
+                <div className="text-sm font-medium text-foreground mb-2">Дополнительные кнопки</div>
+                <div className="flex flex-wrap gap-2">
+                  {vacuumSubOptionsConfig.extraButtons.map((cfg) => {
+                    const opt = getSubOption(cfg.id);
+                    const sel = opt?.selected ?? cfg.defaultOn;
+                    return (
+                      <label
+                        key={cfg.id}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-md border cursor-pointer text-xs transition-colors ${
+                          sel ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={sel}
+                          onChange={() => toggleSubOption(cfg.id)}
+                          className="sr-only"
+                        />
+                        <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 ${
+                          sel ? 'border-accent bg-accent' : 'border-border'
+                        }`}>
+                          {sel && <span className="text-white text-[10px]">✓</span>}
+                        </div>
+                        <span>{cfg.name}</span>
+                        <span className="text-muted">— {cfg.price} ₽</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

@@ -29,6 +29,7 @@ import {
   profiles,
   defaultPostExtras,
   defaultWashExtras,
+  defaultVacuumSubOptions,
   robotExtraEquipment,
 } from '@/data/mockData';
 import { HintsProvider } from '@/context/HintsContext';
@@ -130,6 +131,7 @@ function createInitialState(): WizardState {
     step9: {
       vacuumOption: 'none',
       vacuumQuantity: 0,
+      vacuumSubOptions: defaultVacuumSubOptions.map((o) => ({ ...o })),
       extras: defaultWashExtras.map((e) => ({ ...e })),
       pipelinesAirPrice: 0,
       pipelinesWaterPrice: 0,

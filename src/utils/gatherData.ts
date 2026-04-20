@@ -316,17 +316,29 @@ function calcWashBlock(state: WizardState): WashBlock {
     waterTotal += state.step7.softeningOsmosPrice;
   }
 
-  // Vacuum
+  // Vacuum (base price only; sub-options shown as separate rows below)
   const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
   const vacPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
   const vacLabel = vac && vac.id !== 'none'
     ? `${vac.name} x${state.step9.vacuumQuantity}`
     : 'Нет';
 
-  // Wash extras (Step 9)
+  // Wash extras (Step 9) + vacuum sub-options (shown as separate rows in exports)
   const washExtras: PostRow[] = state.step9.extras
     .filter((e) => e.selected)
     .map((e) => ({ name: e.name + (e.quantity > 1 ? ` x${e.quantity}` : ''), price: e.price * e.quantity }));
+
+  if (vac && vac.id !== 'none') {
+    (state.step9.vacuumSubOptions ?? [])
+      .filter((o) => o.selected)
+      .forEach((o) => {
+        const qty = state.step9.vacuumQuantity;
+        washExtras.push({
+          name: `${o.name}${qty > 1 ? ` x${qty}` : ''} (пылесос)`,
+          price: o.price * qty,
+        });
+      });
+  }
 
   // Pipelines
   const pipAir = state.step9.pipelinesAirPrice || 0;
