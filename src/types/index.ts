@@ -16,6 +16,7 @@ export interface BumModel {
   name: string;
   description: string;
   maxButtons: number;
+  maxFunctions: number;
   price: number;
   realPrice: number;
 }
