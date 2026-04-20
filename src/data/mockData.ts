@@ -321,6 +321,8 @@ export const defaultPostExtras: PostExtra[] = [
 
 export const vacuumOptions: VacuumOption[] = [
   { id: 'single', name: 'Пылесос 1-постовой', price: 235000 },
+  { id: 'double', name: 'Пылесос 2-постовой', price: 1 },
+  { id: 'double_premium', name: 'Пылесос 2-постовой Премиум', price: 1 },
   { id: 'none', name: 'Нет', price: 0 },
 ];
 
@@ -336,6 +338,8 @@ export const defaultWashExtras: WashExtra[] = [
   { id: 'local_server', name: 'Локальный сервер', selected: false, quantity: 0, price: 60000 },
   { id: 'manual_wash', name: 'Ручная мойка (АВД)', selected: false, quantity: 0, price: 35000 },
   { id: 'mat_wash', name: 'Мойка ковриков', selected: false, quantity: 0, price: 25000 },
+  { id: 'washer_fluid_dispenser', name: 'Розлив омывающей жидкости', selected: false, quantity: 0, price: 1 },
+  { id: 'dry_fog_machine', name: 'Аппарат сухого тумана', selected: false, quantity: 0, price: 1 },
 ];
 
 export const managers = [
