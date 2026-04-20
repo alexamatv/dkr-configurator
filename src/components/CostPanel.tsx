@@ -126,9 +126,25 @@ function useMsoCalc(state: WizardState): CalcResult {
     : 0;
   const vacuumPrice = vacuumBasePrice + vacuumSubPrice;
 
-  const washExtrasPrice = state.step9.extras
+  const washExtrasBasePrice = state.step9.extras
     .filter((e) => e.selected)
     .reduce((sum, e) => sum + e.price * e.quantity, 0);
+
+  const dispenserItem = state.step9.extras.find((e) => e.id === 'washer_fluid_dispenser');
+  const dispenserSubPrice = dispenserItem?.selected
+    ? (state.step9.dispenserSubOptions ?? [])
+        .filter((o) => o.selected)
+        .reduce((s, o) => s + o.price, 0) * (dispenserItem.quantity || 1)
+    : 0;
+
+  const foggerItem = state.step9.extras.find((e) => e.id === 'dry_fog_machine');
+  const foggerSubPrice = foggerItem?.selected
+    ? (state.step9.foggerSubOptions ?? [])
+        .filter((o) => o.selected)
+        .reduce((s, o) => s + o.price, 0) * (foggerItem.quantity || 1)
+    : 0;
+
+  const washExtrasPrice = washExtrasBasePrice + dispenserSubPrice + foggerSubPrice;
 
   const pipelinesPrice =
     (state.step9.pipelinesAirPrice || 0) +
@@ -194,9 +210,25 @@ function useRobotCalc(state: WizardState): CalcResult {
         .reduce((s, o) => s + o.price, 0) * state.step9.vacuumQuantity
     : 0;
   const vacuumPrice = vacuumBasePrice + vacuumSubPrice;
-  const washExtrasPrice = state.step9.extras
+  const washExtrasBasePrice = state.step9.extras
     .filter((e) => e.selected)
     .reduce((sum, e) => sum + e.price * e.quantity, 0);
+
+  const dispenserItem = state.step9.extras.find((e) => e.id === 'washer_fluid_dispenser');
+  const dispenserSubPrice = dispenserItem?.selected
+    ? (state.step9.dispenserSubOptions ?? [])
+        .filter((o) => o.selected)
+        .reduce((s, o) => s + o.price, 0) * (dispenserItem.quantity || 1)
+    : 0;
+
+  const foggerItem = state.step9.extras.find((e) => e.id === 'dry_fog_machine');
+  const foggerSubPrice = foggerItem?.selected
+    ? (state.step9.foggerSubOptions ?? [])
+        .filter((o) => o.selected)
+        .reduce((s, o) => s + o.price, 0) * (foggerItem.quantity || 1)
+    : 0;
+
+  const washExtrasPrice = washExtrasBasePrice + dispenserSubPrice + foggerSubPrice;
   const pipelinesPrice =
     (state.step9.pipelinesAirPrice || 0) +
     (state.step9.pipelinesWaterPrice || 0) +

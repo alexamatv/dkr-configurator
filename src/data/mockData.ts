@@ -348,6 +348,52 @@ export const defaultVacuumSubOptions = [
   ...vacuumSubOptionsConfig.extraButtons,
 ].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn }));
 
+// Dispenser (розлив омывающей жидкости) sub-options
+export const dispenserSubOptionsConfig = {
+  payment: [
+    { id: 'disp_coin_acceptor', name: 'Монетоприёмник', price: 1, defaultOn: true },
+    { id: 'disp_loyalty_reader', name: 'Считыватель карт лояльности', price: 1, defaultOn: true },
+  ],
+  baseButtons: [
+    { id: 'disp_start_btn', name: 'Старт', price: 1, defaultOn: true },
+    { id: 'disp_stop_btn', name: 'Стоп', price: 1, defaultOn: true },
+  ],
+  extraButtons: [
+    { id: 'disp_blackener_btn', name: 'Чернитель', price: 1, defaultOn: false },
+    { id: 'disp_air_btn', name: 'Воздух', price: 1, defaultOn: false },
+    { id: 'disp_dry_cleaning_btn', name: 'Химчистка', price: 1, defaultOn: false },
+  ],
+} as const;
+
+export const defaultDispenserSubOptions = [
+  ...dispenserSubOptionsConfig.payment,
+  ...dispenserSubOptionsConfig.baseButtons,
+  ...dispenserSubOptionsConfig.extraButtons,
+].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn }));
+
+// Fogger (аппарат сухого тумана) sub-options
+export const foggerSubOptionsConfig = {
+  payment: [
+    { id: 'fog_coin_acceptor', name: 'Монетоприёмник', price: 1, defaultOn: true },
+    { id: 'fog_loyalty_reader', name: 'Считыватель карт лояльности', price: 1, defaultOn: true },
+  ],
+  baseScents: [
+    { id: 'fog_scent_1', name: 'Запах 1', price: 0, defaultOn: true, locked: true },
+    { id: 'fog_scent_2', name: 'Запах 2', price: 0, defaultOn: true, locked: true },
+  ],
+  extraScents: [
+    { id: 'fog_scent_3', name: 'Запах 3', price: 1, defaultOn: false },
+    { id: 'fog_scent_4', name: 'Запах 4', price: 1, defaultOn: false },
+    { id: 'fog_scent_5', name: 'Запах 5', price: 1, defaultOn: false },
+  ],
+} as const;
+
+export const defaultFoggerSubOptions = [
+  ...foggerSubOptionsConfig.payment,
+  ...foggerSubOptionsConfig.baseScents,
+  ...foggerSubOptionsConfig.extraScents,
+].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn }));
+
 export const defaultWashExtras: WashExtra[] = [
   { id: 'tank_1m3', name: 'Ёмкость накопительная (1 куб)', selected: false, quantity: 0, price: 50000 },
   { id: 'hose_reel', name: 'Катушка инерционная для шланга пылесоса', selected: false, quantity: 0, price: 17000 },

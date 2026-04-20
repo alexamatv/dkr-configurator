@@ -340,6 +340,34 @@ function calcWashBlock(state: WizardState): WashBlock {
       });
   }
 
+  // Dispenser sub-options
+  const dispenserItem = state.step9.extras.find((e) => e.id === 'washer_fluid_dispenser');
+  if (dispenserItem?.selected) {
+    const qty = dispenserItem.quantity || 1;
+    (state.step9.dispenserSubOptions ?? [])
+      .filter((o) => o.selected)
+      .forEach((o) => {
+        washExtras.push({
+          name: `${o.name}${qty > 1 ? ` x${qty}` : ''} (розлив)`,
+          price: o.price * qty,
+        });
+      });
+  }
+
+  // Fogger sub-options
+  const foggerItem = state.step9.extras.find((e) => e.id === 'dry_fog_machine');
+  if (foggerItem?.selected) {
+    const qty = foggerItem.quantity || 1;
+    (state.step9.foggerSubOptions ?? [])
+      .filter((o) => o.selected)
+      .forEach((o) => {
+        washExtras.push({
+          name: `${o.name}${qty > 1 ? ` x${qty}` : ''} (сухой туман)`,
+          price: o.price * qty,
+        });
+      });
+  }
+
   // Pipelines
   const pipAir = state.step9.pipelinesAirPrice || 0;
   const pipWater = state.step9.pipelinesWaterPrice || 0;

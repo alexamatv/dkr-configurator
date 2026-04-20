@@ -172,6 +172,8 @@ export interface Step9Data {
   vacuumOption: string;
   vacuumQuantity: number;
   vacuumSubOptions: VacuumSubOption[];
+  dispenserSubOptions: VacuumSubOption[];
+  foggerSubOptions: VacuumSubOption[];
   extras: WashExtra[];
   pipelinesAirPrice?: number;
   pipelinesWaterPrice?: number;
