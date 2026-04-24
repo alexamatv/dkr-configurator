@@ -1,6 +1,6 @@
 'use client';
 
-import type { Step9Data, VacuumSubOption } from '@/types';
+import type { Step9Data, VacuumSubOption, WashExtra } from '@/types';
 import { StepHint } from '../StepHint';
 import {
   vacuumOptions,
@@ -63,6 +63,8 @@ function SubOptionPill({
   );
 }
 
+const OUTDOOR_EXTRA_IDS = ['washer_fluid_dispenser', 'dry_fog_machine'];
+
 export function Step9WashExtras({ data, onChange, title }: Props) {
   const update = (patch: Partial<Step9Data>) => onChange({ ...data, ...patch });
 
@@ -92,8 +94,47 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
     return found ? found.selected : fallback;
   };
 
-  const dispenserSelected = data.extras.find((e) => e.id === 'washer_fluid_dispenser')?.selected ?? false;
-  const foggerSelected = data.extras.find((e) => e.id === 'dry_fog_machine')?.selected ?? false;
+  const dispenser = data.extras.find((e) => e.id === 'washer_fluid_dispenser');
+  const fogger = data.extras.find((e) => e.id === 'dry_fog_machine');
+
+  // Renders a single extra checkbox row (used for dispenser and fogger inside outdoor section)
+  const renderExtraRow = (item: WashExtra | undefined) => {
+    if (!item) return null;
+    return (
+      <div
+        className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
+          item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+        }`}
+      >
+        <label className="flex items-center gap-3 flex-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={item.selected}
+            onChange={() => toggleExtra(item.id)}
+            className="sr-only"
+          />
+          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+            item.selected ? 'border-accent bg-accent' : 'border-border'
+          }`}>
+            {item.selected && <span className="text-white text-xs">✓</span>}
+          </div>
+          <div>
+            <div className="text-sm font-medium">{item.name}</div>
+            <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>
+          </div>
+        </label>
+        {item.selected && (
+          <input
+            type="number"
+            min={1}
+            value={item.quantity}
+            onChange={(e) => setExtraQty(item.id, parseInt(e.target.value) || 1)}
+            className="w-16 text-center bg-surface border border-border rounded py-1 text-sm"
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-10">
@@ -104,7 +145,9 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
       </StepHint>
 
       <div>
-        <label className="block text-sm font-medium text-muted mb-3">Уличные пылесосы</label>
+        <label className="block text-sm font-medium text-muted mb-3">Уличное оборудование</label>
+
+        {/* Vacuum radio group */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {vacuumOptions.map((v) => (
             <button
@@ -176,138 +219,142 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
             </div>
           </>
         )}
+
+        {/* Separator + dispenser & fogger as checkboxes */}
+        <div className="mt-6 pt-4 border-t border-border/60 space-y-2">
+          <div className="text-[11px] text-muted mb-1">Дополнительные модули (независимый выбор)</div>
+
+          {renderExtraRow(dispenser)}
+          {dispenser?.selected && (
+            <div className="mt-2 ml-4 pl-4 border-l-2 border-accent/30 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-foreground">Система оплаты</div>
+                <div className="text-[11px] text-muted mb-2">Встроены по умолчанию. Снимите галочку, если не нужно.</div>
+                <div className="flex flex-wrap gap-2">
+                  {dispenserSubOptionsConfig.payment.map((cfg) => (
+                    <SubOptionPill
+                      key={cfg.id}
+                      cfg={cfg}
+                      selected={isSel(data.dispenserSubOptions, cfg.id, cfg.defaultOn)}
+                      onToggle={() => toggleIn('dispenserSubOptions', cfg.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground mb-2">Базовые кнопки</div>
+                <div className="flex flex-wrap gap-2">
+                  {dispenserSubOptionsConfig.baseButtons.map((cfg) => (
+                    <SubOptionPill
+                      key={cfg.id}
+                      cfg={cfg}
+                      selected={isSel(data.dispenserSubOptions, cfg.id, cfg.defaultOn)}
+                      onToggle={() => toggleIn('dispenserSubOptions', cfg.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground mb-2">Дополнительные кнопки</div>
+                <div className="flex flex-wrap gap-2">
+                  {dispenserSubOptionsConfig.extraButtons.map((cfg) => (
+                    <SubOptionPill
+                      key={cfg.id}
+                      cfg={cfg}
+                      selected={isSel(data.dispenserSubOptions, cfg.id, cfg.defaultOn)}
+                      onToggle={() => toggleIn('dispenserSubOptions', cfg.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {renderExtraRow(fogger)}
+          {fogger?.selected && (
+            <div className="mt-2 ml-4 pl-4 border-l-2 border-accent/30 space-y-4">
+              <div>
+                <div className="text-sm font-medium text-foreground">Система оплаты</div>
+                <div className="text-[11px] text-muted mb-2">Встроены по умолчанию. Снимите галочку, если не нужно.</div>
+                <div className="flex flex-wrap gap-2">
+                  {foggerSubOptionsConfig.payment.map((cfg) => (
+                    <SubOptionPill
+                      key={cfg.id}
+                      cfg={cfg}
+                      selected={isSel(data.foggerSubOptions, cfg.id, cfg.defaultOn)}
+                      onToggle={() => toggleIn('foggerSubOptions', cfg.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground mb-2">Запахи (в базе)</div>
+                <div className="flex flex-wrap gap-2">
+                  {foggerSubOptionsConfig.baseScents.map((cfg) => (
+                    <SubOptionPill
+                      key={cfg.id}
+                      cfg={cfg}
+                      selected={true}
+                      onToggle={() => {}}
+                      locked
+                      includedLabel
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-foreground mb-2">Дополнительные запахи</div>
+                <div className="flex flex-wrap gap-2">
+                  {foggerSubOptionsConfig.extraScents.map((cfg) => (
+                    <SubOptionPill
+                      key={cfg.id}
+                      cfg={cfg}
+                      selected={isSel(data.foggerSubOptions, cfg.id, cfg.defaultOn)}
+                      onToggle={() => toggleIn('foggerSubOptions', cfg.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Другое оборудование</label>
         <div className="space-y-2">
-          {data.extras.map((item) => (
-            <div key={item.id}>
-              <div
-                className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
-                  item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
-                }`}
-              >
-                <label className="flex items-center gap-3 flex-1 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={item.selected}
-                    onChange={() => toggleExtra(item.id)}
-                    className="sr-only"
-                  />
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
-                    item.selected ? 'border-accent bg-accent' : 'border-border'
-                  }`}>
-                    {item.selected && <span className="text-white text-xs">✓</span>}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">{item.name}</div>
-                    <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>
-                  </div>
-                </label>
-                {item.selected && (
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => setExtraQty(item.id, parseInt(e.target.value) || 1)}
-                    className="w-16 text-center bg-surface border border-border rounded py-1 text-sm"
-                  />
-                )}
-              </div>
-
-              {/* Dispenser sub-options */}
-              {item.id === 'washer_fluid_dispenser' && dispenserSelected && (
-                <div className="mt-3 ml-4 pl-4 border-l-2 border-accent/30 space-y-4">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">Система оплаты</div>
-                    <div className="text-[11px] text-muted mb-2">Встроены по умолчанию. Снимите галочку, если не нужно.</div>
-                    <div className="flex flex-wrap gap-2">
-                      {dispenserSubOptionsConfig.payment.map((cfg) => (
-                        <SubOptionPill
-                          key={cfg.id}
-                          cfg={cfg}
-                          selected={isSel(data.dispenserSubOptions, cfg.id, cfg.defaultOn)}
-                          onToggle={() => toggleIn('dispenserSubOptions', cfg.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground mb-2">Базовые кнопки</div>
-                    <div className="flex flex-wrap gap-2">
-                      {dispenserSubOptionsConfig.baseButtons.map((cfg) => (
-                        <SubOptionPill
-                          key={cfg.id}
-                          cfg={cfg}
-                          selected={isSel(data.dispenserSubOptions, cfg.id, cfg.defaultOn)}
-                          onToggle={() => toggleIn('dispenserSubOptions', cfg.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground mb-2">Дополнительные кнопки</div>
-                    <div className="flex flex-wrap gap-2">
-                      {dispenserSubOptionsConfig.extraButtons.map((cfg) => (
-                        <SubOptionPill
-                          key={cfg.id}
-                          cfg={cfg}
-                          selected={isSel(data.dispenserSubOptions, cfg.id, cfg.defaultOn)}
-                          onToggle={() => toggleIn('dispenserSubOptions', cfg.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
+          {data.extras.filter((e) => !OUTDOOR_EXTRA_IDS.includes(e.id)).map((item) => (
+            <div
+              key={item.id}
+              className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
+                item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+              }`}
+            >
+              <label className="flex items-center gap-3 flex-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={item.selected}
+                  onChange={() => toggleExtra(item.id)}
+                  className="sr-only"
+                />
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                  item.selected ? 'border-accent bg-accent' : 'border-border'
+                }`}>
+                  {item.selected && <span className="text-white text-xs">✓</span>}
                 </div>
-              )}
-
-              {/* Fogger sub-options */}
-              {item.id === 'dry_fog_machine' && foggerSelected && (
-                <div className="mt-3 ml-4 pl-4 border-l-2 border-accent/30 space-y-4">
-                  <div>
-                    <div className="text-sm font-medium text-foreground">Система оплаты</div>
-                    <div className="text-[11px] text-muted mb-2">Встроены по умолчанию. Снимите галочку, если не нужно.</div>
-                    <div className="flex flex-wrap gap-2">
-                      {foggerSubOptionsConfig.payment.map((cfg) => (
-                        <SubOptionPill
-                          key={cfg.id}
-                          cfg={cfg}
-                          selected={isSel(data.foggerSubOptions, cfg.id, cfg.defaultOn)}
-                          onToggle={() => toggleIn('foggerSubOptions', cfg.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground mb-2">Запахи (в базе)</div>
-                    <div className="flex flex-wrap gap-2">
-                      {foggerSubOptionsConfig.baseScents.map((cfg) => (
-                        <SubOptionPill
-                          key={cfg.id}
-                          cfg={cfg}
-                          selected={true}
-                          onToggle={() => {}}
-                          locked
-                          includedLabel
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-foreground mb-2">Дополнительные запахи</div>
-                    <div className="flex flex-wrap gap-2">
-                      {foggerSubOptionsConfig.extraScents.map((cfg) => (
-                        <SubOptionPill
-                          key={cfg.id}
-                          cfg={cfg}
-                          selected={isSel(data.foggerSubOptions, cfg.id, cfg.defaultOn)}
-                          onToggle={() => toggleIn('foggerSubOptions', cfg.id)}
-                        />
-                      ))}
-                    </div>
-                  </div>
+                <div>
+                  <div className="text-sm font-medium">{item.name}</div>
+                  <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>
                 </div>
+              </label>
+              {item.selected && (
+                <input
+                  type="number"
+                  min={1}
+                  value={item.quantity}
+                  onChange={(e) => setExtraQty(item.id, parseInt(e.target.value) || 1)}
+                  className="w-16 text-center bg-surface border border-border rounded py-1 text-sm"
+                />
               )}
             </div>
           ))}
