@@ -1,24 +1,14 @@
 import type { WizardState, PostConfig, PaymentSystem } from '@/types';
+import type { DataContextValue } from '@/context/DataContext';
 import {
-  profiles,
-  bumModels,
-  calcBumPrice,
-  getDefaultBumForProfile,
   paymentSystemLabels,
-  avdKits,
-  osmosOptions,
-  arasModels,
-  vacuumOptions,
   dosatorOptions,
   managers,
-  robotModels,
-  burModels,
   calcPaymentCost,
   paymentSystemPrices,
   basePaymentSystems,
   paymentSystemRemovalDiscounts,
   boosterPumpPrice,
-  truckWashTypes,
   kompakOptions,
   truckManualPostEquipment,
   truckManualPostMontage,
@@ -134,23 +124,23 @@ export interface DocData {
 
 // ─── Helpers ───
 
-function getPostName(post: PostConfig, idx: number): string {
+function getPostName(data: DataContextValue, post: PostConfig, idx: number): string {
   if (post.customName) return post.customName;
-  const profile = profiles.find((p) => p.id === post.profile);
+  const profile = data.profiles.find((p) => p.id === post.profile);
   return `Пост #${idx + 1} — ${profile?.name ?? 'Без профиля'}`;
 }
 
 // ─── MSO: Post block ───
 
-function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostBlock {
-  const profile = profiles.find((p) => p.id === post.profile);
+function calcPostBlock(data: DataContextValue, post: PostConfig, idx: number, state: WizardState): PostBlock {
+  const profile = data.profiles.find((p) => p.id === post.profile);
   const basePrice = profile?.basePrice ?? 0;
 
-  const bum = bumModels.find((b) => b.id === post.bumModel);
+  const bum = data.bumModels.find((b) => b.id === post.bumModel);
   const bumName = bum?.name ?? '—';
-  const bumPrice = calcBumPrice(post.bumModel, post.profile);
-  const defaultBumId = getDefaultBumForProfile(post.profile);
-  const defaultBum = bumModels.find((b) => b.id === defaultBumId);
+  const bumPrice = data.calcBumPrice(post.bumModel, post.profile);
+  const defaultBumId = data.getDefaultBumForProfile(post.profile);
+  const defaultBum = data.bumModels.find((b) => b.id === defaultBumId);
   const defaultBumName = defaultBum?.name ?? '—';
   const bumSwapped = post.bumModel !== defaultBumId;
 
@@ -209,7 +199,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
 
   // Pumps (АВД)
   const pumps: PostRow[] = post.avdSelections.map((sel) => {
-    const kit = avdKits.find((a) => a.id === sel.avdId);
+    const kit = data.avdKits.find((a) => a.id === sel.avdId);
     return {
       name: kit?.name?.replace(' (входит в комплект)', '') ?? '—',
       price: kit?.price ?? 0,
@@ -235,7 +225,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
   let secondPump: PostRow | null = null;
   if (state.step8.secondPumpEnabled) {
     const defaultSel = state.step5.avdSelections.find((s) => s.isDefault);
-    const defaultAvd = defaultSel ? avdKits.find((k) => k.id === defaultSel.avdId) : null;
+    const defaultAvd = defaultSel ? data.avdKits.find((k) => k.id === defaultSel.avdId) : null;
     const spPrice = defaultAvd ? (defaultAvd.price > 0 ? defaultAvd.price : 85000) : 0;
     const spName = defaultAvd?.name?.replace(' (входит в комплект)', '') ?? '—';
     secondPump = { name: `Вторая помпа — ${spName}`, price: spPrice };
@@ -251,7 +241,7 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
   const postTotal = basePriceWithBum + accTotal + payTotal + funTotal + pmpTotal + extTotal + spTotal;
 
   return {
-    title: getPostName(post, idx),
+    title: getPostName(data, post, idx),
     profileName: profile?.name ?? '—',
     basePrice: basePriceWithBum,
     includedItems: profile?.includedComponents ?? [],
@@ -272,9 +262,9 @@ function calcPostBlock(post: PostConfig, idx: number, state: WizardState): PostB
 
 // ─── Wash block (MSO + Robot) ───
 
-function calcWashBlock(state: WizardState): WashBlock {
-  const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
-  const aras = arasModels.find((a) => a.id === state.step7.arasModel);
+function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
+  const osmos = data.osmosOptions.find((o) => o.id === state.step7.osmosOption);
+  const aras = data.arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
   const customWater = state.step7.customWaterPrice || 0;
 
@@ -317,7 +307,7 @@ function calcWashBlock(state: WizardState): WashBlock {
   }
 
   // Vacuum (base price only; sub-options shown as separate rows below)
-  const vac = vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
+  const vac = data.vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
   const vacPrice = (vac?.price ?? 0) * state.step9.vacuumQuantity;
   const vacLabel = vac && vac.id !== 'none'
     ? `${vac.name} x${state.step9.vacuumQuantity}`
@@ -432,7 +422,7 @@ function calcRobotTotals(state: WizardState, subtotal: number, robotMontagePrice
   const afterDiscount = subtotal - discountAmount;
 
   const montageAmount = state.step10.robotMontage ? robotMontagePrice : 0;
-  const montageTypeLabel = state.step10.robotMontage ? `Монтаж (фикс. ${robotMontagePrice.toLocaleString('ru-RU')} \u20BD)` : 'Нет';
+  const montageTypeLabel = state.step10.robotMontage ? `Монтаж (фикс. ${robotMontagePrice.toLocaleString('ru-RU')} ₽)` : 'Нет';
 
   const vatEnabled = state.step10.vatEnabled;
   const vatPct = state.step10.vat;
@@ -460,11 +450,11 @@ function calcRobotTotals(state: WizardState, subtotal: number, robotMontagePrice
 
 // ─── Robot branch ───
 
-function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
-  const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
+function gatherRobotDocData(data: DataContextValue, state: WizardState, header: HeaderData): DocData {
+  const robot = data.robotModels.find((m) => m.id === state.robotStep2.robotModel);
   const robotPrice = robot?.price ?? 0;
 
-  const bur = burModels.find((b) => b.id === state.robotStep3.burModel);
+  const bur = data.burModels.find((b) => b.id === state.robotStep3.burModel);
   const burPrice = bur?.price ?? 0;
 
   const guidesIncluded = ['premium_360', 'cosmo_360'].includes(state.robotStep2.robotModel);
@@ -500,7 +490,7 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
     robotTotal,
   };
 
-  const wash = calcWashBlock(state);
+  const wash = calcWashBlock(data, state);
 
   const subtotal = robotTotal + wash.washTotal;
   // Robot: fixed montage 370k instead of percentage-based
@@ -524,13 +514,13 @@ function gatherRobotDocData(state: WizardState, header: HeaderData): DocData {
 
 // ─── Truck branch ───
 
-function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
-  const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
+function gatherTruckDocData(data: DataContextValue, state: WizardState, header: HeaderData): DocData {
+  const truckType = data.truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
 
   // BUR
-  const bur = burModels.find((b) => b.id === state.truckBur.burModel);
+  const bur = data.burModels.find((b) => b.id === state.truckBur.burModel);
   const burName = bur?.name ?? '—';
   const burPrice = bur?.price ?? 0;
 
@@ -617,7 +607,7 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
       discountAmount,
       discountWarning: discountPct > 3,
       afterDiscount,
-      montageType: montage !== 'none' ? `Монтаж (фикс. ${kompakMontagePrice.toLocaleString('ru-RU')} \u20BD)` : 'Нет',
+      montageType: montage !== 'none' ? `Монтаж (фикс. ${kompakMontagePrice.toLocaleString('ru-RU')} ₽)` : 'Нет',
       montageFromSubtotal: montage !== 'none' ? kompakMontagePrice : 0,
       montageExtra: montage === 'full' ? (state.step10.montageExtra || 0) : 0,
       montageAmount,
@@ -659,7 +649,7 @@ function gatherTruckDocData(state: WizardState, header: HeaderData): DocData {
 
 // ─── Main entry ───
 
-export function gatherDocData(state: WizardState): DocData {
+export function gatherDocData(state: WizardState, data: DataContextValue): DocData {
   const mgr = managers.find((m) => m.id === state.step1.manager);
 
   const header: HeaderData = {
@@ -673,19 +663,19 @@ export function gatherDocData(state: WizardState): DocData {
 
   const isRobot = state.step1.objectType === 'robotic';
   const isTruck = state.step1.objectType === 'truck';
-  if (isRobot) return gatherRobotDocData(state, header);
-  if (isTruck) return gatherTruckDocData(state, header);
+  if (isRobot) return gatherRobotDocData(data, state, header);
+  if (isTruck) return gatherTruckDocData(data, state, header);
 
   // ─── MSO branch ───
   const postsData = state.posts.length > 0 ? state.posts : [];
-  const postBlocks = postsData.map((p, i) => calcPostBlock(p, i, state));
+  const postBlocks = postsData.map((p, i) => calcPostBlock(data, p, i, state));
 
-  const wash = calcWashBlock(state);
+  const wash = calcWashBlock(data, state);
 
   // Mirror CostPanel subtotal logic exactly (delta-based pricing)
   const postCount = Math.max(postBlocks.length, 1);
 
-  const profileObj = profiles.find((p) => p.id === state.step2.profile);
+  const profileObj = data.profiles.find((p) => p.id === state.step2.profile);
   // Use profile.price (bundle) as base — includes default accessories, AVD, and payments
   const cpProfilePrice = profileObj?.price ?? 0;
   const cpDefaultAccIds = profileObj?.defaultAccessories ?? [];
@@ -695,7 +685,7 @@ export function gatherDocData(state: WizardState): DocData {
     .filter((a) => a.selected && !cpDefaultAccIds.includes(a.id))
     .reduce((s, a) => s + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
 
-  const cpBumUpgrade = calcBumPrice(state.step3.bumModel, state.step2.profile);
+  const cpBumUpgrade = data.calcBumPrice(state.step3.bumModel, state.step2.profile);
 
   // Payment delta: current minus default
   const cpDefaultPayments = profileObj?.defaultPayments ?? [];
@@ -714,17 +704,17 @@ export function gatherDocData(state: WizardState): DocData {
     }, 0);
 
   // AVD delta: current minus default AVD
-  const cpDefaultAvdKit = avdKits.find((a) => a.id === profileObj?.defaultAvd);
+  const cpDefaultAvdKit = data.avdKits.find((a) => a.id === profileObj?.defaultAvd);
   const cpDefaultAvdPrice = cpDefaultAvdKit?.price ?? 0;
   const cpCurrentAvdPrice = state.step5.avdSelections.reduce((s, sel) => {
-    return s + (avdKits.find((a) => a.id === sel.avdId)?.price ?? 0);
+    return s + (data.avdKits.find((a) => a.id === sel.avdId)?.price ?? 0);
   }, 0) + (state.step5.customPumpPrice || 0);
   const cpAvdDelta = cpCurrentAvdPrice - cpDefaultAvdPrice;
 
   let cpSecondPumpPrice = 0;
   if (state.step8.secondPumpEnabled) {
     const ds = state.step5.avdSelections.find((s2) => s2.isDefault);
-    const da = ds ? avdKits.find((k) => k.id === ds.avdId) : null;
+    const da = ds ? data.avdKits.find((k) => k.id === ds.avdId) : null;
     cpSecondPumpPrice = da ? (da.price > 0 ? da.price : 85000) : 0;
   }
   const gIsPremium = state.step2.profile === 'premium';

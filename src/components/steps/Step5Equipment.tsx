@@ -2,7 +2,7 @@
 
 import type { Step5Data, AvdSelection } from '@/types';
 import { StepHint } from '../StepHint';
-import { avdKits, profiles } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step5Data;
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export function Step5Equipment({ data, profileId, onChange }: Props) {
+  const { profiles, avdKits } = useData();
   const profile = profiles.find((p) => p.id === profileId);
   const isPremium = profileId === 'premium';
   const filteredAvdKits = avdKits;

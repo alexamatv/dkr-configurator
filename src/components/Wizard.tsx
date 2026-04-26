@@ -23,17 +23,12 @@ import type {
   TruckStep5Data,
 } from '@/types';
 import {
-  defaultAccessories,
-  defaultBaseFunctions,
-  defaultExtraFunctions,
-  profiles,
-  defaultPostExtras,
-  defaultWashExtras,
   defaultVacuumSubOptions,
   defaultDispenserSubOptions,
   defaultFoggerSubOptions,
   robotExtraEquipment,
 } from '@/data/mockData';
+import { useData, type DataContextValue } from '@/context/DataContext';
 import { HintsProvider } from '@/context/HintsContext';
 import { StepNavigation } from './StepNavigation';
 import { CostPanel } from './CostPanel';
@@ -61,14 +56,14 @@ const premiumIncludedFunctions = [
   'osmos', 'turbo_water', 'active_chem_seko', 'call_operator',
 ];
 
-function applyProfileDefaults(profileId: string) {
-  const profile = profiles.find((p) => p.id === profileId);
+function applyProfileDefaults(data: DataContextValue, profileId: string) {
+  const profile = data.profiles.find((p) => p.id === profileId);
   if (!profile) return null;
   const isPremium = profileId === 'premium';
 
   const step4Functions = [
-    ...defaultBaseFunctions.map((f) => ({ ...f })),
-    ...defaultExtraFunctions.map((f) => {
+    ...data.defaultBaseFunctions.map((f) => ({ ...f })),
+    ...data.defaultExtraFunctions.map((f) => {
       if (isPremium && premiumIncludedFunctions.includes(f.id)) {
         return { ...f, isBase: true, enabled: true, option: undefined };
       }
@@ -79,7 +74,7 @@ function applyProfileDefaults(profileId: string) {
   return {
     step2: {
       profile: profileId as WizardState['step2']['profile'],
-      accessories: defaultAccessories.map((a) => ({
+      accessories: data.defaultAccessories.map((a) => ({
         ...a,
         selected: profile.defaultAccessories.includes(a.id),
       })),
@@ -100,8 +95,8 @@ function applyProfileDefaults(profileId: string) {
   };
 }
 
-function createInitialState(): WizardState {
-  const defaults = applyProfileDefaults('standard')!;
+function createInitialState(data: DataContextValue): WizardState {
+  const defaults = applyProfileDefaults(data, 'standard')!;
   return {
     currentStep: 1,
     step1: {
@@ -128,7 +123,7 @@ function createInitialState(): WizardState {
       softeningOsmosPrice: 0,
     },
     step8: {
-      extras: defaultPostExtras.map((e) => ({ ...e })),
+      extras: data.defaultPostExtras.map((e) => ({ ...e })),
     },
     step9: {
       vacuumOption: 'none',
@@ -136,7 +131,7 @@ function createInitialState(): WizardState {
       vacuumSubOptions: defaultVacuumSubOptions.map((o) => ({ ...o })),
       dispenserSubOptions: defaultDispenserSubOptions.map((o) => ({ ...o })),
       foggerSubOptions: defaultFoggerSubOptions.map((o) => ({ ...o })),
-      extras: defaultWashExtras.map((e) => ({ ...e })),
+      extras: data.defaultWashExtras.map((e) => ({ ...e })),
       pipelinesAirPrice: 0,
       pipelinesWaterPrice: 0,
       pipelinesChemPrice: 0,
@@ -168,7 +163,8 @@ function createInitialState(): WizardState {
 }
 
 export function Wizard() {
-  const [state, setState] = useState<WizardState>(createInitialState);
+  const data = useData();
+  const [state, setState] = useState<WizardState>(() => createInitialState(data));
 
   const isRobot = state.step1.objectType === 'robotic';
   const isTruck = state.step1.objectType === 'truck';
@@ -183,10 +179,10 @@ export function Wizard() {
       return { ...s, step1: data, ...(switched ? { currentStep: 1 } : {}) };
     });
   }, []);
-  const updateStep2 = useCallback((data: Step2Data) => {
+  const updateStep2 = useCallback((newData: Step2Data) => {
     setState((s) => {
-      if (data.profile !== s.step2.profile) {
-        const defaults = applyProfileDefaults(data.profile);
+      if (newData.profile !== s.step2.profile) {
+        const defaults = applyProfileDefaults(data, newData.profile);
         if (defaults) {
           return {
             ...s,
@@ -197,9 +193,9 @@ export function Wizard() {
           };
         }
       }
-      return { ...s, step2: data };
+      return { ...s, step2: newData };
     });
-  }, []);
+  }, [data]);
   const updateStep3 = useCallback((data: Step3Data) => setState((s) => ({ ...s, step3: data })), []);
   const updateStep4 = useCallback((data: Step4Data) => setState((s) => ({ ...s, step4: data })), []);
   const updateStep5 = useCallback((data: Step5Data) => setState((s) => ({ ...s, step5: data })), []);
@@ -311,7 +307,7 @@ export function Wizard() {
 
   const handleCreateNew = useCallback(() => {
     saveCurrentPostToList();
-    const defaults = applyProfileDefaults('standard')!;
+    const defaults = applyProfileDefaults(data, 'standard')!;
     setState((s) => ({
       ...s,
       currentStep: 1,
@@ -321,7 +317,7 @@ export function Wizard() {
       step4: defaults.step4,
       step5: defaults.step5,
     }));
-  }, [saveCurrentPostToList]);
+  }, [saveCurrentPostToList, data]);
 
   const handleFinishPosts = useCallback(() => {
     setStep(7);

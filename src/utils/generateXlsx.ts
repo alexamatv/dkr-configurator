@@ -1,5 +1,6 @@
 import ExcelJS from 'exceljs';
 import type { WizardState } from '@/types';
+import type { DataContextValue } from '@/context/DataContext';
 import { gatherDocData, makeFileName, type PostRow, type PostBlock } from './gatherData';
 
 /* ─── Post grouping (shared with PDF) ─── */
@@ -39,8 +40,8 @@ const LINE_LIGHT = 'E2E8F0';
 const FOOTER_GRAY = '9CA3AF';
 const FONT = 'Arial';
 
-export async function generateXlsx(state: WizardState): Promise<void> {
-  const d = gatherDocData(state);
+export async function generateXlsx(state: WizardState, data: DataContextValue): Promise<void> {
+  const d = gatherDocData(state, data);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('КП', {
     properties: { defaultColWidth: 10 },

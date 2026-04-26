@@ -2,7 +2,7 @@
 
 import type { Step8Data, AvdSelection } from '@/types';
 import { StepHint } from '../StepHint';
-import { avdKits } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step8Data;
@@ -14,6 +14,7 @@ interface Props {
 const premiumIncludedExtras = ['freq_converter'];
 
 export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Props) {
+  const { avdKits } = useData();
   const isPremium = profileId === 'premium';
   // Основная помпа — первая default-строка из Step 5
   const defaultSel = avdSelections.find((s) => s.isDefault);

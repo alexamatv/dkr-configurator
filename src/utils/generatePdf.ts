@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { WizardState } from '@/types';
+import type { DataContextValue } from '@/context/DataContext';
 import { gatherDocData, makeFileName, type PostRow, type PostBlock } from './gatherData';
 import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
@@ -62,8 +63,8 @@ function fmtPrice(n: number): string {
 }
 
 /* ─── Main export ─── */
-export function generatePdf(state: WizardState): void {
-  const d = gatherDocData(state);
+export function generatePdf(state: WizardState, data: DataContextValue): void {
+  const d = gatherDocData(state, data);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
   // Register fonts

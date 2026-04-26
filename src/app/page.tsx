@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Wizard } from '@/components/Wizard';
 import { LoginScreen } from '@/components/LoginScreen';
+import { DataProvider } from '@/context/DataContext';
 
 export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -11,5 +12,9 @@ export default function Home() {
     return <LoginScreen onLogin={() => setIsLoggedIn(true)} />;
   }
 
-  return <Wizard />;
+  return (
+    <DataProvider>
+      <Wizard />
+    </DataProvider>
+  );
 }

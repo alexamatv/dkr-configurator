@@ -2,7 +2,8 @@
 
 import type { Step7Data } from '@/types';
 import { StepHint } from '../StepHint';
-import { osmosOptions, arasModels, boosterPumpPrice } from '@/data/mockData';
+import { boosterPumpPrice } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step7Data;
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export function Step7Water({ data, onChange, title }: Props) {
+  const { osmosOptions, arasModels } = useData();
   const update = (patch: Partial<Step7Data>) => onChange({ ...data, ...patch });
   const notReady = (data.osmosOption === '' || data.arasModel === '') && !(data.customWaterPrice > 0);
 

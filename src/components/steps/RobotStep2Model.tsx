@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { RobotStep2Data } from '@/types';
-import { robotModels } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: RobotStep2Data;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export function RobotStep2Model({ data, onChange }: Props) {
+  const { robotModels } = useData();
   const [expandedId, setExpandedId] = useState<string | null>(data.robotModel || null);
 
   return (

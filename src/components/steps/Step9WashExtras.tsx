@@ -3,11 +3,11 @@
 import type { Step9Data, VacuumSubOption, WashExtra } from '@/types';
 import { StepHint } from '../StepHint';
 import {
-  vacuumOptions,
   vacuumSubOptionsConfig,
   dispenserSubOptionsConfig,
   foggerSubOptionsConfig,
 } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step9Data;
@@ -66,6 +66,7 @@ function SubOptionPill({
 const OUTDOOR_EXTRA_IDS = ['washer_fluid_dispenser', 'dry_fog_machine'];
 
 export function Step9WashExtras({ data, onChange, title }: Props) {
+  const { vacuumOptions } = useData();
   const update = (patch: Partial<Step9Data>) => onChange({ ...data, ...patch });
 
   const toggleExtra = (id: string) => {

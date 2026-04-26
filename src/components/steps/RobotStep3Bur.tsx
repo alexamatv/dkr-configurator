@@ -1,7 +1,7 @@
 'use client';
 
 import type { RobotStep3Data } from '@/types';
-import { burModels } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: RobotStep3Data;
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export function RobotStep3Bur({ data, onChange }: Props) {
+  const { burModels } = useData();
   return (
     <div className="space-y-10">
       <h2 className="text-xl font-bold">Шаг 3. Выбор БУР</h2>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import type { Step2Data } from '@/types';
 import { StepHint } from '../StepHint';
-import { profiles } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step2Data;
@@ -11,6 +11,7 @@ interface Props {
 }
 
 export function Step2BaseConfig({ data, onChange }: Props) {
+  const { profiles } = useData();
   const [expandedProfile, setExpandedProfile] = useState<string | null>(data.profile);
   const selectedProfile = profiles.find((p) => p.id === data.profile);
 

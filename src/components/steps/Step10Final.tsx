@@ -2,7 +2,7 @@
 
 import type { Step10Data, PostConfig, WizardState } from '@/types';
 import { StepHint } from '../StepHint';
-import { profiles, bumModels } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 import { generateXlsx } from '@/utils/generateXlsx';
 import { generatePdf } from '@/utils/generatePdf';
 
@@ -19,6 +19,8 @@ interface Props {
 }
 
 export function Step10Final({ data, posts, wizardState, onChange, onEditPost, onDuplicatePost, onDeletePost, title }: Props) {
+  const dataCtx = useData();
+  const { profiles, bumModels } = dataCtx;
   const update = (patch: Partial<Step10Data>) => onChange({ ...data, ...patch });
 
   return (
@@ -175,13 +177,13 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
           Сохранить черновик
         </button>
         <button
-          onClick={() => generatePdf(wizardState)}
+          onClick={() => generatePdf(wizardState, dataCtx)}
           className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm"
         >
           Скачать PDF
         </button>
         <button
-          onClick={() => { generateXlsx(wizardState); }}
+          onClick={() => { generateXlsx(wizardState, dataCtx); }}
           className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm"
         >
           Скачать Excel

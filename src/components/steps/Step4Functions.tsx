@@ -2,7 +2,7 @@
 
 import type { Step4Data, PostFunction, FunctionOption } from '@/types';
 import { StepHint } from '../StepHint';
-import { bumModels } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step4Data;
@@ -13,6 +13,7 @@ interface Props {
 
 export function Step4Functions({ data, bumModelId, profileId, onChange }: Props) {
   void profileId;
+  const { bumModels } = useData();
 
   const bum = bumModels.find((b) => b.id === bumModelId);
   const bumName = bum?.name ?? 'БУМ';

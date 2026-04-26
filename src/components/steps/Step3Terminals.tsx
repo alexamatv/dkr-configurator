@@ -2,7 +2,8 @@
 
 import type { Step3Data, PaymentSystem } from '@/types';
 import { StepHint } from '../StepHint';
-import { bumModels, getDefaultBumForProfile, paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
+import { paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: Step3Data;
@@ -13,6 +14,7 @@ interface Props {
 const paymentSystems: PaymentSystem[] = ['bill_acceptor', 'coin_acceptor', 'loyalty_reader', 'acquiring', 'qr_payment'];
 
 export function Step3Terminals({ data, onChange, profile }: Props) {
+  const { bumModels, getDefaultBumForProfile } = useData();
   const defaultBumId = getDefaultBumForProfile(profile);
   const togglePayment = (ps: PaymentSystem) => {
     const has = data.paymentSystems.includes(ps);

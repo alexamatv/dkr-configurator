@@ -3,19 +3,9 @@
 import { useState } from 'react';
 import type { WizardState, Step10Data, MontageType } from '@/types';
 import {
-  profiles,
-  bumModels,
-  calcBumPrice,
-  avdKits,
-  osmosOptions,
-  arasModels,
-  vacuumOptions,
   dosatorOptions,
-  robotModels,
-  burModels,
   calcPaymentCost,
   boosterPumpPrice,
-  truckWashTypes,
   kompakOptions,
   truckManualPostEquipment,
   truckManualPostMontage,
@@ -23,6 +13,7 @@ import {
   kompakMontagePrice,
   robotExtraEquipment,
 } from '@/data/mockData';
+import { useData, type DataContextValue } from '@/context/DataContext';
 
 interface CostPanelProps {
   state: WizardState;
@@ -52,7 +43,8 @@ interface CalcResult {
   total: number;
 }
 
-function useMsoCalc(state: WizardState): CalcResult {
+function calcMso(state: WizardState, data: DataContextValue): CalcResult {
+  const { profiles, avdKits, osmosOptions, arasModels, vacuumOptions, calcBumPrice } = data;
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
@@ -171,7 +163,8 @@ function useMsoCalc(state: WizardState): CalcResult {
   ]);
 }
 
-function useRobotCalc(state: WizardState): CalcResult {
+function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
+  const { robotModels, burModels, osmosOptions, arasModels, vacuumOptions } = data;
   const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
   const robotPrice = robot?.price ?? 0;
 
@@ -261,7 +254,8 @@ function useRobotCalc(state: WizardState): CalcResult {
   };
 }
 
-function useTruckCalc(state: WizardState): CalcResult {
+function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
+  const { truckWashTypes, burModels } = data;
   const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
@@ -550,10 +544,11 @@ function CostContent({
 }
 
 export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
+  const data = useData();
   const [mobileOpen, setMobileOpen] = useState(false);
   const isRobot = state.step1.objectType === 'robotic';
   const isTruck = state.step1.objectType === 'truck';
-  const rawCalc = isTruck ? useTruckCalc(state) : isRobot ? useRobotCalc(state) : useMsoCalc(state);
+  const rawCalc = isTruck ? calcTruck(state, data) : isRobot ? calcRobot(state, data) : calcMso(state, data);
   // Show zeros on step 1 before any configuration
   const calc = state.currentStep === 1 ? {
     ...rawCalc,

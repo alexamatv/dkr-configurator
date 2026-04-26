@@ -3,13 +3,8 @@
 import { useState } from 'react';
 import type { PostConfig } from '@/types';
 import { StepHint } from '../StepHint';
-import {
-  profiles,
-  bumModels,
-  avdKits,
-  dosatorOptions,
-  calcPaymentCost,
-} from '@/data/mockData';
+import { dosatorOptions, calcPaymentCost } from '@/data/mockData';
+import { useData, type DataContextValue } from '@/context/DataContext';
 
 interface Props {
   posts: PostConfig[];
@@ -26,15 +21,15 @@ function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' ₽';
 }
 
-function calcPostPrice(post: PostConfig): number {
-  const profile = profiles.find((p) => p.id === post.profile);
+function calcPostPrice(post: PostConfig, data: DataContextValue): number {
+  const profile = data.profiles.find((p) => p.id === post.profile);
   const basePrice = profile?.basePrice ?? 0;
 
   const accessoriesPrice = post.accessories
     .filter((a) => a.selected)
     .reduce((sum, a) => sum + (a.customPrice !== undefined ? a.customPrice : a.price), 0);
 
-  const bumUpgrade = bumModels.find((b) => b.id === post.bumModel)?.price ?? 0;
+  const bumUpgrade = data.bumModels.find((b) => b.id === post.bumModel)?.price ?? 0;
 
   const paymentUpgrade = calcPaymentCost(post.paymentSystems);
 
@@ -51,7 +46,7 @@ function calcPostPrice(post: PostConfig): number {
     }, 0);
 
   const avdUpgrade = post.avdSelections.reduce((sum, sel) => {
-    const kit = avdKits.find((a) => a.id === sel.avdId);
+    const kit = data.avdKits.find((a) => a.id === sel.avdId);
     return sum + (kit?.price ?? 0);
   }, 0);
 
@@ -68,6 +63,8 @@ export function Step6Posts({
   onFinish,
   onUpdatePost,
 }: Props) {
+  const data = useData();
+  const { profiles, bumModels } = data;
   const [editingName, setEditingName] = useState<string | null>(null);
   const [nameValue, setNameValue] = useState('');
 
@@ -116,7 +113,7 @@ export function Step6Posts({
             const funcCount = post.functions.filter(
               (f) => f.isBase ? f.enabled : f.option !== 'none'
             ).length;
-            const price = calcPostPrice(post);
+            const price = calcPostPrice(post, data);
             const displayName = post.customName || getDefaultName(idx, post);
             const isEditing = editingName === post.id;
 
