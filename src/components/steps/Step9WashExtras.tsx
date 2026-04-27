@@ -57,9 +57,9 @@ function SubOptionPill({
       <span>{cfg.name}</span>
       {includedLabel ? (
         <span className="text-muted italic">(в комплекте)</span>
-      ) : (
-        <span className="text-muted">— {cfg.price} ₽</span>
-      )}
+      ) : cfg.price > 1 ? (
+        <span className="text-muted">— {cfg.price.toLocaleString('ru-RU')} ₽</span>
+      ) : null}
     </label>
   );
 }
