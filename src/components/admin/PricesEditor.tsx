@@ -1,6 +1,21 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext,
+  arrayMove,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { createClient } from '@/lib/supabase/client';
 import { EditablePrice } from './EditablePrice';
 import { PhotoCell } from './PhotoCell';
@@ -75,8 +90,6 @@ const BRANCH_OPTS = [
   { label: 'Грузовик', value: 'truck' },
 ];
 
-const SORT_FIELD: FieldConfig = { name: 'sort_order', label: 'Порядок', type: 'number', defaultValue: 0 };
-
 const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
   profiles: [
     { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
@@ -85,7 +98,6 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
     { name: 'price', label: 'Цена (бандл), ₽', type: 'number', required: true, helpText: 'Включает дефолтные аксессуары, помпу и оплату' },
     { name: 'base_price', label: 'Базовая цена (raw), ₽', type: 'number' },
     { name: 'included_components', label: 'Что входит в комплект', type: 'lines', helpText: 'По одному пункту на строку' },
-    SORT_FIELD,
   ],
   bum_models: [
     { name: 'name', label: 'Название', type: 'text', required: true },
@@ -93,20 +105,17 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
     { name: 'real_price', label: 'Цена, ₽', type: 'number', required: true },
     { name: 'max_buttons', label: 'Макс. кнопок', type: 'number', defaultValue: 8 },
     { name: 'max_functions', label: 'Макс. функций', type: 'number', defaultValue: 12 },
-    SORT_FIELD,
   ],
   accessories: [
     { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
     { name: 'name', label: 'Название', type: 'text', required: true },
     { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
     { name: 'has_custom_price', label: 'Цена редактируется на посту', type: 'checkbox' },
-    SORT_FIELD,
   ],
   pumps: [
     { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
     { name: 'name', label: 'Название', type: 'text', required: true },
     { name: 'price', label: 'Цена (доплата), ₽', type: 'number', required: true, helpText: '0, если входит в комплект профиля' },
-    SORT_FIELD,
   ],
   wash_functions: [
     { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
@@ -120,7 +129,6 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
     { name: 'kit_price', label: 'Цена комплекта, ₽', type: 'number', defaultValue: 0 },
     { name: 'premium_only', label: 'Только для Премиум', type: 'checkbox' },
     { name: 'requires_dosator', label: 'Требует дозатора', type: 'checkbox' },
-    SORT_FIELD,
   ],
   water_treatment: [
     { name: 'type', label: 'Тип', type: 'select', required: true, options: [
@@ -134,7 +142,6 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
       { label: 'Премиум', value: 'premium' },
     ] },
     { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
-    SORT_FIELD,
   ],
   extra_equipment: [
     { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
@@ -151,27 +158,23 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
       { label: 'Чекбокс', value: 'checkbox' },
       { label: 'Радио (один из)', value: 'radio' },
     ], defaultValue: 'checkbox' },
-    SORT_FIELD,
   ],
   robot_models: [
     { name: 'name', label: 'Название', type: 'text', required: true },
     { name: 'description', label: 'Описание', type: 'textarea' },
     { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
     { name: 'included_components', label: 'Что входит', type: 'lines', helpText: 'По одному пункту на строку' },
-    SORT_FIELD,
   ],
   bur_models: [
     { name: 'name', label: 'Название', type: 'text', required: true },
     { name: 'description', label: 'Описание', type: 'text' },
     { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
-    SORT_FIELD,
   ],
   truck_wash_types: [
     { name: 'name', label: 'Название', type: 'text', required: true },
     { name: 'description', label: 'Описание', type: 'textarea' },
     { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
     { name: 'features', label: 'Характеристики', type: 'lines', helpText: 'По одной строке на характеристику' },
-    SORT_FIELD,
   ],
 };
 
@@ -187,6 +190,12 @@ export function PricesEditor() {
   const [addModal, setAddModal] = useState<{ table: keyof Catalog } | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
+
+  // Drag activates only after 6px of movement so single-clicks on the grip
+  // don't get caught (the rest of the row isn't draggable anyway).
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+  );
 
   useEffect(() => {
     void loadAll();
@@ -254,6 +263,64 @@ export function PricesEditor() {
       return { ...prev, [table]: next } as Catalog;
     });
   }
+
+  // Re-sequence sort_order across the given table to match the array of ids.
+  // Uses a 10-step gap between rows so future single-row inserts don't need
+  // to renumber the world.
+  async function reorder(table: keyof Catalog, ids: string[]) {
+    // Optimistic UI: reorder in local state first
+    setData((prev) => {
+      if (!prev) return prev;
+      const rows = prev[table] as BaseRow[];
+      const byId = new Map(rows.map((r) => [r.id, r]));
+      const reordered = ids.map((id) => byId.get(id)).filter(Boolean) as BaseRow[];
+      // Append any rows not in `ids` (filtered out by branch/visibility) at the end
+      const tail = rows.filter((r) => !ids.includes(r.id));
+      return { ...prev, [table]: [...reordered, ...tail] } as Catalog;
+    });
+
+    // Persist new sort_order values in parallel
+    await Promise.all(
+      ids.map((id, i) => supabase.from(table).update({ sort_order: i * 10 }).eq('id', id)),
+    );
+  }
+
+  // Existing-name lookup for the duplicate-name validation in ItemModal
+  const isNameTaken = (table: keyof Catalog, name: string, branchValue: string | null) => {
+    if (!data) return false;
+    const rows = data[table] as BaseRow[];
+    const target = name.trim().toLowerCase();
+    return rows.some((r) =>
+      r.is_active !== false &&
+      r.name.trim().toLowerCase() === target &&
+      (branchValue == null || (r.branch ?? null) === branchValue || r.branch == null),
+    );
+  };
+
+  // Returns human-readable references that point at this row as a default,
+  // so we can warn before hiding it.
+  const getDefaultUsage = (table: keyof Catalog, id: string): string[] => {
+    if (!data) return [];
+    const usage: string[] = [];
+    if (table === 'bum_models') {
+      for (const p of data.profiles) {
+        const def = (p as ProfileRow & { default_bum?: string | null }).default_bum;
+        if (def === id) usage.push(`профиль «${p.name}» (дефолтный БУМ)`);
+      }
+    } else if (table === 'pumps') {
+      for (const p of data.profiles) {
+        const def = (p as ProfileRow & { default_avd?: string | null }).default_avd;
+        if (def === id) usage.push(`профиль «${p.name}» (дефолтная помпа)`);
+      }
+    } else if (table === 'accessories') {
+      for (const p of data.profiles) {
+        const acc = (p as ProfileRow & { default_accessories?: unknown }).default_accessories;
+        const ids = Array.isArray(acc) ? (acc as string[]) : [];
+        if (ids.includes(id)) usage.push(`профиль «${p.name}» (входит в комплект)`);
+      }
+    }
+    return usage;
+  };
 
   if (loadError) {
     return (
@@ -343,7 +410,19 @@ export function PricesEditor() {
             </div>
           </div>
           <div className="overflow-x-auto">
-            {renderSection(sectionKey, data, branch, matches, filterByBranch, updateField, setEditingSubOptions, showHidden[sectionKey] ?? false)}
+            {renderSection(
+              sectionKey,
+              data,
+              branch,
+              matches,
+              filterByBranch,
+              updateField,
+              setEditingSubOptions,
+              showHidden[sectionKey] ?? false,
+              reorder,
+              getDefaultUsage,
+              sensors,
+            )}
           </div>
         </section>
       ))}
@@ -364,6 +443,9 @@ export function PricesEditor() {
           table={addModal.table}
           title={SECTION_TITLES[addModal.table]}
           fields={FIELD_CONFIGS[addModal.table]}
+          isNameTaken={(name, formValues) =>
+            isNameTaken(addModal.table, name, (formValues.branch as string) ?? null)
+          }
           onClose={() => setAddModal(null)}
           onSaved={() => {
             void loadAll();
@@ -385,6 +467,9 @@ function renderSection(
   update: (table: keyof Catalog, id: string, patch: Record<string, unknown>) => Promise<void>,
   openSubOpts: (s: { row: ExtraRow }) => void,
   showHidden: boolean,
+  reorder: (table: keyof Catalog, ids: string[]) => Promise<void>,
+  getDefaultUsage: (table: keyof Catalog, id: string) => string[],
+  sensors: ReturnType<typeof useSensors>,
 ): React.ReactNode {
   const empty = (
     <div className="px-4 py-6 text-xs text-muted">Нет позиций.</div>
@@ -416,7 +501,12 @@ function renderSection(
       ) : (
         <button
           onClick={() => {
-            if (confirm(`Скрыть позицию «${row.name}»? Она перестанет отображаться в калькуляторе. Скрытие можно отменить кнопкой «Показать скрытые».`)) {
+            const usage = getDefaultUsage(table, row.id);
+            const base = `Скрыть позицию «${row.name}»? Она перестанет отображаться в калькуляторе.\n\nСкрытие можно отменить кнопкой «Показать скрытые».`;
+            const msg = usage.length > 0
+              ? `⚠️ Эта позиция используется как дефолтная:\n• ${usage.join('\n• ')}\n\nПри скрытии она перестанет подставляться по умолчанию.\n\n${base}`
+              : base;
+            if (confirm(msg)) {
               void update(table, row.id, { is_active: false });
             }
           }}
@@ -428,6 +518,32 @@ function renderSection(
       )}
     </Td>
   );
+
+  // Wraps a section's <Table> in a DndContext + SortableContext so its rows
+  // can be reordered. Drag is constrained to the rows of that section only —
+  // the SortableContext lives next to a single table.
+  const withDnd = (table: keyof Catalog, rows: BaseRow[], content: React.ReactNode) => {
+    const ids = rows.map((r) => r.id);
+    return (
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={(event: DragEndEvent) => {
+          const { active, over } = event;
+          if (!over || active.id === over.id) return;
+          const oldIndex = ids.indexOf(String(active.id));
+          const newIndex = ids.indexOf(String(over.id));
+          if (oldIndex < 0 || newIndex < 0) return;
+          const next = arrayMove(ids, oldIndex, newIndex);
+          void reorder(table, next);
+        }}
+      >
+        <SortableContext items={ids} strategy={verticalListSortingStrategy}>
+          {content}
+        </SortableContext>
+      </DndContext>
+    );
+  };
 
   // Apply soft-delete visibility filter
   const visibility = <R extends BaseRow>(rows: R[]): R[] =>
@@ -453,10 +569,10 @@ function renderSection(
     case 'profiles': {
       const rows = visibility(filterByBranch(data.profiles, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('profiles', rows, (
+        <Table headers={['', 'Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td muted>{r.description ?? '—'}</Td>
               <Td>
@@ -467,19 +583,19 @@ function renderSection(
               </Td>
               {photoTd('profiles', r)}
               {actionsTd('profiles', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'bum_models': {
       const rows = visibility(data.bum_models.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Модель', 'Макс. функций', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('bum_models', rows, (
+        <Table headers={['', 'Модель', 'Макс. функций', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td muted>{r.max_functions}</Td>
               <Td>
@@ -490,19 +606,19 @@ function renderSection(
               </Td>
               {photoTd('bum_models', r)}
               {actionsTd('bum_models', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'accessories': {
       const rows = visibility(filterByBranch(data.accessories, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('accessories', rows, (
+        <Table headers={['', 'Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td>
                 <EditablePrice
@@ -512,19 +628,19 @@ function renderSection(
               </Td>
               {photoTd('accessories', r)}
               {actionsTd('accessories', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'pumps': {
       const rows = visibility(filterByBranch(data.pumps, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('pumps', rows, (
+        <Table headers={['', 'Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td>
                 <EditablePrice
@@ -534,19 +650,19 @@ function renderSection(
               </Td>
               {photoTd('pumps', r)}
               {actionsTd('pumps', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'wash_functions': {
       const rows = visibility(filterByBranch(data.wash_functions, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Категория', 'Кнопка', 'Комплект', 'Фото', 'Действия']}>
+      return withDnd('wash_functions', rows, (
+        <Table headers={['', 'Название', 'Категория', 'Кнопка', 'Комплект', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r, (
                 <>
                   {r.name}
@@ -574,19 +690,19 @@ function renderSection(
               </Td>
               {photoTd('wash_functions', r)}
               {actionsTd('wash_functions', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'water_treatment': {
       const rows = visibility(data.water_treatment.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Тип', 'Название', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('water_treatment', rows, (
+        <Table headers={['', 'Тип', 'Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               <Td muted>{r.type}</Td>
               {nameCell(r)}
               <Td>
@@ -597,21 +713,21 @@ function renderSection(
               </Td>
               {photoTd('water_treatment', r)}
               {actionsTd('water_treatment', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'extra_equipment': {
       const rows = visibility(filterByBranch(data.extra_equipment, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Категория', 'Название', 'Цена', 'Под-опции', 'Фото', 'Действия']}>
+      return withDnd('extra_equipment', rows, (
+        <Table headers={['', 'Категория', 'Название', 'Цена', 'Под-опции', 'Фото', 'Действия']}>
           {rows.map((r) => {
             const subCount = countSubOptions(r.sub_options);
             return (
-              <tr key={r.id} className={trClass(r)}>
+              <SortableRow key={r.id} id={r.id} className={trClass(r)}>
                 <Td muted>{r.category}</Td>
                 {nameCell(r)}
                 <Td>
@@ -634,20 +750,20 @@ function renderSection(
                 </Td>
                 {photoTd('extra_equipment', r)}
                 {actionsTd('extra_equipment', r)}
-              </tr>
+              </SortableRow>
             );
           })}
         </Table>
-      );
+      ));
     }
 
     case 'robot_models': {
       const rows = visibility(data.robot_models.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('robot_models', rows, (
+        <Table headers={['', 'Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td muted>{r.description ?? '—'}</Td>
               <Td>
@@ -658,19 +774,19 @@ function renderSection(
               </Td>
               {photoTd('robot_models', r)}
               {actionsTd('robot_models', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'bur_models': {
       const rows = visibility(data.bur_models.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('bur_models', rows, (
+        <Table headers={['', 'Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td muted>{r.description ?? '—'}</Td>
               <Td>
@@ -681,19 +797,19 @@ function renderSection(
               </Td>
               {photoTd('bur_models', r)}
               {actionsTd('bur_models', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
 
     case 'truck_wash_types': {
       const rows = visibility(data.truck_wash_types.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
-      return (
-        <Table headers={['Название', 'Цена', 'Фото', 'Действия']}>
+      return withDnd('truck_wash_types', rows, (
+        <Table headers={['', 'Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className={trClass(r)}>
+            <SortableRow key={r.id} id={r.id} className={trClass(r)}>
               {nameCell(r)}
               <Td>
                 <EditablePrice
@@ -703,10 +819,10 @@ function renderSection(
               </Td>
               {photoTd('truck_wash_types', r)}
               {actionsTd('truck_wash_types', r)}
-            </tr>
+            </SortableRow>
           ))}
         </Table>
-      );
+      ));
     }
   }
 }
@@ -756,5 +872,45 @@ function Td({
     <td className={`px-4 py-2 align-middle ${muted ? 'text-muted text-xs' : ''}`}>
       {children}
     </td>
+  );
+}
+
+/**
+ * <tr> wrapper that participates in dnd-kit's sortable context. Renders a
+ * grip handle in the leftmost cell — only the grip is draggable, so click
+ * targets inside other cells (edit, delete, etc.) keep working normally.
+ */
+function SortableRow({
+  id,
+  className,
+  children,
+}: {
+  id: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : undefined,
+    background: isDragging ? 'var(--color-accent)' : undefined,
+    zIndex: isDragging ? 10 : undefined,
+  };
+
+  return (
+    <tr ref={setNodeRef} style={style} className={className}>
+      <td
+        className="px-2 py-2 align-middle text-muted cursor-grab active:cursor-grabbing select-none w-6"
+        {...attributes}
+        {...listeners}
+        title="Перетащите, чтобы изменить порядок"
+      >
+        ≡
+      </td>
+      {children}
+    </tr>
   );
 }

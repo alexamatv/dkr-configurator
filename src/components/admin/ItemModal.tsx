@@ -23,6 +23,8 @@ interface Props {
   /** When set, the form opens in edit mode and updates the row at this id. */
   editingId?: string;
   initialValues?: Record<string, unknown>;
+  /** Returns true if another active row in the same branch already uses `name`. */
+  isNameTaken?: (name: string, formValues: Record<string, unknown>) => boolean;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -35,7 +37,7 @@ interface Props {
  * For new rows the `id` is auto-generated as `<table-prefix>_<base36 timestamp>`
  * unless the user explicitly enters one in a field named `id`.
  */
-export function ItemModal({ table, title, fields, editingId, initialValues, onClose, onSaved }: Props) {
+export function ItemModal({ table, title, fields, editingId, initialValues, isNameTaken, onClose, onSaved }: Props) {
   const isEdit = Boolean(editingId);
 
   const initial = useMemo(() => {
@@ -75,6 +77,16 @@ export function ItemModal({ table, title, fields, editingId, initialValues, onCl
       const v = values[f.name];
       if (v === '' || v === null || v === undefined) {
         setError(`Поле «${f.label}» обязательно`);
+        return;
+      }
+    }
+
+    // Duplicate-name check (skips when we're editing and the row already
+    // owns this name — handled by the parent's isNameTaken logic if needed)
+    if (!isEdit && isNameTaken) {
+      const candidateName = String(values.name ?? '').trim();
+      if (candidateName && isNameTaken(candidateName, values)) {
+        setError('Позиция с таким названием уже существует в этой ветке');
         return;
       }
     }
