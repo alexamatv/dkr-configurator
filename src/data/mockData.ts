@@ -336,9 +336,9 @@ export const vacuumSubOptionsConfig = {
     { id: 'pause_btn', name: 'Пауза', price: 1, defaultOn: true },
   ],
   extraButtons: [
-    { id: 'air_btn', name: 'Воздух', price: 1, defaultOn: false },
-    { id: 'blackener_btn', name: 'Чернитель', price: 1, defaultOn: false },
-    { id: 'dry_cleaning_btn', name: 'Химчистка', price: 1, defaultOn: false },
+    { id: 'air_btn', name: 'Воздух', price: 20000, defaultOn: false },
+    { id: 'blackener_btn', name: 'Чернитель', price: 38000, defaultOn: false },
+    { id: 'dry_cleaning_btn', name: 'Химчистка (торнадор)', price: 55000, defaultOn: false },
   ],
 } as const;
 
@@ -382,9 +382,9 @@ export const foggerSubOptionsConfig = {
     { id: 'fog_scent_2', name: 'Запах 2', price: 0, defaultOn: true, locked: true },
   ],
   extraScents: [
-    { id: 'fog_scent_3', name: 'Запах 3', price: 1, defaultOn: false },
-    { id: 'fog_scent_4', name: 'Запах 4', price: 1, defaultOn: false },
-    { id: 'fog_scent_5', name: 'Запах 5', price: 1, defaultOn: false },
+    { id: 'fog_scent_3', name: 'Запах 3', price: 25000, defaultOn: false },
+    { id: 'fog_scent_4', name: 'Запах 4', price: 25000, defaultOn: false },
+    { id: 'fog_scent_5', name: 'Запах 5', price: 25000, defaultOn: false },
   ],
 } as const;
 
@@ -406,8 +406,8 @@ export const defaultWashExtras: WashExtra[] = [
   { id: 'local_server', name: 'Локальный сервер', selected: false, quantity: 0, price: 60000 },
   { id: 'manual_wash', name: 'Ручная мойка (АВД)', selected: false, quantity: 0, price: 35000 },
   { id: 'mat_wash', name: 'Мойка ковриков', selected: false, quantity: 0, price: 25000 },
-  { id: 'washer_fluid_dispenser', name: 'Розлив омывающей жидкости', selected: false, quantity: 0, price: 1 },
-  { id: 'dry_fog_machine', name: 'Аппарат сухого тумана', selected: false, quantity: 0, price: 1 },
+  { id: 'washer_fluid_dispenser', name: 'Розлив омывающей жидкости', selected: false, quantity: 0, price: 310000 },
+  { id: 'dry_fog_machine', name: 'Аппарат сухого тумана', selected: false, quantity: 0, price: 250000 },
 ];
 
 export const managers = [
