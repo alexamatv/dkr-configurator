@@ -61,6 +61,10 @@ export interface PostFunction {
   kitPrice: number;
   imageUrl?: string;
   showImageInKp?: boolean;
+  /** Functions that share this key are merged into a single brand-selector card. */
+  brandGroup?: string;
+  /** Brand label for that group, e.g. 'seko', 'ulka'. */
+  brand?: string;
 }
 
 export interface Dosator {

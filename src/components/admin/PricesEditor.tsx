@@ -163,6 +163,12 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
     { name: 'kit_price', label: 'Цена комплекта, ₽', type: 'number', defaultValue: 0 },
     { name: 'premium_only', label: 'Только для Премиум', type: 'checkbox' },
     { name: 'requires_dosator', label: 'Требует дозатора', type: 'checkbox' },
+    { name: 'brand_group', label: 'Brand-группа', type: 'text',
+      placeholder: 'Оставьте пустым если нет вариантов бренда',
+      helpText: 'Позиции с одинаковым brand_group объединяются в одну карточку (например active_chem для Активной химии SEKO + ULKA)' },
+    { name: 'brand', label: 'Бренд', type: 'text',
+      placeholder: 'seko, ulka и т.д.',
+      helpText: 'Заполните только если задана brand-группа. В калькуляторе показывается заглавными буквами' },
   ],
   water_treatment: [
     { name: 'type', label: 'Тип', type: 'select', required: true, options: [

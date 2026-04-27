@@ -82,6 +82,8 @@ type WashFunctionRow = PhotoFields & {
   kit_price: number | string;
   requires_dosator: boolean;
   sort_order: number;
+  brand_group: string | null;
+  brand: string | null;
 };
 
 type WaterTreatmentRow = PhotoFields & {
@@ -284,6 +286,10 @@ export async function getWashFunctions(): Promise<WashFunctionsResult> {
 
   for (const r of data as WashFunctionRow[]) {
     const isBase = r.is_base || r.category === 'base';
+    const brandFields = {
+      ...(r.brand_group ? { brandGroup: r.brand_group } : {}),
+      ...(r.brand ? { brand: r.brand } : {}),
+    };
     const fn: PostFunction = isBase
       ? {
           id: r.id,
@@ -292,6 +298,7 @@ export async function getWashFunctions(): Promise<WashFunctionsResult> {
           enabled: true,
           buttonPrice: num(r.button_price),
           kitPrice: num(r.kit_price),
+          ...brandFields,
           ...photo(r),
         }
       : {
@@ -304,6 +311,7 @@ export async function getWashFunctions(): Promise<WashFunctionsResult> {
           ...(r.requires_dosator ? { requiresDosator: true } : {}),
           buttonPrice: num(r.button_price),
           kitPrice: num(r.kit_price),
+          ...brandFields,
           ...photo(r),
         };
     if (isBase) base.push(fn);

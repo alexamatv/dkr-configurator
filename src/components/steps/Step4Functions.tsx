@@ -37,67 +37,74 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
   const baseFunctions = data.functions.filter((f) => f.isBase);
   const extraFunctions = data.functions.filter((f) => !f.isBase);
 
-  // ─── Group SEKO/ULKA pairs into a single card ─────────────────────────────
-  // Functions ending in `_seko` and matching `_ulka` are merged so a manager
-  // sees one row per chemistry/degreaser slot with a brand selector inside.
-  interface BrandPair {
-    stem: string;
+  // ─── Group brand variants into a single card ──────────────────────────────
+  // Functions sharing a `brand_group` (e.g. "active_chem" with brand="seko"|"ulka")
+  // are merged so a manager sees one row per chemistry slot with a brand
+  // selector inside. The number of brands per group is open-ended — adding
+  // a third or fourth brand in the admin just adds another button.
+  interface BrandGroup {
+    groupKey: string;
     displayName: string;
-    seko: PostFunction;
-    ulka: PostFunction;
+    members: PostFunction[];
   }
-  const brandPairs: BrandPair[] = [];
-  const groupedIds = new Set<string>();
+
+  const brandGroupsMap = new Map<string, PostFunction[]>();
   for (const f of extraFunctions) {
-    if (!f.id.endsWith('_seko')) continue;
-    const stem = f.id.slice(0, -5);
-    const ulka = extraFunctions.find((g) => g.id === `${stem}_ulka`);
-    if (!ulka) continue;
-    const displayName = f.name.replace(/\s*\(SEKO\)\s*$/i, '').trim();
-    brandPairs.push({ stem, displayName, seko: f, ulka });
-    groupedIds.add(f.id);
-    groupedIds.add(ulka.id);
+    if (!f.brandGroup) continue;
+    const list = brandGroupsMap.get(f.brandGroup) ?? [];
+    list.push(f);
+    brandGroupsMap.set(f.brandGroup, list);
+  }
+
+  const brandGroups: BrandGroup[] = [];
+  const groupedIds = new Set<string>();
+  for (const [groupKey, members] of brandGroupsMap) {
+    if (members.length < 2) continue;
+    members.sort((a, b) => (a.brand ?? '').localeCompare(b.brand ?? ''));
+    const displayName =
+      members[0].name.replace(/\s*\([\p{L}\d]+\)\s*$/u, '').trim() || groupKey;
+    brandGroups.push({ groupKey, displayName, members });
+    members.forEach((m) => groupedIds.add(m.id));
   }
   const ungroupedExtras = extraFunctions.filter((f) => !groupedIds.has(f.id));
 
-  type BrandMode = 'none' | 'button_only' | 'seko' | 'ulka';
-  const getBrandMode = (pair: BrandPair): BrandMode => {
-    if (pair.seko.option === 'button_and_kit') return 'seko';
-    if (pair.ulka.option === 'button_and_kit') return 'ulka';
-    if (pair.seko.option === 'button_only' || pair.ulka.option === 'button_only') {
-      return 'button_only';
+  // Mode is either 'none' / 'button_only' or a brand name that matches one
+  // of the group members. We canonicalise "только кнопка" onto the first
+  // member of the group so the slot counter still treats the group as one.
+  const getGroupMode = (g: BrandGroup): string => {
+    for (const m of g.members) {
+      if (m.option === 'button_and_kit' && m.brand) return m.brand;
     }
+    if (g.members.some((m) => m.option === 'button_only')) return 'button_only';
     return 'none';
   };
-  const setBrandMode = (pair: BrandPair, mode: BrandMode) => {
+  const setGroupMode = (g: BrandGroup, mode: string) => {
     const off = { option: 'none' as const, enabled: false };
     if (mode === 'none') {
-      updateFuncs([
-        { id: pair.seko.id, patch: off },
-        { id: pair.ulka.id, patch: off },
-      ]);
+      updateFuncs(g.members.map((m) => ({ id: m.id, patch: off })));
     } else if (mode === 'button_only') {
-      updateFuncs([
-        { id: pair.seko.id, patch: { option: 'button_only', enabled: true } },
-        { id: pair.ulka.id, patch: off },
-      ]);
-    } else if (mode === 'seko') {
-      updateFuncs([
-        { id: pair.seko.id, patch: { option: 'button_and_kit', enabled: true } },
-        { id: pair.ulka.id, patch: off },
-      ]);
+      updateFuncs(
+        g.members.map((m, i) =>
+          i === 0
+            ? { id: m.id, patch: { option: 'button_only' as const, enabled: true } }
+            : { id: m.id, patch: off },
+        ),
+      );
     } else {
-      updateFuncs([
-        { id: pair.seko.id, patch: off },
-        { id: pair.ulka.id, patch: { option: 'button_and_kit', enabled: true } },
-      ]);
+      updateFuncs(
+        g.members.map((m) =>
+          m.brand === mode
+            ? { id: m.id, patch: { option: 'button_and_kit' as const, enabled: true } }
+            : { id: m.id, patch: off },
+        ),
+      );
     }
   };
-  const brandPriceLabel = (pair: BrandPair, mode: BrandMode): string => {
-    if (mode === 'seko') return `${pair.seko.kitPrice.toLocaleString('ru-RU')} ₽`;
-    if (mode === 'ulka') return `${pair.ulka.kitPrice.toLocaleString('ru-RU')} ₽`;
+  const groupPriceLabel = (g: BrandGroup, mode: string): string => {
+    if (mode === 'none') return '—';
     if (mode === 'button_only') return '0 ₽';
-    return '—';
+    const member = g.members.find((m) => m.brand === mode);
+    return member ? `${member.kitPrice.toLocaleString('ru-RU')} ₽` : '—';
   };
 
   // Count used slots: enabled base + extras with option !== 'none'
@@ -175,21 +182,24 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
           </p>
         )}
         <div className="space-y-3">
-          {/* Merged SEKO/ULKA cards */}
-          {brandPairs.map((pair) => {
-            const mode = getBrandMode(pair);
+          {/* Merged brand-group cards */}
+          {brandGroups.map((group) => {
+            const mode = getGroupMode(group);
             const isActive = mode !== 'none';
             const disabled = !isActive && atLimit;
-            const buttons: { mode: BrandMode; label: string }[] = [
+            const buttons: { mode: string; label: string }[] = [
               { mode: 'none', label: 'Не добавлять' },
               { mode: 'button_only', label: 'Только кнопка (0 ₽)' },
-              { mode: 'seko', label: `SEKO (${pair.seko.kitPrice.toLocaleString('ru-RU')} ₽)` },
-              { mode: 'ulka', label: `ULKA (${pair.ulka.kitPrice.toLocaleString('ru-RU')} ₽)` },
+              ...group.members.map((m) => ({
+                mode: m.brand ?? '',
+                label: `${(m.brand ?? '').toUpperCase()} (${m.kitPrice.toLocaleString('ru-RU')} ₽)`,
+              })),
             ];
+            const cols = buttons.length <= 4 ? 'sm:grid-cols-4' : 'sm:grid-cols-5';
 
             return (
               <div
-                key={pair.stem}
+                key={group.groupKey}
                 className={`p-4 rounded-lg border-2 transition-colors ${
                   isActive
                     ? 'border-accent bg-accent/10'
@@ -199,17 +209,17 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium">{pair.displayName}</span>
-                  <span className="text-xs text-accent font-bold">{brandPriceLabel(pair, mode)}</span>
+                  <span className="font-medium">{group.displayName}</span>
+                  <span className="text-xs text-accent font-bold">{groupPriceLabel(group, mode)}</span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className={`grid grid-cols-2 ${cols} gap-2`}>
                   {buttons.map(({ mode: m, label }) => {
                     const btnDisabled = disabled && m !== 'none';
                     return (
                       <button
                         key={m}
                         disabled={btnDisabled}
-                        onClick={() => !btnDisabled && setBrandMode(pair, m)}
+                        onClick={() => !btnDisabled && setGroupMode(group, m)}
                         className={`text-xs py-2 px-2 rounded transition-colors ${
                           mode === m
                             ? 'bg-accent text-white'
