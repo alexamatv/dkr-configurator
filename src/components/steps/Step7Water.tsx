@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Step7Data } from '@/types';
 import { StepHint } from '../StepHint';
 import { boosterPumpPrice } from '@/data/mockData';
@@ -40,6 +41,18 @@ export function Step7Water({ data, onChange, title }: Props) {
               onClick={() => update({ osmosOption: o.id })}
               className={`radio-card text-center !p-3 ${data.osmosOption === o.id ? 'selected' : ''}`}
             >
+              {o.imageUrl && (
+                <div className="relative w-20 h-16 mx-auto mb-2 bg-background/40 rounded">
+                  <Image
+                    src={o.imageUrl}
+                    alt={o.name}
+                    fill
+                    className="object-contain p-1"
+                    sizes="80px"
+                    unoptimized
+                  />
+                </div>
+              )}
               <div className="font-bold text-sm">{o.capacity} л/ч</div>
               <div className={`text-[10px] mt-1 px-1.5 py-0.5 rounded inline-block ${
                 o.level === 'premium' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-accent/20 text-accent'

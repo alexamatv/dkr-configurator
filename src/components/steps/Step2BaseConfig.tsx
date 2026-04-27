@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import type { Step2Data } from '@/types';
 import { StepHint } from '../StepHint';
 import { useData } from '@/context/DataContext';
@@ -72,12 +73,26 @@ export function Step2BaseConfig({ data, onChange }: Props) {
                     onChange({ ...data, profile: p.id as Step2Data['profile'] });
                     setExpandedProfile(isExpanded && isSelected ? null : p.id);
                   }}
-                  className={`radio-card flex flex-col h-full ${isSelected ? 'selected' : ''}`}
+                  className={`radio-card flex flex-col h-full !p-0 overflow-hidden ${isSelected ? 'selected' : ''}`}
                 >
-                  <div className="font-bold text-lg">{p.name}</div>
-                  <div className="text-xs text-muted mt-1 flex-1">{p.description}</div>
-                  <div className="text-accent font-bold text-xl mt-3">
-                    {p.price.toLocaleString('ru-RU')} ₽
+                  {p.imageUrl && (
+                    <div className="relative w-full h-40 bg-background/40">
+                      <Image
+                        src={p.imageUrl}
+                        alt={p.name}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 640px) 100vw, 280px"
+                        unoptimized
+                      />
+                    </div>
+                  )}
+                  <div className="flex flex-col flex-1 p-4">
+                    <div className="font-bold text-lg">{p.name}</div>
+                    <div className="text-xs text-muted mt-1 flex-1">{p.description}</div>
+                    <div className="text-accent font-bold text-xl mt-3">
+                      {p.price.toLocaleString('ru-RU')} ₽
+                    </div>
                   </div>
                 </button>
                 {isSelected && isExpanded && (

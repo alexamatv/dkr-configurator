@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import type { Step10Data, PostConfig, WizardState } from '@/types';
 import { StepHint } from '../StepHint';
 import { useData } from '@/context/DataContext';
 import { generateXlsx } from '@/utils/generateXlsx';
-import { generatePdf } from '@/utils/generatePdf';
+import { generatePdf, type KpPhotoEmbed } from '@/utils/generatePdf';
+import { collectKpPhotos, fetchPhotosAsBase64 } from '@/utils/kpPhotos';
 
 
 interface Props {
@@ -21,7 +23,38 @@ interface Props {
 export function Step10Final({ data, posts, wizardState, onChange, onEditPost, onDuplicatePost, onDeletePost, title }: Props) {
   const dataCtx = useData();
   const { profiles, bumModels } = dataCtx;
+  const [downloadingKind, setDownloadingKind] = useState<'pdf' | 'xlsx' | null>(null);
   const update = (patch: Partial<Step10Data>) => onChange({ ...data, ...patch });
+
+  const buildPhotoEmbeds = async (): Promise<KpPhotoEmbed[]> => {
+    if (!data.includePhotos) return [];
+    const candidates = collectKpPhotos(wizardState, dataCtx);
+    if (candidates.length === 0) return [];
+    const base64Map = await fetchPhotosAsBase64(candidates.map((c) => c.url));
+    return candidates
+      .filter((c) => base64Map.has(c.url))
+      .map((c) => ({ label: c.label, price: c.price, data: base64Map.get(c.url)! }));
+  };
+
+  const onDownloadPdf = async () => {
+    setDownloadingKind('pdf');
+    try {
+      const photos = await buildPhotoEmbeds();
+      generatePdf(wizardState, dataCtx, photos);
+    } finally {
+      setDownloadingKind(null);
+    }
+  };
+
+  const onDownloadXlsx = async () => {
+    setDownloadingKind('xlsx');
+    try {
+      const photos = await buildPhotoEmbeds();
+      await generateXlsx(wizardState, dataCtx, photos);
+    } finally {
+      setDownloadingKind(null);
+    }
+  };
 
   return (
     <div className="space-y-10">
@@ -172,21 +205,36 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 pt-4 border-t border-border">
+      <label className="flex items-center gap-3 cursor-pointer text-sm pt-4 border-t border-border">
+        <input
+          type="checkbox"
+          checked={data.includePhotos}
+          onChange={(e) => update({ includePhotos: e.target.checked })}
+          className="w-4 h-4 accent-accent"
+        />
+        <span>Включить фото оборудования в КП</span>
+        <span className="text-xs text-muted">
+          (только позиции, помеченные «В КП» в админке)
+        </span>
+      </label>
+
+      <div className="flex flex-wrap gap-3">
         <button className="w-[200px] h-11 bg-accent text-white font-medium rounded-lg hover:bg-accent-hover transition-colors text-sm">
           Сохранить черновик
         </button>
         <button
-          onClick={() => generatePdf(wizardState, dataCtx)}
-          className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm"
+          onClick={() => void onDownloadPdf()}
+          disabled={downloadingKind !== null}
+          className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Скачать PDF
+          {downloadingKind === 'pdf' ? 'Готовим PDF…' : 'Скачать PDF'}
         </button>
         <button
-          onClick={() => { generateXlsx(wizardState, dataCtx); }}
-          className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm"
+          onClick={() => void onDownloadXlsx()}
+          disabled={downloadingKind !== null}
+          className="w-[200px] h-11 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Скачать Excel
+          {downloadingKind === 'xlsx' ? 'Готовим Excel…' : 'Скачать Excel'}
         </button>
       </div>
     </div>

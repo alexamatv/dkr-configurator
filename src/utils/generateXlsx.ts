@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs';
 import type { WizardState } from '@/types';
 import type { DataContextValue } from '@/context/DataContext';
 import { gatherDocData, makeFileName, type PostRow, type PostBlock } from './gatherData';
+import type { KpPhotoEmbed } from './generatePdf';
 
 /* ─── Post grouping (shared with PDF) ─── */
 interface PostGroup { post: PostBlock; count: number; }
@@ -40,7 +41,11 @@ const LINE_LIGHT = 'E2E8F0';
 const FOOTER_GRAY = '9CA3AF';
 const FONT = 'Arial';
 
-export async function generateXlsx(state: WizardState, data: DataContextValue): Promise<void> {
+export async function generateXlsx(
+  state: WizardState,
+  data: DataContextValue,
+  photos: KpPhotoEmbed[] = [],
+): Promise<void> {
   const d = gatherDocData(state, data);
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('КП', {
@@ -493,6 +498,37 @@ export async function generateXlsx(state: WizardState, data: DataContextValue): 
   addSectionRow('Условия');
   addInfoRow('Условия доставки', d.deliveryConditions);
   addInfoRow('Условия оплаты', d.paymentConditions);
+
+  // ─── EQUIPMENT PHOTOS (optional appendix) ───
+  if (photos.length > 0) {
+    addSpacer();
+    addSectionRow('Фото оборудования');
+    for (const p of photos) {
+      const labelRow = nextRow();
+      labelRow.getCell(1).value = p.label;
+      labelRow.getCell(1).font = valueFont;
+      ws.mergeCells(rowNum, 1, rowNum, 2);
+      labelRow.getCell(3).value = p.price;
+      labelRow.getCell(3).numFmt = priceFormat;
+      labelRow.getCell(3).font = valueFont;
+      labelRow.getCell(3).alignment = { horizontal: 'right' };
+
+      const imgRow = nextRow();
+      imgRow.height = 60;
+      try {
+        const fmtMatch = /^data:image\/(\w+);base64,/.exec(p.data);
+        const ext = (fmtMatch?.[1] ?? 'jpeg') as 'jpeg' | 'png' | 'gif';
+        const imgId = wb.addImage({ base64: p.data, extension: ext });
+        ws.addImage(imgId, {
+          tl: { col: 0.1, row: rowNum - 1 + 0.1 },
+          ext: { width: 110, height: 75 },
+        });
+      } catch {
+        // Skip image if ExcelJS rejects the format
+      }
+      addSpacer();
+    }
+  }
 
   // ─── FOOTER ───
   addSpacer();

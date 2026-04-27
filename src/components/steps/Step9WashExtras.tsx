@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Step9Data, VacuumSubOption, WashExtra } from '@/types';
 import { StepHint } from '../StepHint';
 import {
@@ -119,6 +120,18 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
           }`}>
             {item.selected && <span className="text-white text-xs">✓</span>}
           </div>
+          {item.imageUrl && (
+            <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
+              <Image
+                src={item.imageUrl}
+                alt={item.name}
+                fill
+                className="object-contain p-1"
+                sizes="64px"
+                unoptimized
+              />
+            </div>
+          )}
           <div>
             <div className="text-sm font-medium">{item.name}</div>
             <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>
@@ -154,12 +167,26 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
             <button
               key={v.id}
               onClick={() => update({ vacuumOption: v.id, vacuumQuantity: v.id === 'none' ? 0 : Math.max(data.vacuumQuantity, 1) })}
-              className={`radio-card ${data.vacuumOption === v.id ? 'selected' : ''}`}
+              className={`radio-card flex items-center gap-3 ${data.vacuumOption === v.id ? 'selected' : ''}`}
             >
-              <div className="font-medium">{v.name}</div>
-              {v.price > 0 && (
-                <div className="text-accent text-sm font-bold mt-1">{v.price.toLocaleString('ru-RU')} ₽</div>
+              {v.imageUrl && (
+                <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
+                  <Image
+                    src={v.imageUrl}
+                    alt={v.name}
+                    fill
+                    className="object-contain p-1"
+                    sizes="64px"
+                    unoptimized
+                  />
+                </div>
               )}
+              <div className="flex-1 min-w-0 text-left">
+                <div className="font-medium">{v.name}</div>
+                {v.price > 0 && (
+                  <div className="text-accent text-sm font-bold mt-1">{v.price.toLocaleString('ru-RU')} ₽</div>
+                )}
+              </div>
             </button>
           ))}
         </div>
@@ -343,6 +370,18 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
                 }`}>
                   {item.selected && <span className="text-white text-xs">✓</span>}
                 </div>
+                {item.imageUrl && (
+                  <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      fill
+                      className="object-contain p-1"
+                      sizes="64px"
+                      unoptimized
+                    />
+                  </div>
+                )}
                 <div>
                   <div className="text-sm font-medium">{item.name}</div>
                   <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>

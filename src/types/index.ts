@@ -9,6 +9,8 @@ export interface Accessory {
   selected: boolean;
   exclusiveGroup?: string;
   customPrice?: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface BumModel {
@@ -19,6 +21,8 @@ export interface BumModel {
   maxFunctions: number;
   price: number;
   realPrice: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface ProfileConfig {
@@ -32,6 +36,8 @@ export interface ProfileConfig {
   defaultPayments: PaymentSystem[];
   defaultAccessories: string[];
   includedComponents: string[];
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export type PaymentSystem = 'bill_acceptor' | 'coin_acceptor' | 'acquiring' | 'loyalty_reader' | 'qr_payment';
@@ -53,6 +59,8 @@ export interface PostFunction {
   premiumOnly?: boolean;
   buttonPrice: number;
   kitPrice: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface Dosator {
@@ -84,6 +92,8 @@ export interface OsmosOption {
   level: OsmosLevel;
   name: string;
   price: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface PostExtra {
@@ -92,12 +102,16 @@ export interface PostExtra {
   selected: boolean;
   quantity: number;
   price: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface VacuumOption {
   id: string;
   name: string;
   price: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface WashExtra {
@@ -106,6 +120,8 @@ export interface WashExtra {
   selected: boolean;
   quantity: number;
   price: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export type MontageType = 'none' | 'commissioning' | 'full';
@@ -192,6 +208,7 @@ export interface Step10Data {
   montageExtra: number;
   robotMontage: boolean;
   language: Language;
+  includePhotos: boolean;
 }
 
 // ─── Robot types ───
@@ -202,6 +219,8 @@ export interface RobotModel {
   description: string;
   price: number;
   includedComponents: string[];
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface RobotBurModel {
@@ -209,6 +228,8 @@ export interface RobotBurModel {
   name: string;
   description: string;
   price: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface RobotOption {

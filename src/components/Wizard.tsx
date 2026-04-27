@@ -148,6 +148,7 @@ function createInitialState(data: DataContextValue): WizardState {
       montageExtra: 0,
       robotMontage: false,
       language: 'ru',
+      includePhotos: false,
     },
     // Robot
     robotStep2: { robotModel: '' },

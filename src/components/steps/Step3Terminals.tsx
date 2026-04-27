@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Step3Data, PaymentSystem } from '@/types';
 import { StepHint } from '../StepHint';
 import { paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
@@ -43,19 +44,33 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
               <button
                 key={b.id}
                 onClick={() => onChange({ ...data, bumModel: b.id })}
-                className={`radio-card flex flex-col h-full ${data.bumModel === b.id ? 'selected' : ''}`}
+                className={`radio-card flex h-full gap-3 ${data.bumModel === b.id ? 'selected' : ''}`}
               >
-                <div className="font-bold">{b.name}</div>
-                <div className="text-xs text-muted mt-1 flex-1">{b.description}</div>
-                <div className="text-xs text-accent mt-1">До {b.maxButtons} кнопок</div>
-                <div className="text-accent font-bold text-lg mt-2">
-                  {b.realPrice.toLocaleString('ru-RU')} ₽
-                </div>
-                {isDefault && (
-                  <div className="mt-1 text-xs font-medium text-success bg-success/10 px-2 py-0.5 rounded inline-block">
-                    Входит в комплект
+                {b.imageUrl && (
+                  <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
+                    <Image
+                      src={b.imageUrl}
+                      alt={b.name}
+                      fill
+                      className="object-contain p-1"
+                      sizes="64px"
+                      unoptimized
+                    />
                   </div>
                 )}
+                <div className="flex flex-col flex-1 min-w-0 text-left">
+                  <div className="font-bold">{b.name}</div>
+                  <div className="text-xs text-muted mt-1 flex-1">{b.description}</div>
+                  <div className="text-xs text-accent mt-1">До {b.maxButtons} кнопок</div>
+                  <div className="text-accent font-bold text-lg mt-2">
+                    {b.realPrice.toLocaleString('ru-RU')} ₽
+                  </div>
+                  {isDefault && (
+                    <div className="mt-1 text-xs font-medium text-success bg-success/10 px-2 py-0.5 rounded inline-block self-start">
+                      Входит в комплект
+                    </div>
+                  )}
+                </div>
               </button>
             );
           })}

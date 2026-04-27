@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import type { Step5Data, AvdSelection } from '@/types';
 import { StepHint } from '../StepHint';
 import { useData } from '@/context/DataContext';
@@ -65,6 +66,18 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
             const price = selectedAvd?.price ?? 0;
             return (
               <div key={sel.id} className="flex items-center gap-2">
+                {selectedAvd?.imageUrl ? (
+                  <div className="relative w-[100px] h-20 shrink-0 bg-background/40 rounded border border-border">
+                    <Image
+                      src={selectedAvd.imageUrl}
+                      alt={selectedAvd.name}
+                      fill
+                      className="object-contain p-1"
+                      sizes="100px"
+                      unoptimized
+                    />
+                  </div>
+                ) : null}
                 <select
                   value={sel.avdId}
                   onChange={(e) => updateSelection(sel.id, e.target.value)}

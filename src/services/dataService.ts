@@ -25,7 +25,13 @@ import type {
 
 // ─── DB row shapes (loose — only the fields we read) ────────────────────────
 
-type ProfileRow = {
+// Photo fields shared by every catalog row
+type PhotoFields = {
+  image_url: string | null;
+  show_image_in_kp: boolean | null;
+};
+
+type ProfileRow = PhotoFields & {
   id: string;
   name: string;
   description: string | null;
@@ -39,7 +45,7 @@ type ProfileRow = {
   sort_order: number;
 };
 
-type BumRow = {
+type BumRow = PhotoFields & {
   id: string;
   name: string;
   description: string | null;
@@ -50,7 +56,7 @@ type BumRow = {
   sort_order: number;
 };
 
-type AccessoryRow = {
+type AccessoryRow = PhotoFields & {
   id: string;
   name: string;
   price: number | string;
@@ -58,7 +64,7 @@ type AccessoryRow = {
   sort_order: number;
 };
 
-type PumpRow = {
+type PumpRow = PhotoFields & {
   id: string;
   name: string;
   price: number | string;
@@ -66,7 +72,7 @@ type PumpRow = {
   sort_order: number;
 };
 
-type WashFunctionRow = {
+type WashFunctionRow = PhotoFields & {
   id: string;
   name: string;
   category: string;
@@ -78,7 +84,7 @@ type WashFunctionRow = {
   sort_order: number;
 };
 
-type WaterTreatmentRow = {
+type WaterTreatmentRow = PhotoFields & {
   id: string;
   type: string;
   name: string;
@@ -88,7 +94,7 @@ type WaterTreatmentRow = {
   sort_order: number;
 };
 
-type ExtraEquipmentRow = {
+type ExtraEquipmentRow = PhotoFields & {
   id: string;
   category: string;
   name: string;
@@ -98,7 +104,7 @@ type ExtraEquipmentRow = {
   sort_order: number;
 };
 
-type RobotRow = {
+type RobotRow = PhotoFields & {
   id: string;
   name: string;
   description: string | null;
@@ -107,7 +113,7 @@ type RobotRow = {
   sort_order: number;
 };
 
-type BurRow = {
+type BurRow = PhotoFields & {
   id: string;
   name: string;
   description: string | null;
@@ -115,7 +121,7 @@ type BurRow = {
   sort_order: number;
 };
 
-type TruckWashRow = {
+type TruckWashRow = PhotoFields & {
   id: string;
   name: string;
   description: string | null;
@@ -131,6 +137,11 @@ const num = (v: number | string | null | undefined): number =>
 
 const arr = <T>(v: unknown): T[] => (Array.isArray(v) ? (v as T[]) : []);
 
+const photo = (r: PhotoFields) => ({
+  imageUrl: r.image_url ?? undefined,
+  showImageInKp: r.show_image_in_kp ?? false,
+});
+
 // ─── Service: getters return mockData-shaped data ───────────────────────────
 
 export interface AvdKit {
@@ -138,12 +149,16 @@ export interface AvdKit {
   name: string;
   price: number;
   premiumOnly?: boolean;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface ArasModel {
   id: string;
   name: string;
   price?: number;
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 export interface TruckWashType {
@@ -152,6 +167,8 @@ export interface TruckWashType {
   price: number;
   currency: 'RUB';
   features: string[];
+  imageUrl?: string;
+  showImageInKp?: boolean;
 }
 
 const PREMIUM_ONLY_AVD_IDS = new Set<string>(['hawk_25_200']);
@@ -177,6 +194,7 @@ export async function getProfiles(): Promise<ProfileConfig[]> {
     defaultPayments: arr<PaymentSystem>(r.default_payments),
     defaultAccessories: arr<string>(r.default_accessories),
     includedComponents: arr<string>(r.included_components),
+    ...photo(r),
   }));
 }
 
@@ -197,6 +215,7 @@ export async function getBumModels(): Promise<BumModel[]> {
     maxFunctions: r.max_functions,
     price: num(r.upgrade_price),
     realPrice: num(r.real_price),
+    ...photo(r),
   }));
 }
 
@@ -217,6 +236,7 @@ export async function getAccessories(): Promise<Accessory[]> {
     selected: false,
     // Hose pair is mutually exclusive (preserved from mockData behavior)
     exclusiveGroup: r.id === 'hose_4m' || r.id === 'hose_5m' ? 'hose' : undefined,
+    ...photo(r),
   }));
 }
 
@@ -235,6 +255,7 @@ export async function getPumps(): Promise<AvdKit[]> {
     name: r.name,
     price: num(r.price),
     ...(PREMIUM_ONLY_AVD_IDS.has(r.id) ? { premiumOnly: true } : {}),
+    ...photo(r),
   }));
 }
 
@@ -266,6 +287,7 @@ export async function getWashFunctions(): Promise<WashFunctionsResult> {
           enabled: true,
           buttonPrice: num(r.button_price),
           kitPrice: num(r.kit_price),
+          ...photo(r),
         }
       : {
           id: r.id,
@@ -277,6 +299,7 @@ export async function getWashFunctions(): Promise<WashFunctionsResult> {
           ...(r.requires_dosator ? { requiresDosator: true } : {}),
           buttonPrice: num(r.button_price),
           kitPrice: num(r.kit_price),
+          ...photo(r),
         };
     if (isBase) base.push(fn);
     else extra.push(fn);
@@ -310,12 +333,14 @@ export async function getWaterTreatment(): Promise<WaterTreatmentResult> {
         level: (r.level === 'premium' ? 'premium' : 'standard') as OsmosOption['level'],
         name: r.name,
         price: num(r.price),
+        ...photo(r),
       });
     } else if (r.type === 'aras') {
       aras.push({
         id: r.id,
         name: r.name,
         ...(r.id === 'none' ? {} : { price: num(r.price) }),
+        ...photo(r),
       });
     }
   }
@@ -356,6 +381,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
         id: stripPrefix(r.id, VACUUM_PREFIX),
         name: r.name,
         price: num(r.price),
+        ...photo(r),
       });
     } else if (r.category === 'post_extra') {
       postExtras.push({
@@ -364,6 +390,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
         selected: false,
         quantity: 0,
         price: num(r.price),
+        ...photo(r),
       });
     } else {
       // wash_extra | dispenser | fogger — all rendered together in Step9 wash extras list
@@ -373,6 +400,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
         selected: false,
         quantity: 0,
         price: num(r.price),
+        ...photo(r),
       });
     }
   }
@@ -400,6 +428,7 @@ export async function getRobotModels(): Promise<RobotModel[]> {
     description: r.description ?? '',
     price: num(r.price),
     includedComponents: arr<string>(r.included_components),
+    ...photo(r),
   }));
 }
 
@@ -417,6 +446,7 @@ export async function getBurModels(): Promise<RobotBurModel[]> {
     name: r.name,
     description: r.description ?? '',
     price: num(r.price),
+    ...photo(r),
   }));
 }
 
@@ -435,5 +465,6 @@ export async function getTruckWashTypes(): Promise<TruckWashType[]> {
     price: num(r.price),
     currency: 'RUB',
     features: arr<string>(r.features),
+    ...photo(r),
   }));
 }

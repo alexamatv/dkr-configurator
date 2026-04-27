@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { EditablePrice } from './EditablePrice';
+import { PhotoCell } from './PhotoCell';
 import { SubOptionsModal, type SubOptionsValue } from './SubOptionsModal';
 
 type Branch = 'mso' | 'robot' | 'truck';
@@ -12,6 +13,8 @@ interface BaseRow {
   name: string;
   branch?: string | null;
   is_active?: boolean;
+  image_url?: string | null;
+  show_image_in_kp?: boolean;
 }
 
 interface ProfileRow extends BaseRow { description: string | null; price: number; base_price: number }
@@ -246,12 +249,25 @@ function renderSection(
     <div className="px-4 py-6 text-xs text-muted">Нет позиций.</div>
   );
 
+  const photoTd = (table: keyof Catalog, row: BaseRow) => (
+    <Td>
+      <PhotoCell
+        table={String(table)}
+        id={row.id}
+        name={row.name}
+        imageUrl={row.image_url ?? null}
+        showImageInKp={Boolean(row.show_image_in_kp)}
+        onChange={(patch) => update(table, row.id, patch)}
+      />
+    </Td>
+  );
+
   switch (key) {
     case 'profiles': {
       const rows = filterByBranch(data.profiles, true).filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Описание', 'Цена']}>
+        <Table headers={['Название', 'Описание', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -262,6 +278,7 @@ function renderSection(
                   onSave={(v) => update('profiles', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('profiles', r)}
             </tr>
           ))}
         </Table>
@@ -272,7 +289,7 @@ function renderSection(
       const rows = data.bum_models.filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Модель', 'Макс. функций', 'Цена']}>
+        <Table headers={['Модель', 'Макс. функций', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -283,6 +300,7 @@ function renderSection(
                   onSave={(v) => update('bum_models', r.id, { real_price: v })}
                 />
               </Td>
+              {photoTd('bum_models', r)}
             </tr>
           ))}
         </Table>
@@ -293,7 +311,7 @@ function renderSection(
       const rows = filterByBranch(data.accessories, true).filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Цена']}>
+        <Table headers={['Название', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -303,6 +321,7 @@ function renderSection(
                   onSave={(v) => update('accessories', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('accessories', r)}
             </tr>
           ))}
         </Table>
@@ -313,7 +332,7 @@ function renderSection(
       const rows = filterByBranch(data.pumps, true).filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Цена']}>
+        <Table headers={['Название', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -323,6 +342,7 @@ function renderSection(
                   onSave={(v) => update('pumps', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('pumps', r)}
             </tr>
           ))}
         </Table>
@@ -333,7 +353,7 @@ function renderSection(
       const rows = filterByBranch(data.wash_functions, true).filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Категория', 'Кнопка', 'Комплект']}>
+        <Table headers={['Название', 'Категория', 'Кнопка', 'Комплект', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>
@@ -359,6 +379,7 @@ function renderSection(
                   onSave={(v) => update('wash_functions', r.id, { kit_price: v })}
                 />
               </Td>
+              {photoTd('wash_functions', r)}
             </tr>
           ))}
         </Table>
@@ -369,7 +390,7 @@ function renderSection(
       const rows = data.water_treatment.filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Тип', 'Название', 'Цена']}>
+        <Table headers={['Тип', 'Название', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td muted>{r.type}</Td>
@@ -380,6 +401,7 @@ function renderSection(
                   onSave={(v) => update('water_treatment', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('water_treatment', r)}
             </tr>
           ))}
         </Table>
@@ -390,7 +412,7 @@ function renderSection(
       const rows = filterByBranch(data.extra_equipment, true).filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Категория', 'Название', 'Цена', 'Под-опции']}>
+        <Table headers={['Категория', 'Название', 'Цена', 'Под-опции', 'Фото']}>
           {rows.map((r) => {
             const subCount = countSubOptions(r.sub_options);
             return (
@@ -415,6 +437,7 @@ function renderSection(
                     <span className="text-xs text-muted">—</span>
                   )}
                 </Td>
+                {photoTd('extra_equipment', r)}
               </tr>
             );
           })}
@@ -426,7 +449,7 @@ function renderSection(
       const rows = data.robot_models.filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Описание', 'Цена']}>
+        <Table headers={['Название', 'Описание', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -437,6 +460,7 @@ function renderSection(
                   onSave={(v) => update('robot_models', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('robot_models', r)}
             </tr>
           ))}
         </Table>
@@ -447,7 +471,7 @@ function renderSection(
       const rows = data.bur_models.filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Описание', 'Цена']}>
+        <Table headers={['Название', 'Описание', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -458,6 +482,7 @@ function renderSection(
                   onSave={(v) => update('bur_models', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('bur_models', r)}
             </tr>
           ))}
         </Table>
@@ -468,7 +493,7 @@ function renderSection(
       const rows = data.truck_wash_types.filter((r) => matches(r.name));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Цена']}>
+        <Table headers={['Название', 'Цена', 'Фото']}>
           {rows.map((r) => (
             <tr key={r.id} className="border-t border-border">
               <Td>{r.name}</Td>
@@ -478,6 +503,7 @@ function renderSection(
                   onSave={(v) => update('truck_wash_types', r.id, { price: v })}
                 />
               </Td>
+              {photoTd('truck_wash_types', r)}
             </tr>
           ))}
         </Table>

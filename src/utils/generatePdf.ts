@@ -3,6 +3,12 @@ import autoTable from 'jspdf-autotable';
 import type { WizardState } from '@/types';
 import type { DataContextValue } from '@/context/DataContext';
 import { gatherDocData, makeFileName, type PostRow, type PostBlock } from './gatherData';
+
+export interface KpPhotoEmbed {
+  label: string;
+  price: number;
+  data: string; // base64 data URL
+}
 import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
 import { DKR_LOGO_BASE64 } from '../fonts/dkr-logo';
@@ -63,7 +69,11 @@ function fmtPrice(n: number): string {
 }
 
 /* ─── Main export ─── */
-export function generatePdf(state: WizardState, data: DataContextValue): void {
+export function generatePdf(
+  state: WizardState,
+  data: DataContextValue,
+  photos: KpPhotoEmbed[] = [],
+): void {
   const d = gatherDocData(state, data);
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
@@ -567,6 +577,42 @@ export function generatePdf(state: WizardState, data: DataContextValue): void {
       const lines = doc.splitTextToSize(d.paymentConditions, cW - 4);
       doc.text(lines, mL + 2, y);
       y += lines.length * 4 + 3;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════
+  //  EQUIPMENT PHOTOS (optional appendix)
+  // ═══════════════════════════════════════════════════════
+
+  if (photos.length > 0) {
+    sectionTitle('Фото оборудования');
+
+    const imgW = 35;
+    const imgH = 28;
+    const rowGap = 6;
+    const textPad = 6;
+
+    for (const p of photos) {
+      checkPage(imgH + rowGap + 2);
+      const startY = y;
+      try {
+        const formatMatch = /^data:image\/(\w+);base64,/.exec(p.data);
+        const imgFormat = (formatMatch?.[1] ?? 'jpeg').toUpperCase();
+        doc.addImage(p.data, imgFormat, mL, startY, imgW, imgH);
+      } catch {
+        // Skip this photo if jsPDF can't decode it
+      }
+      const textX = mL + imgW + textPad;
+      doc.setFontSize(10);
+      doc.setFont(F, 'bold');
+      doc.setTextColor(...DARK);
+      const labelLines = doc.splitTextToSize(p.label, pageW - mR - textX - 30);
+      doc.text(labelLines, textX, startY + 6);
+      doc.setFont(F, 'normal');
+      doc.setTextColor(...BLUE);
+      doc.text(fmt(p.price), pageW - mR, startY + 6, { align: 'right' });
+      doc.setTextColor(...DARK);
+      y = startY + imgH + rowGap;
     }
   }
 
