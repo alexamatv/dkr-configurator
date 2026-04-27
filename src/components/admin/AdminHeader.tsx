@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -13,7 +14,7 @@ export function AdminHeader({ email }: Props) {
   const onSignOut = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/admin/login');
+    router.push('/login');
     router.refresh();
   };
 
@@ -25,6 +26,12 @@ export function AdminHeader({ email }: Props) {
           <span className="text-sm font-bold">Админ-панель</span>
         </div>
         <div className="flex items-center gap-4 text-sm">
+          <Link
+            href="/"
+            className="text-xs text-accent hover:underline"
+          >
+            ← Калькулятор
+          </Link>
           <span className="text-muted hidden sm:inline">{email}</span>
           <button
             onClick={onSignOut}

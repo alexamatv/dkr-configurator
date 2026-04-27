@@ -95,7 +95,7 @@ function applyProfileDefaults(data: DataContextValue, profileId: string) {
   };
 }
 
-function createInitialState(data: DataContextValue): WizardState {
+function createInitialState(data: DataContextValue, initialManager: string): WizardState {
   const defaults = applyProfileDefaults(data, 'standard')!;
   return {
     currentStep: 1,
@@ -103,7 +103,7 @@ function createInitialState(data: DataContextValue): WizardState {
       vehicleType: 'passenger',
       objectType: 'self_service',
       clientSearch: '',
-      manager: '',
+      manager: initialManager,
     },
     // MSO
     step2: defaults.step2,
@@ -163,9 +163,14 @@ function createInitialState(data: DataContextValue): WizardState {
   };
 }
 
-export function Wizard() {
+interface WizardProps {
+  initialManager: string;
+  userEmail: string;
+}
+
+export function Wizard({ initialManager, userEmail }: WizardProps) {
   const data = useData();
-  const [state, setState] = useState<WizardState>(() => createInitialState(data));
+  const [state, setState] = useState<WizardState>(() => createInitialState(data, initialManager));
 
   const isRobot = state.step1.objectType === 'robotic';
   const isTruck = state.step1.objectType === 'truck';
@@ -461,7 +466,7 @@ export function Wizard() {
   return (
     <HintsProvider>
     <div className="flex flex-col lg:flex-row h-screen overflow-hidden">
-      <StepNavigation currentStep={state.currentStep} objectType={state.step1.objectType} onStepClick={setStep} />
+      <StepNavigation currentStep={state.currentStep} objectType={state.step1.objectType} onStepClick={setStep} userEmail={userEmail} />
 
       <div className="flex-1 flex flex-col min-w-0 min-h-0">
         <div className="flex-1 overflow-y-auto p-4 lg:p-8 pb-36 lg:pb-8">

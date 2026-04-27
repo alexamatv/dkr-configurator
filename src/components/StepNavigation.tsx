@@ -1,7 +1,10 @@
 'use client';
 
 import { useRef, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ObjectType } from '@/types';
+import { createClient } from '@/lib/supabase/client';
 import { ThemeToggle } from './ThemeToggle';
 import { HintsToggle } from './HintsToggle';
 
@@ -49,12 +52,21 @@ interface StepNavigationProps {
   currentStep: number;
   objectType: ObjectType;
   onStepClick: (step: number) => void;
+  userEmail: string;
 }
 
-export function StepNavigation({ currentStep, objectType, onStepClick }: StepNavigationProps) {
+export function StepNavigation({ currentStep, objectType, onStepClick, userEmail }: StepNavigationProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const steps = objectType === 'truck' ? truckSteps : objectType === 'robotic' ? robotSteps : msoSteps;
   const title = objectType === 'truck' ? 'Конфигуратор Грузовая' : objectType === 'robotic' ? 'Конфигуратор Робот' : 'Конфигуратор МСО';
+
+  const onSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+    router.refresh();
+  };
 
   useEffect(() => {
     if (!scrollRef.current) return;
@@ -76,7 +88,7 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
           <ThemeToggle />
           <HintsToggle />
         </div>
-        <nav className="py-2">
+        <nav className="py-2 flex-1">
           {steps.map((step, idx) => {
             const isActive = currentStep === step.number;
             const isPast = currentStep > step.number;
@@ -125,6 +137,23 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
             );
           })}
         </nav>
+        <div className="p-4 border-t border-border space-y-2">
+          {userEmail && <div className="text-[11px] text-muted truncate">{userEmail}</div>}
+          <div className="flex items-center justify-between gap-2">
+            <Link
+              href="/admin"
+              className="text-xs text-accent hover:underline"
+            >
+              Админка →
+            </Link>
+            <button
+              onClick={() => void onSignOut()}
+              className="text-xs px-2 py-1 border border-border rounded hover:bg-surface-hover transition-colors"
+            >
+              Выйти
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Mobile horizontal strip */}
@@ -136,6 +165,18 @@ export function StepNavigation({ currentStep, objectType, onStepClick }: StepNav
           <div className="shrink-0">
             <ThemeToggle />
           </div>
+          <Link
+            href="/admin"
+            className="shrink-0 text-[10px] px-2 py-1 border border-border rounded text-accent hover:bg-surface-hover"
+          >
+            Админка
+          </Link>
+          <button
+            onClick={() => void onSignOut()}
+            className="shrink-0 text-[10px] px-2 py-1 border border-border rounded hover:bg-surface-hover"
+          >
+            Выйти
+          </button>
           {steps.map((step) => {
             const isActive = currentStep === step.number;
             const isPast = currentStep > step.number;

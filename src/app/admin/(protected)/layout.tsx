@@ -15,7 +15,7 @@ export default async function ProtectedAdminLayout({
   // Defense-in-depth: middleware already redirects, but if it's misconfigured
   // this prevents the page from rendering for an unauthenticated user.
   if (!user) {
-    redirect('/admin/login');
+    redirect('/login');
   }
 
   return (

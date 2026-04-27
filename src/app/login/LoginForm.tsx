@@ -1,11 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
-export default function AdminLoginPage() {
+export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get('next') || '/';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -28,19 +32,22 @@ export default function AdminLoginPage() {
       return;
     }
 
-    router.push('/admin/prices');
+    router.push(next);
     router.refresh();
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
       <form
         onSubmit={onSubmit}
         className="w-full max-w-[380px] p-6 space-y-5 bg-surface border border-border rounded-lg"
       >
-        <div>
-          <div className="text-xs font-medium text-muted tracking-wider">DKR GROUP</div>
-          <h1 className="text-2xl font-bold mt-1">Админ-панель</h1>
+        <div className="text-center">
+          <div className="text-2xl font-extrabold tracking-wide">DKR GROUP</div>
+          <div className="text-xs text-muted mt-1">Войдите в свой аккаунт</div>
         </div>
 
         <div className="space-y-3">
