@@ -179,6 +179,7 @@ export async function getProfiles(): Promise<ProfileConfig[]> {
     .from('profiles')
     .select('*')
     .eq('branch', 'mso')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -203,6 +204,7 @@ export async function getBumModels(): Promise<BumModel[]> {
   const { data, error } = await supabase
     .from('bum_models')
     .select('*')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -225,6 +227,7 @@ export async function getAccessories(): Promise<Accessory[]> {
     .from('accessories')
     .select('*')
     .eq('branch', 'mso')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -246,6 +249,7 @@ export async function getPumps(): Promise<AvdKit[]> {
     .from('pumps')
     .select('*')
     .eq('branch', 'mso')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -270,6 +274,7 @@ export async function getWashFunctions(): Promise<WashFunctionsResult> {
     .from('wash_functions')
     .select('*')
     .eq('branch', 'mso')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -318,6 +323,7 @@ export async function getWaterTreatment(): Promise<WaterTreatmentResult> {
   const { data, error } = await supabase
     .from('water_treatment')
     .select('*')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -367,6 +373,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     .from('extra_equipment')
     .select('*')
     .eq('branch', 'mso')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -418,6 +425,7 @@ export async function getRobotModels(): Promise<RobotModel[]> {
   const { data, error } = await supabase
     .from('robot_models')
     .select('*')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -437,6 +445,7 @@ export async function getBurModels(): Promise<RobotBurModel[]> {
   const { data, error } = await supabase
     .from('bur_models')
     .select('*')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;
@@ -455,6 +464,7 @@ export async function getTruckWashTypes(): Promise<TruckWashType[]> {
   const { data, error } = await supabase
     .from('truck_wash_types')
     .select('*')
+    .eq('is_active', true)
     .order('sort_order');
 
   if (error) throw error;

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client';
 import { EditablePrice } from './EditablePrice';
 import { PhotoCell } from './PhotoCell';
 import { SubOptionsModal, type SubOptionsValue } from './SubOptionsModal';
+import { ItemModal, type FieldConfig } from './ItemModal';
 
 type Branch = 'mso' | 'robot' | 'truck';
 
@@ -68,6 +69,112 @@ const SECTION_TITLES: Record<keyof Catalog, string> = {
   truck_wash_types: 'Грузовые мойки',
 };
 
+const BRANCH_OPTS = [
+  { label: 'МСО', value: 'mso' },
+  { label: 'Робот', value: 'robot' },
+  { label: 'Грузовик', value: 'truck' },
+];
+
+const SORT_FIELD: FieldConfig = { name: 'sort_order', label: 'Порядок', type: 'number', defaultValue: 0 };
+
+const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
+  profiles: [
+    { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'description', label: 'Описание', type: 'textarea' },
+    { name: 'price', label: 'Цена (бандл), ₽', type: 'number', required: true, helpText: 'Включает дефолтные аксессуары, помпу и оплату' },
+    { name: 'base_price', label: 'Базовая цена (raw), ₽', type: 'number' },
+    { name: 'included_components', label: 'Что входит в комплект', type: 'lines', helpText: 'По одному пункту на строку' },
+    SORT_FIELD,
+  ],
+  bum_models: [
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'description', label: 'Описание', type: 'text' },
+    { name: 'real_price', label: 'Цена, ₽', type: 'number', required: true },
+    { name: 'max_buttons', label: 'Макс. кнопок', type: 'number', defaultValue: 8 },
+    { name: 'max_functions', label: 'Макс. функций', type: 'number', defaultValue: 12 },
+    SORT_FIELD,
+  ],
+  accessories: [
+    { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
+    { name: 'has_custom_price', label: 'Цена редактируется на посту', type: 'checkbox' },
+    SORT_FIELD,
+  ],
+  pumps: [
+    { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'price', label: 'Цена (доплата), ₽', type: 'number', required: true, helpText: '0, если входит в комплект профиля' },
+    SORT_FIELD,
+  ],
+  wash_functions: [
+    { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'category', label: 'Категория', type: 'select', required: true, options: [
+      { label: 'Базовая (входит в комплект)', value: 'base' },
+      { label: 'Дополнительная', value: 'extra' },
+    ], defaultValue: 'extra' },
+    { name: 'is_base', label: 'Базовая (входит в профиль)', type: 'checkbox' },
+    { name: 'button_price', label: 'Цена кнопки, ₽', type: 'number', defaultValue: 0 },
+    { name: 'kit_price', label: 'Цена комплекта, ₽', type: 'number', defaultValue: 0 },
+    { name: 'premium_only', label: 'Только для Премиум', type: 'checkbox' },
+    { name: 'requires_dosator', label: 'Требует дозатора', type: 'checkbox' },
+    SORT_FIELD,
+  ],
+  water_treatment: [
+    { name: 'type', label: 'Тип', type: 'select', required: true, options: [
+      { label: 'Осмос', value: 'osmosis' },
+      { label: 'АРОС', value: 'aras' },
+    ] },
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'capacity', label: 'Производительность', type: 'text', placeholder: '500 л/ч' },
+    { name: 'level', label: 'Уровень', type: 'select', options: [
+      { label: 'Стандарт', value: 'standard' },
+      { label: 'Премиум', value: 'premium' },
+    ] },
+    { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
+    SORT_FIELD,
+  ],
+  extra_equipment: [
+    { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
+    { name: 'category', label: 'Категория', type: 'select', required: true, options: [
+      { label: 'Пылесос', value: 'vacuum' },
+      { label: 'Розлив омывайки', value: 'dispenser' },
+      { label: 'Сухой туман', value: 'fogger' },
+      { label: 'Доп. на мойку', value: 'wash_extra' },
+      { label: 'Доп. к посту', value: 'post_extra' },
+    ] },
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
+    { name: 'selection_type', label: 'Тип выбора', type: 'select', options: [
+      { label: 'Чекбокс', value: 'checkbox' },
+      { label: 'Радио (один из)', value: 'radio' },
+    ], defaultValue: 'checkbox' },
+    SORT_FIELD,
+  ],
+  robot_models: [
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'description', label: 'Описание', type: 'textarea' },
+    { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
+    { name: 'included_components', label: 'Что входит', type: 'lines', helpText: 'По одному пункту на строку' },
+    SORT_FIELD,
+  ],
+  bur_models: [
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'description', label: 'Описание', type: 'text' },
+    { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
+    SORT_FIELD,
+  ],
+  truck_wash_types: [
+    { name: 'name', label: 'Название', type: 'text', required: true },
+    { name: 'description', label: 'Описание', type: 'textarea' },
+    { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
+    { name: 'features', label: 'Характеристики', type: 'lines', helpText: 'По одной строке на характеристику' },
+    SORT_FIELD,
+  ],
+};
+
 export function PricesEditor() {
   const [branch, setBranch] = useState<Branch>('mso');
   const [search, setSearch] = useState('');
@@ -76,6 +183,8 @@ export function PricesEditor() {
   const [editingSubOptions, setEditingSubOptions] = useState<{
     row: ExtraRow;
   } | null>(null);
+  const [showHidden, setShowHidden] = useState<Partial<Record<keyof Catalog, boolean>>>({});
+  const [addModal, setAddModal] = useState<{ table: keyof Catalog } | null>(null);
 
   const supabase = useMemo(() => createClient(), []);
 
@@ -211,11 +320,30 @@ export function PricesEditor() {
           key={sectionKey}
           className="bg-surface border border-border rounded-lg overflow-hidden"
         >
-          <div className="px-4 py-3 border-b border-border">
+          <div className="px-4 py-3 border-b border-border flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-sm font-bold">{SECTION_TITLES[sectionKey]}</h2>
+            <div className="flex items-center gap-3">
+              <label className="flex items-center gap-1.5 text-xs text-muted cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showHidden[sectionKey] ?? false}
+                  onChange={(e) =>
+                    setShowHidden((prev) => ({ ...prev, [sectionKey]: e.target.checked }))
+                  }
+                  className="w-3.5 h-3.5 accent-accent"
+                />
+                Показать скрытые
+              </label>
+              <button
+                onClick={() => setAddModal({ table: sectionKey })}
+                className="text-xs px-3 py-1.5 bg-accent text-white rounded hover:bg-accent-hover"
+              >
+                + Добавить позицию
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
-            {renderSection(sectionKey, data, branch, matches, filterByBranch, updateField, setEditingSubOptions)}
+            {renderSection(sectionKey, data, branch, matches, filterByBranch, updateField, setEditingSubOptions, showHidden[sectionKey] ?? false)}
           </div>
         </section>
       ))}
@@ -227,6 +355,18 @@ export function PricesEditor() {
           onClose={() => setEditingSubOptions(null)}
           onSave={async (next) => {
             await updateField('extra_equipment', editingSubOptions.row.id, { sub_options: next });
+          }}
+        />
+      )}
+
+      {addModal && (
+        <ItemModal
+          table={addModal.table}
+          title={SECTION_TITLES[addModal.table]}
+          fields={FIELD_CONFIGS[addModal.table]}
+          onClose={() => setAddModal(null)}
+          onSaved={() => {
+            void loadAll();
           }}
         />
       )}
@@ -244,6 +384,7 @@ function renderSection(
   filterByBranch: <R extends BaseRow>(rows: R[], hasBranch: boolean) => R[],
   update: (table: keyof Catalog, id: string, patch: Record<string, unknown>) => Promise<void>,
   openSubOpts: (s: { row: ExtraRow }) => void,
+  showHidden: boolean,
 ): React.ReactNode {
   const empty = (
     <div className="px-4 py-6 text-xs text-muted">Нет позиций.</div>
@@ -262,15 +403,61 @@ function renderSection(
     </Td>
   );
 
+  const actionsTd = (table: keyof Catalog, row: BaseRow) => (
+    <Td>
+      {row.is_active === false ? (
+        <button
+          onClick={() => void update(table, row.id, { is_active: true })}
+          className="text-[11px] px-2 py-1 border border-border rounded hover:border-accent hover:text-accent transition-colors"
+          title="Восстановить позицию"
+        >
+          Восстановить
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            if (confirm(`Скрыть позицию «${row.name}»? Она перестанет отображаться в калькуляторе. Скрытие можно отменить кнопкой «Показать скрытые».`)) {
+              void update(table, row.id, { is_active: false });
+            }
+          }}
+          className="text-[11px] px-2 py-1 border border-border rounded hover:border-danger hover:text-danger transition-colors"
+          title="Скрыть позицию"
+        >
+          🚫 Скрыть
+        </button>
+      )}
+    </Td>
+  );
+
+  // Apply soft-delete visibility filter
+  const visibility = <R extends BaseRow>(rows: R[]): R[] =>
+    showHidden ? rows : rows.filter((r) => r.is_active !== false);
+
+  // Row className based on active state
+  const trClass = (row: BaseRow) =>
+    `border-t border-border ${row.is_active === false ? 'opacity-60 bg-background/30' : ''}`;
+
+  // Name cell that shows a "Скрыто" badge for inactive rows
+  const nameCell = (row: BaseRow, content: React.ReactNode = row.name) => (
+    <Td>
+      <span>{content}</span>
+      {row.is_active === false && (
+        <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-border/60 text-muted uppercase tracking-wider">
+          Скрыто
+        </span>
+      )}
+    </Td>
+  );
+
   switch (key) {
     case 'profiles': {
-      const rows = filterByBranch(data.profiles, true).filter((r) => matches(r.name));
+      const rows = visibility(filterByBranch(data.profiles, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Описание', 'Цена', 'Фото']}>
+        <Table headers={['Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td muted>{r.description ?? '—'}</Td>
               <Td>
                 <EditablePrice
@@ -279,6 +466,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('profiles', r)}
+              {actionsTd('profiles', r)}
             </tr>
           ))}
         </Table>
@@ -286,13 +474,13 @@ function renderSection(
     }
 
     case 'bum_models': {
-      const rows = data.bum_models.filter((r) => matches(r.name));
+      const rows = visibility(data.bum_models.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Модель', 'Макс. функций', 'Цена', 'Фото']}>
+        <Table headers={['Модель', 'Макс. функций', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td muted>{r.max_functions}</Td>
               <Td>
                 <EditablePrice
@@ -301,6 +489,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('bum_models', r)}
+              {actionsTd('bum_models', r)}
             </tr>
           ))}
         </Table>
@@ -308,13 +497,13 @@ function renderSection(
     }
 
     case 'accessories': {
-      const rows = filterByBranch(data.accessories, true).filter((r) => matches(r.name));
+      const rows = visibility(filterByBranch(data.accessories, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Цена', 'Фото']}>
+        <Table headers={['Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td>
                 <EditablePrice
                   value={Number(r.price)}
@@ -322,6 +511,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('accessories', r)}
+              {actionsTd('accessories', r)}
             </tr>
           ))}
         </Table>
@@ -329,13 +519,13 @@ function renderSection(
     }
 
     case 'pumps': {
-      const rows = filterByBranch(data.pumps, true).filter((r) => matches(r.name));
+      const rows = visibility(filterByBranch(data.pumps, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Цена', 'Фото']}>
+        <Table headers={['Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td>
                 <EditablePrice
                   value={Number(r.price)}
@@ -343,6 +533,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('pumps', r)}
+              {actionsTd('pumps', r)}
             </tr>
           ))}
         </Table>
@@ -350,20 +541,22 @@ function renderSection(
     }
 
     case 'wash_functions': {
-      const rows = filterByBranch(data.wash_functions, true).filter((r) => matches(r.name));
+      const rows = visibility(filterByBranch(data.wash_functions, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Категория', 'Кнопка', 'Комплект', 'Фото']}>
+        <Table headers={['Название', 'Категория', 'Кнопка', 'Комплект', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>
-                {r.name}
-                {r.premium_only && (
-                  <span className="ml-2 text-[10px] text-accent border border-accent/30 px-1.5 py-0.5 rounded">
-                    premium
-                  </span>
-                )}
-              </Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r, (
+                <>
+                  {r.name}
+                  {r.premium_only && (
+                    <span className="ml-2 text-[10px] text-accent border border-accent/30 px-1.5 py-0.5 rounded">
+                      premium
+                    </span>
+                  )}
+                </>
+              ))}
               <Td muted>{r.category}</Td>
               <Td>
                 <EditablePrice
@@ -380,6 +573,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('wash_functions', r)}
+              {actionsTd('wash_functions', r)}
             </tr>
           ))}
         </Table>
@@ -387,14 +581,14 @@ function renderSection(
     }
 
     case 'water_treatment': {
-      const rows = data.water_treatment.filter((r) => matches(r.name));
+      const rows = visibility(data.water_treatment.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Тип', 'Название', 'Цена', 'Фото']}>
+        <Table headers={['Тип', 'Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
+            <tr key={r.id} className={trClass(r)}>
               <Td muted>{r.type}</Td>
-              <Td>{r.name}</Td>
+              {nameCell(r)}
               <Td>
                 <EditablePrice
                   value={Number(r.price)}
@@ -402,6 +596,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('water_treatment', r)}
+              {actionsTd('water_treatment', r)}
             </tr>
           ))}
         </Table>
@@ -409,16 +604,16 @@ function renderSection(
     }
 
     case 'extra_equipment': {
-      const rows = filterByBranch(data.extra_equipment, true).filter((r) => matches(r.name));
+      const rows = visibility(filterByBranch(data.extra_equipment, true).filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Категория', 'Название', 'Цена', 'Под-опции', 'Фото']}>
+        <Table headers={['Категория', 'Название', 'Цена', 'Под-опции', 'Фото', 'Действия']}>
           {rows.map((r) => {
             const subCount = countSubOptions(r.sub_options);
             return (
-              <tr key={r.id} className="border-t border-border">
+              <tr key={r.id} className={trClass(r)}>
                 <Td muted>{r.category}</Td>
-                <Td>{r.name}</Td>
+                {nameCell(r)}
                 <Td>
                   <EditablePrice
                     value={Number(r.price)}
@@ -438,6 +633,7 @@ function renderSection(
                   )}
                 </Td>
                 {photoTd('extra_equipment', r)}
+                {actionsTd('extra_equipment', r)}
               </tr>
             );
           })}
@@ -446,13 +642,13 @@ function renderSection(
     }
 
     case 'robot_models': {
-      const rows = data.robot_models.filter((r) => matches(r.name));
+      const rows = visibility(data.robot_models.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Описание', 'Цена', 'Фото']}>
+        <Table headers={['Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td muted>{r.description ?? '—'}</Td>
               <Td>
                 <EditablePrice
@@ -461,6 +657,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('robot_models', r)}
+              {actionsTd('robot_models', r)}
             </tr>
           ))}
         </Table>
@@ -468,13 +665,13 @@ function renderSection(
     }
 
     case 'bur_models': {
-      const rows = data.bur_models.filter((r) => matches(r.name));
+      const rows = visibility(data.bur_models.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Описание', 'Цена', 'Фото']}>
+        <Table headers={['Название', 'Описание', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td muted>{r.description ?? '—'}</Td>
               <Td>
                 <EditablePrice
@@ -483,6 +680,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('bur_models', r)}
+              {actionsTd('bur_models', r)}
             </tr>
           ))}
         </Table>
@@ -490,13 +688,13 @@ function renderSection(
     }
 
     case 'truck_wash_types': {
-      const rows = data.truck_wash_types.filter((r) => matches(r.name));
+      const rows = visibility(data.truck_wash_types.filter((r) => matches(r.name)));
       if (!rows.length) return empty;
       return (
-        <Table headers={['Название', 'Цена', 'Фото']}>
+        <Table headers={['Название', 'Цена', 'Фото', 'Действия']}>
           {rows.map((r) => (
-            <tr key={r.id} className="border-t border-border">
-              <Td>{r.name}</Td>
+            <tr key={r.id} className={trClass(r)}>
+              {nameCell(r)}
               <Td>
                 <EditablePrice
                   value={Number(r.price)}
@@ -504,6 +702,7 @@ function renderSection(
                 />
               </Td>
               {photoTd('truck_wash_types', r)}
+              {actionsTd('truck_wash_types', r)}
             </tr>
           ))}
         </Table>
