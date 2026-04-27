@@ -27,13 +27,31 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
   const update = (patch: Partial<Step10Data>) => onChange({ ...data, ...patch });
 
   const buildPhotoEmbeds = async (): Promise<KpPhotoEmbed[]> => {
-    if (!data.includePhotos) return [];
+    if (!data.includePhotos) {
+      // eslint-disable-next-line no-console
+      console.info('[KP photos] master switch off → no photos');
+      return [];
+    }
     const candidates = collectKpPhotos(wizardState, dataCtx);
-    if (candidates.length === 0) return [];
+    // eslint-disable-next-line no-console
+    console.info('[KP photos] candidates:', candidates.map((c) => ({ label: c.label, url: c.url })));
+    if (candidates.length === 0) {
+      // eslint-disable-next-line no-console
+      console.info('[KP photos] no candidates — check that items in this configuration have an image_url AND show_image_in_kp = true in the admin');
+      return [];
+    }
     const base64Map = await fetchPhotosAsBase64(candidates.map((c) => c.url));
-    return candidates
+    const missed = candidates.filter((c) => !base64Map.has(c.url));
+    if (missed.length > 0) {
+      // eslint-disable-next-line no-console
+      console.warn('[KP photos] failed to fetch:', missed.map((c) => c.url));
+    }
+    const embeds = candidates
       .filter((c) => base64Map.has(c.url))
       .map((c) => ({ label: c.label, price: c.price, data: base64Map.get(c.url)! }));
+    // eslint-disable-next-line no-console
+    console.info(`[KP photos] embedding ${embeds.length} photo(s) into the document`);
+    return embeds;
   };
 
   const onDownloadPdf = async () => {

@@ -355,7 +355,10 @@ export async function generateXlsx(
       addInfoRow('\u041F\u0440\u043E\u0444\u0438\u043B\u044C', post.profileName);
       const priceRows: number[] = [];
 
-      priceRows.push(addPriceRow(`\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.bumName})`, post.basePrice));
+      priceRows.push(addPriceRow(`\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.profileName})`, post.basePrice));
+      if (post.bumSwapped) {
+        priceRows.push(addPriceRow(`Замена терминала: ${post.defaultBumName} → ${post.bumName}`, post.bumPrice));
+      }
       addIncludedItems(post.includedItems);
 
       priceRows.push(...addPriceBlock('\u0421\u0438\u0441\u0442\u0435\u043C\u044B \u043E\u043F\u043B\u0430\u0442\u044B', post.payments));

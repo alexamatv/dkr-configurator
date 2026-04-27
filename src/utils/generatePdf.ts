@@ -393,8 +393,14 @@ export function generatePdf(
       sectionTitle(title);
 
       const baseRows: PostRow[] = [
-        { name: `\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.profileName}, ${post.bumName})`, price: post.basePrice },
+        { name: `\u0411\u0430\u0437\u043E\u0432\u0430\u044F \u043A\u043E\u043C\u043F\u043B\u0435\u043A\u0442\u0430\u0446\u0438\u044F (${post.profileName})`, price: post.basePrice },
       ];
+      if (post.bumSwapped) {
+        baseRows.push({
+          name: `Замена терминала: ${post.defaultBumName} → ${post.bumName}`,
+          price: post.bumPrice,
+        });
+      }
       priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', baseRows);
 
       // Included items

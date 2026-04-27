@@ -133,7 +133,11 @@ function getPostName(data: DataContextValue, post: PostConfig, idx: number): str
 
 function calcPostBlock(data: DataContextValue, post: PostConfig, idx: number, state: WizardState): PostBlock {
   const profile = data.profiles.find((p) => p.id === post.profile);
-  const basePrice = profile?.basePrice ?? 0;
+  // Use the BUNDLE price (`profile.price`), not the raw equipment cost
+  // (`profile.basePrice`). The bundle includes default accessories, AVD,
+  // payments and BUM at a discount, and is the same baseline used by the
+  // grand-total subtotal calc below — so per-post total + wash total ≡ ИТОГО.
+  const basePrice = profile?.price ?? 0;
 
   const bum = data.bumModels.find((b) => b.id === post.bumModel);
   const bumName = bum?.name ?? '—';
@@ -230,22 +234,23 @@ function calcPostBlock(data: DataContextValue, post: PostConfig, idx: number, st
     secondPump = { name: `Вторая помпа — ${spName}`, price: spPrice };
   }
 
-  const basePriceWithBum = basePrice + bumPrice;
   const accTotal = accessories.reduce((s, r) => s + r.price, 0);
   const payTotal = payments.reduce((s, r) => s + r.price, 0);
   const funTotal = functions.reduce((s, r) => s + r.price, 0);
   const pmpTotal = pumps.reduce((s, r) => s + r.price, 0);
   const extTotal = postExtras.reduce((s, r) => s + r.price, 0);
   const spTotal = secondPump?.price ?? 0;
-  const postTotal = basePriceWithBum + accTotal + payTotal + funTotal + pmpTotal + extTotal + spTotal;
+  // basePrice is the bundle (no BUM swap baked in). bumPrice is the swap
+  // delta — surfaced as its own line in the KP so the total is transparent.
+  const postTotal = basePrice + bumPrice + accTotal + payTotal + funTotal + pmpTotal + extTotal + spTotal;
 
   return {
     title: getPostName(data, post, idx),
     profileName: profile?.name ?? '—',
-    basePrice: basePriceWithBum,
+    basePrice,
     includedItems: profile?.includedComponents ?? [],
     bumName,
-    bumPrice: 0,
+    bumPrice,
     defaultBumName,
     bumSwapped,
     payments,
