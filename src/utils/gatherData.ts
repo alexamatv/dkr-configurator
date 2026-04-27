@@ -296,8 +296,13 @@ function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
   }
 
   if (state.step7.boosterPump) {
-    waterRows.push({ name: 'Станция повышающая давление', price: boosterPumpPrice });
-    waterTotal += boosterPumpPrice;
+    const qty = Math.max(1, state.step7.boosterPumpQuantity || 1);
+    const cost = boosterPumpPrice * qty;
+    waterRows.push({
+      name: qty > 1 ? `Станция повышающая давление × ${qty}` : 'Станция повышающая давление',
+      price: cost,
+    });
+    waterTotal += cost;
   }
 
   if (state.step7.softeningAll && state.step7.softeningAllPrice > 0) {

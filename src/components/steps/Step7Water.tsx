@@ -5,6 +5,7 @@ import type { Step7Data } from '@/types';
 import { StepHint } from '../StepHint';
 import { boosterPumpPrice } from '@/data/mockData';
 import { useData } from '@/context/DataContext';
+import { QuantityInput } from '../ui/QuantityInput';
 
 interface Props {
   data: Step7Data;
@@ -88,20 +89,39 @@ export function Step7Water({ data, onChange, title }: Props) {
         <label className="block text-sm font-medium text-muted mb-3">Дополнительное оборудование</label>
         <div className="space-y-3">
           {/* Станция повышающая давление */}
-          <label className={`flex items-center gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-            data.boosterPump ? 'border-accent bg-accent/10' : 'border-border bg-surface'
-          }`}>
-            <input type="checkbox" checked={data.boosterPump} onChange={(e) => update({ boosterPump: e.target.checked })} className="sr-only" />
-            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
-              data.boosterPump ? 'border-accent bg-accent' : 'border-border'
-            }`}>
-              {data.boosterPump && <span className="text-white text-xs">✓</span>}
-            </div>
-            <div>
-              <div className="text-sm font-medium">Станция повышающая давление</div>
-              <div className="text-xs text-accent font-bold">{boosterPumpPrice.toLocaleString('ru-RU')} ₽</div>
-            </div>
-          </label>
+          <div
+            className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
+              data.boosterPump ? 'border-accent bg-accent/10' : 'border-border bg-surface'
+            }`}
+          >
+            <label className="flex items-center gap-3 flex-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={data.boosterPump}
+                onChange={(e) => update({
+                  boosterPump: e.target.checked,
+                  boosterPumpQuantity: e.target.checked ? Math.max(1, data.boosterPumpQuantity) : data.boosterPumpQuantity,
+                })}
+                className="sr-only"
+              />
+              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
+                data.boosterPump ? 'border-accent bg-accent' : 'border-border'
+              }`}>
+                {data.boosterPump && <span className="text-white text-xs">✓</span>}
+              </div>
+              <div>
+                <div className="text-sm font-medium">Станция повышающая давление</div>
+                <div className="text-xs text-accent font-bold">{boosterPumpPrice.toLocaleString('ru-RU')} ₽ / шт.</div>
+              </div>
+            </label>
+            {data.boosterPump && (
+              <QuantityInput
+                value={Math.max(1, data.boosterPumpQuantity)}
+                onChange={(n) => update({ boosterPumpQuantity: n })}
+                min={1}
+              />
+            )}
+          </div>
 
           {/* Умягчение на все функции */}
           <div className={`p-3 rounded-lg border-2 transition-colors ${

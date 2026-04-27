@@ -3,6 +3,7 @@
 import type { Step8Data, AvdSelection } from '@/types';
 import { StepHint } from '../StepHint';
 import { useData } from '@/context/DataContext';
+import { QuantityInput } from '../ui/QuantityInput';
 
 interface Props {
   data: Step8Data;
@@ -115,27 +116,11 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
                 </div>
               </label>
               {item.selected && !isIncluded && (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setQuantity(item.id, item.quantity - 1)}
-                    className="w-8 h-8 rounded bg-border/50 hover:bg-border flex items-center justify-center text-sm transition-colors"
-                  >
-                    −
-                  </button>
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.quantity}
-                    onChange={(e) => setQuantity(item.id, parseInt(e.target.value) || 1)}
-                    className="w-16 text-center bg-surface border border-border rounded py-1 text-sm"
-                  />
-                  <button
-                    onClick={() => setQuantity(item.id, item.quantity + 1)}
-                    className="w-8 h-8 rounded bg-border/50 hover:bg-border flex items-center justify-center text-sm transition-colors"
-                  >
-                    +
-                  </button>
-                </div>
+                <QuantityInput
+                  value={item.quantity || 1}
+                  onChange={(n) => setQuantity(item.id, n)}
+                  min={1}
+                />
               )}
             </div>
           );

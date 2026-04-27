@@ -25,8 +25,80 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
     });
   };
 
+  const updateFuncs = (patches: Array<{ id: string; patch: Partial<PostFunction> }>) => {
+    onChange({
+      functions: data.functions.map((f) => {
+        const p = patches.find((x) => x.id === f.id);
+        return p ? { ...f, ...p.patch } : f;
+      }),
+    });
+  };
+
   const baseFunctions = data.functions.filter((f) => f.isBase);
   const extraFunctions = data.functions.filter((f) => !f.isBase);
+
+  // ─── Group SEKO/ULKA pairs into a single card ─────────────────────────────
+  // Functions ending in `_seko` and matching `_ulka` are merged so a manager
+  // sees one row per chemistry/degreaser slot with a brand selector inside.
+  interface BrandPair {
+    stem: string;
+    displayName: string;
+    seko: PostFunction;
+    ulka: PostFunction;
+  }
+  const brandPairs: BrandPair[] = [];
+  const groupedIds = new Set<string>();
+  for (const f of extraFunctions) {
+    if (!f.id.endsWith('_seko')) continue;
+    const stem = f.id.slice(0, -5);
+    const ulka = extraFunctions.find((g) => g.id === `${stem}_ulka`);
+    if (!ulka) continue;
+    const displayName = f.name.replace(/\s*\(SEKO\)\s*$/i, '').trim();
+    brandPairs.push({ stem, displayName, seko: f, ulka });
+    groupedIds.add(f.id);
+    groupedIds.add(ulka.id);
+  }
+  const ungroupedExtras = extraFunctions.filter((f) => !groupedIds.has(f.id));
+
+  type BrandMode = 'none' | 'button_only' | 'seko' | 'ulka';
+  const getBrandMode = (pair: BrandPair): BrandMode => {
+    if (pair.seko.option === 'button_and_kit') return 'seko';
+    if (pair.ulka.option === 'button_and_kit') return 'ulka';
+    if (pair.seko.option === 'button_only' || pair.ulka.option === 'button_only') {
+      return 'button_only';
+    }
+    return 'none';
+  };
+  const setBrandMode = (pair: BrandPair, mode: BrandMode) => {
+    const off = { option: 'none' as const, enabled: false };
+    if (mode === 'none') {
+      updateFuncs([
+        { id: pair.seko.id, patch: off },
+        { id: pair.ulka.id, patch: off },
+      ]);
+    } else if (mode === 'button_only') {
+      updateFuncs([
+        { id: pair.seko.id, patch: { option: 'button_only', enabled: true } },
+        { id: pair.ulka.id, patch: off },
+      ]);
+    } else if (mode === 'seko') {
+      updateFuncs([
+        { id: pair.seko.id, patch: { option: 'button_and_kit', enabled: true } },
+        { id: pair.ulka.id, patch: off },
+      ]);
+    } else {
+      updateFuncs([
+        { id: pair.seko.id, patch: off },
+        { id: pair.ulka.id, patch: { option: 'button_and_kit', enabled: true } },
+      ]);
+    }
+  };
+  const brandPriceLabel = (pair: BrandPair, mode: BrandMode): string => {
+    if (mode === 'seko') return `${pair.seko.kitPrice.toLocaleString('ru-RU')} ₽`;
+    if (mode === 'ulka') return `${pair.ulka.kitPrice.toLocaleString('ru-RU')} ₽`;
+    if (mode === 'button_only') return '0 ₽';
+    return '—';
+  };
 
   // Count used slots: enabled base + extras with option !== 'none'
   const usedBase = baseFunctions.filter((f) => f.enabled).length;
@@ -103,7 +175,60 @@ export function Step4Functions({ data, bumModelId, profileId, onChange }: Props)
           </p>
         )}
         <div className="space-y-3">
-          {extraFunctions.map((f) => {
+          {/* Merged SEKO/ULKA cards */}
+          {brandPairs.map((pair) => {
+            const mode = getBrandMode(pair);
+            const isActive = mode !== 'none';
+            const disabled = !isActive && atLimit;
+            const buttons: { mode: BrandMode; label: string }[] = [
+              { mode: 'none', label: 'Не добавлять' },
+              { mode: 'button_only', label: 'Только кнопка (0 ₽)' },
+              { mode: 'seko', label: `SEKO (${pair.seko.kitPrice.toLocaleString('ru-RU')} ₽)` },
+              { mode: 'ulka', label: `ULKA (${pair.ulka.kitPrice.toLocaleString('ru-RU')} ₽)` },
+            ];
+
+            return (
+              <div
+                key={pair.stem}
+                className={`p-4 rounded-lg border-2 transition-colors ${
+                  isActive
+                    ? 'border-accent bg-accent/10'
+                    : disabled
+                      ? 'border-border/50 bg-surface opacity-50'
+                      : 'border-border bg-surface'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-medium">{pair.displayName}</span>
+                  <span className="text-xs text-accent font-bold">{brandPriceLabel(pair, mode)}</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {buttons.map(({ mode: m, label }) => {
+                    const btnDisabled = disabled && m !== 'none';
+                    return (
+                      <button
+                        key={m}
+                        disabled={btnDisabled}
+                        onClick={() => !btnDisabled && setBrandMode(pair, m)}
+                        className={`text-xs py-2 px-2 rounded transition-colors ${
+                          mode === m
+                            ? 'bg-accent text-white'
+                            : btnDisabled
+                              ? 'bg-border/30 text-muted/50 cursor-not-allowed'
+                              : 'bg-border/50 text-muted hover:bg-border'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Standalone extras */}
+          {ungroupedExtras.map((f) => {
             const isActive = f.option !== 'none';
             const currentPrice = f.option === 'button_only'
               ? f.buttonPrice

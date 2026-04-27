@@ -117,6 +117,7 @@ function createInitialState(data: DataContextValue, initialManager: string): Wiz
       arasModel: '',
       customWaterPrice: 0,
       boosterPump: false,
+      boosterPumpQuantity: 1,
       softeningAll: false,
       softeningAllPrice: 0,
       softeningOsmos: false,

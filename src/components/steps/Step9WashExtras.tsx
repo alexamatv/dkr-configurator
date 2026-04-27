@@ -9,6 +9,7 @@ import {
   foggerSubOptionsConfig,
 } from '@/data/mockData';
 import { useData } from '@/context/DataContext';
+import { QuantityInput } from '../ui/QuantityInput';
 
 interface Props {
   data: Step9Data;
@@ -99,16 +100,18 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
   const dispenser = data.extras.find((e) => e.id === 'washer_fluid_dispenser');
   const fogger = data.extras.find((e) => e.id === 'dry_fog_machine');
 
-  // Renders a single extra checkbox row (used for dispenser and fogger inside outdoor section)
+  // Renders a single extra row (shared by the outdoor dispenser/fogger and
+  // by the "Другое оборудование" list below). Always reserves a slot for the
+  // qty stepper so unselected cards keep the same height.
   const renderExtraRow = (item: WashExtra | undefined) => {
     if (!item) return null;
     return (
       <div
-        className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
+        className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors min-h-[68px] ${
           item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
         }`}
       >
-        <label className="flex items-center gap-3 flex-1 cursor-pointer">
+        <label className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer">
           <input
             type="checkbox"
             checked={item.selected}
@@ -121,31 +124,31 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
             {item.selected && <span className="text-white text-xs">✓</span>}
           </div>
           {item.imageUrl && (
-            <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
+            <div className="relative w-12 h-12 shrink-0 bg-background/40 rounded">
               <Image
                 src={item.imageUrl}
                 alt={item.name}
                 fill
                 className="object-contain p-1"
-                sizes="64px"
+                sizes="48px"
                 unoptimized
               />
             </div>
           )}
-          <div>
-            <div className="text-sm font-medium">{item.name}</div>
-            <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-medium truncate">{item.name}</div>
+            <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽ / шт.</div>
           </div>
         </label>
-        {item.selected && (
-          <input
-            type="number"
-            min={1}
-            value={item.quantity}
-            onChange={(e) => setExtraQty(item.id, parseInt(e.target.value) || 1)}
-            className="w-16 text-center bg-surface border border-border rounded py-1 text-sm"
-          />
-        )}
+        <div className="shrink-0 w-[140px] flex justify-end">
+          {item.selected ? (
+            <QuantityInput
+              value={item.quantity || 1}
+              onChange={(n) => setExtraQty(item.id, n)}
+              min={1}
+            />
+          ) : null}
+        </div>
       </div>
     );
   };
@@ -350,54 +353,10 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Другое оборудование</label>
-        <div className="space-y-2">
-          {data.extras.filter((e) => !OUTDOOR_EXTRA_IDS.includes(e.id)).map((item) => (
-            <div
-              key={item.id}
-              className={`flex items-center gap-4 p-3 rounded-lg border-2 transition-colors ${
-                item.selected ? 'border-accent bg-accent/10' : 'border-border bg-surface'
-              }`}
-            >
-              <label className="flex items-center gap-3 flex-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={item.selected}
-                  onChange={() => toggleExtra(item.id)}
-                  className="sr-only"
-                />
-                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${
-                  item.selected ? 'border-accent bg-accent' : 'border-border'
-                }`}>
-                  {item.selected && <span className="text-white text-xs">✓</span>}
-                </div>
-                {item.imageUrl && (
-                  <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.name}
-                      fill
-                      className="object-contain p-1"
-                      sizes="64px"
-                      unoptimized
-                    />
-                  </div>
-                )}
-                <div>
-                  <div className="text-sm font-medium">{item.name}</div>
-                  <div className="text-xs text-muted">{item.price.toLocaleString('ru-RU')} ₽</div>
-                </div>
-              </label>
-              {item.selected && (
-                <input
-                  type="number"
-                  min={1}
-                  value={item.quantity}
-                  onChange={(e) => setExtraQty(item.id, parseInt(e.target.value) || 1)}
-                  className="w-16 text-center bg-surface border border-border rounded py-1 text-sm"
-                />
-              )}
-            </div>
-          ))}
+        <div className="grid grid-cols-1 gap-3">
+          {data.extras
+            .filter((e) => !OUTDOOR_EXTRA_IDS.includes(e.id))
+            .map((item) => renderExtraRow(item))}
         </div>
       </div>
 

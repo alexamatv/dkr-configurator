@@ -147,7 +147,9 @@ function calcMso(state: WizardState, data: DataContextValue): CalcResult {
   const upgradesPerPost = paymentDelta + functionsPrice + avdDelta;
   const equipmentTotal = (basePriceWithBum + upgradesPerPost) * postCount;
   const customWaterPrice = state.step7.customWaterPrice || 0;
-  const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
+  const boosterCost = state.step7.boosterPump
+    ? boosterPumpPrice * Math.max(1, state.step7.boosterPumpQuantity || 1)
+    : 0;
   const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
     + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
   const waterTotal = osmosPrice + arasPrice + customWaterPrice + boosterCost + softeningCost;
@@ -189,7 +191,9 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
   const aras = arasModels.find((a) => a.id === state.step7.arasModel);
   const arasPrice = aras && 'price' in aras ? (aras as { price: number }).price : 0;
   const customWaterPrice = state.step7.customWaterPrice || 0;
-  const boosterCost = state.step7.boosterPump ? boosterPumpPrice : 0;
+  const boosterCost = state.step7.boosterPump
+    ? boosterPumpPrice * Math.max(1, state.step7.boosterPumpQuantity || 1)
+    : 0;
   const softeningCost = (state.step7.softeningAll ? (state.step7.softeningAllPrice || 0) : 0)
     + (state.step7.softeningOsmos ? (state.step7.softeningOsmosPrice || 0) : 0);
   const waterTotal = osmosPrice + arasPrice + customWaterPrice + boosterCost + softeningCost;

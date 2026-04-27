@@ -166,6 +166,7 @@ export interface Step7Data {
   arasModel: string;
   customWaterPrice: number;
   boosterPump: boolean;
+  boosterPumpQuantity: number;
   softeningAll: boolean;
   softeningAllPrice: number;
   softeningOsmos: boolean;
