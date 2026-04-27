@@ -25,6 +25,8 @@ interface Props {
   initialValues?: Record<string, unknown>;
   /** Returns true if another active row in the same branch already uses `name`. */
   isNameTaken?: (name: string, formValues: Record<string, unknown>) => boolean;
+  /** Lets the parent inject computed columns (e.g. seed sub_options) before insert. */
+  prepareRow?: (row: Record<string, unknown>) => Record<string, unknown>;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -37,7 +39,7 @@ interface Props {
  * For new rows the `id` is auto-generated as `<table-prefix>_<base36 timestamp>`
  * unless the user explicitly enters one in a field named `id`.
  */
-export function ItemModal({ table, title, fields, editingId, initialValues, isNameTaken, onClose, onSaved }: Props) {
+export function ItemModal({ table, title, fields, editingId, initialValues, isNameTaken, prepareRow, onClose, onSaved }: Props) {
   const isEdit = Boolean(editingId);
 
   const initial = useMemo(() => {
@@ -124,7 +126,8 @@ export function ItemModal({ table, title, fields, editingId, initialValues, isNa
         // Default to active and zero sort_order if not in form
         if (!('is_active' in row)) row.is_active = true;
         if (!('sort_order' in row)) row.sort_order = 0;
-        const { error: e } = await supabase.from(table).insert(row);
+        const finalRow = prepareRow ? prepareRow(row) : row;
+        const { error: e } = await supabase.from(table).insert(finalRow);
         if (e) throw e;
       }
       onSaved();

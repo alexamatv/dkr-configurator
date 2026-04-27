@@ -17,10 +17,44 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { createClient } from '@/lib/supabase/client';
+import {
+  vacuumSubOptionsConfig,
+  dispenserSubOptionsConfig,
+  foggerSubOptionsConfig,
+} from '@/data/mockData';
 import { EditablePrice } from './EditablePrice';
 import { PhotoCell } from './PhotoCell';
 import { SubOptionsModal, type SubOptionsValue } from './SubOptionsModal';
 import { ItemModal, type FieldConfig } from './ItemModal';
+
+// Categories of extra_equipment that carry a sub_options jsonb. Used to gate
+// the "Опции / Настроить" button + to seed defaults on new-row creation.
+const SUBOPT_CATEGORIES = new Set(['vacuum', 'dispenser', 'fogger']);
+
+function defaultSubOptions(category: string): SubOptionsValue {
+  if (category === 'vacuum') {
+    return {
+      payment: vacuumSubOptionsConfig.payment as unknown as never[],
+      baseButtons: vacuumSubOptionsConfig.baseButtons as unknown as never[],
+      extraButtons: vacuumSubOptionsConfig.extraButtons as unknown as never[],
+    } as unknown as SubOptionsValue;
+  }
+  if (category === 'dispenser') {
+    return {
+      payment: dispenserSubOptionsConfig.payment as unknown as never[],
+      baseButtons: dispenserSubOptionsConfig.baseButtons as unknown as never[],
+      extraButtons: dispenserSubOptionsConfig.extraButtons as unknown as never[],
+    } as unknown as SubOptionsValue;
+  }
+  if (category === 'fogger') {
+    return {
+      payment: foggerSubOptionsConfig.payment as unknown as never[],
+      baseScents: foggerSubOptionsConfig.baseScents as unknown as never[],
+      extraScents: foggerSubOptionsConfig.extraScents as unknown as never[],
+    } as unknown as SubOptionsValue;
+  }
+  return [];
+}
 
 type Branch = 'mso' | 'robot' | 'truck';
 
@@ -446,6 +480,22 @@ export function PricesEditor() {
           isNameTaken={(name, formValues) =>
             isNameTaken(addModal.table, name, (formValues.branch as string) ?? null)
           }
+          prepareRow={(row) => {
+            // Seed standard sub_options for new vacuum / dispenser / fogger
+            // rows so the manager can edit prices right after creating
+            // instead of starting from an empty jsonb.
+            if (addModal.table === 'extra_equipment') {
+              const cat = String(row.category ?? '');
+              const empty =
+                row.sub_options === undefined ||
+                row.sub_options === null ||
+                (Array.isArray(row.sub_options) && row.sub_options.length === 0);
+              if (empty && SUBOPT_CATEGORIES.has(cat)) {
+                row.sub_options = defaultSubOptions(cat);
+              }
+            }
+            return row;
+          }}
           onClose={() => setAddModal(null)}
           onSaved={() => {
             void loadAll();
@@ -737,12 +787,12 @@ function renderSection(
                   />
                 </Td>
                 <Td>
-                  {subCount > 0 ? (
+                  {SUBOPT_CATEGORIES.has(r.category) ? (
                     <button
                       onClick={() => openSubOpts({ row: r })}
                       className="text-xs px-2 py-1 border border-border rounded hover:border-accent hover:text-accent"
                     >
-                      Опции ({subCount})
+                      {subCount > 0 ? `Опции (${subCount})` : 'Настроить'}
                     </button>
                   ) : (
                     <span className="text-xs text-muted">—</span>
