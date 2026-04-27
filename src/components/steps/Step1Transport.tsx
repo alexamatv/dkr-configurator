@@ -2,7 +2,6 @@
 
 import type { Step1Data } from '@/types';
 import { StepHint } from '../StepHint';
-import { managers } from '@/data/mockData';
 
 interface Props {
   data: Step1Data;
@@ -64,34 +63,24 @@ export function Step1Transport({ data, onChange }: Props) {
 
       <div className="max-w-[480px]">
         <label className="block text-sm font-medium text-muted mb-2">Клиент</label>
-        <div className="flex gap-2">
-          <input
-            type="text"
-            value={data.clientSearch}
-            onChange={(e) => update({ clientSearch: e.target.value })}
-            placeholder="Поиск клиента..."
-            className="flex-1 h-11 bg-surface border border-border rounded-lg px-3 text-sm focus:outline-none focus:border-accent"
-          />
-          <button className="w-[120px] h-11 bg-accent text-white text-sm rounded-lg hover:bg-accent-hover transition-colors">
-            + Добавить
-          </button>
-        </div>
+        <input
+          type="text"
+          value={data.clientSearch}
+          onChange={(e) => update({ clientSearch: e.target.value })}
+          placeholder="Введите имя клиента"
+          className="w-full h-11 bg-surface border border-border rounded-lg px-3 text-sm focus:outline-none focus:border-accent"
+        />
       </div>
 
       <div className="max-w-[480px]">
         <label className="block text-sm font-medium text-muted mb-2">Менеджер</label>
-        <select
+        <input
+          type="text"
           value={data.manager}
           onChange={(e) => update({ manager: e.target.value })}
+          placeholder="Введите имя менеджера"
           className="w-full h-11 bg-surface border border-border rounded-lg px-3 text-sm focus:outline-none focus:border-accent"
-        >
-          <option value="">Выберите менеджера</option>
-          {managers.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
     </div>
   );

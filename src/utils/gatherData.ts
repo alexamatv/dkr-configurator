@@ -3,7 +3,6 @@ import type { DataContextValue } from '@/context/DataContext';
 import {
   paymentSystemLabels,
   dosatorOptions,
-  managers,
   calcPaymentCost,
   paymentSystemPrices,
   basePaymentSystems,
@@ -650,12 +649,10 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
 // ─── Main entry ───
 
 export function gatherDocData(state: WizardState, data: DataContextValue): DocData {
-  const mgr = managers.find((m) => m.id === state.step1.manager);
-
   const header: HeaderData = {
     date: new Date().toLocaleDateString('ru-RU'),
-    manager: mgr?.name ?? (state.step1.manager || '—'),
-    client: state.step1.clientSearch || '—',
+    manager: state.step1.manager?.trim() || '—',
+    client: state.step1.clientSearch?.trim() || '—',
     vehicleType: state.step1.vehicleType === 'passenger' ? 'Легковой (коммерческий)' : 'Грузовой',
     objectType: state.step1.objectType === 'truck' ? 'Грузовая мойка' : state.step1.objectType === 'self_service' ? 'Мойка самообслуживания' : 'Роботизированная мойка',
     region: state.step10.region || '—',
