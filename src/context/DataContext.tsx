@@ -84,6 +84,14 @@ export interface DataContextValue {
 
 const DataContext = createContext<DataContextValue | null>(null);
 
+function safeHost(rawUrl: string): string {
+  try {
+    return new URL(rawUrl).host;
+  } catch {
+    return 'invalid-url';
+  }
+}
+
 const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcBumPrice' | 'getDefaultBumForProfile' | 'getDefaultBumName'> = {
   profiles: mockProfiles,
   bumModels: mockBumModels,
@@ -179,8 +187,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         if (cancelled) return;
         const error = err instanceof Error ? err : new Error(String(err));
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+        const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+        const usedKey = anonKey || publishableKey;
+        const diagnostic = {
+          message: error.message,
+          envUrlHost: url ? safeHost(url) : null,
+          envAnonKeySet: Boolean(anonKey),
+          envPublishableKeySet: Boolean(publishableKey),
+          keyPrefix: usedKey ? `${usedKey.slice(0, 12)}…` : null,
+          // Supabase PostgrestError fields, if present
+          status: (err as { status?: number })?.status,
+          code: (err as { code?: string })?.code,
+          details: (err as { details?: string })?.details,
+          hint: (err as { hint?: string })?.hint,
+        };
         // eslint-disable-next-line no-console
-        console.warn('[DataProvider] Supabase load failed, falling back to mockData:', error.message);
+        console.error('[DataProvider] Supabase load failed, falling back to mockData. Diagnostic:', diagnostic);
+        // eslint-disable-next-line no-console
+        console.error('[DataProvider] Original error:', error);
         setState({ loaded: FALLBACK, error, source: 'mock' });
       }
     })();
