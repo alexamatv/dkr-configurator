@@ -400,7 +400,6 @@ export const defaultWashExtras: WashExtra[] = [
   { id: 'cloud_register', name: 'Облачная касса (1 год + ФН 15 мес)', selected: false, quantity: 0, price: 120700 },
   { id: 'cloud_register_renewal', name: 'Продление облачной кассы (год)', selected: false, quantity: 0, price: 33600 },
   { id: 'handwash_sink', name: 'Рукомойник', selected: false, quantity: 0, price: 50000 },
-  { id: 'dry_fog', name: 'Сухой туман (3 аромата)', selected: false, quantity: 0, price: 250000 },
   { id: 'antifreeze_station', name: 'Установка розлива незамерзайки', selected: false, quantity: 0, price: 40000 },
   { id: 'plate_recognition', name: 'Система распознавания номеров', selected: false, quantity: 0, price: 80000 },
   { id: 'local_server', name: 'Локальный сервер', selected: false, quantity: 0, price: 60000 },

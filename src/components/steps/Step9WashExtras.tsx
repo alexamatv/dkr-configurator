@@ -186,7 +186,7 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
               )}
               <div className="flex-1 min-w-0 text-left">
                 <div className="font-medium">{v.name}</div>
-                {v.price > 0 && (
+                {v.price > 1 && (
                   <div className="text-accent text-sm font-bold mt-1">{v.price.toLocaleString('ru-RU')} ₽</div>
                 )}
               </div>
