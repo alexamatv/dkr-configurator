@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step5Data, AvdSelection } from '@/types';
 import { StepHint } from '../StepHint';
 import { useData } from '@/context/DataContext';
@@ -68,7 +68,7 @@ export function Step5Equipment({ data, profileId, onChange }: Props) {
               <div key={sel.id} className="flex items-center gap-2">
                 {selectedAvd?.imageUrl ? (
                   <div className="relative w-[100px] h-20 shrink-0 bg-background/40 rounded border border-border">
-                    <Image
+                    <ZoomableImage
                       src={selectedAvd.imageUrl}
                       alt={selectedAvd.name}
                       fill

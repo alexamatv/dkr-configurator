@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step3Data, PaymentSystem } from '@/types';
 import { StepHint } from '../StepHint';
 import { paymentSystemLabels, paymentSystemPrices, basePaymentSystems, paymentSystemRemovalDiscounts, paymentSystemFullPrices } from '@/data/mockData';
@@ -48,7 +48,7 @@ export function Step3Terminals({ data, onChange, profile }: Props) {
               >
                 {b.imageUrl && (
                   <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
-                    <Image
+                    <ZoomableImage
                       src={b.imageUrl}
                       alt={b.name}
                       fill

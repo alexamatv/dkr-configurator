@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image';
+import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step2Data } from '@/types';
 import { StepHint } from '../StepHint';
 import { useData } from '@/context/DataContext';
@@ -77,7 +77,7 @@ export function Step2BaseConfig({ data, onChange }: Props) {
                 >
                   {p.imageUrl && (
                     <div className="relative w-full h-40 bg-background/40">
-                      <Image
+                      <ZoomableImage
                         src={p.imageUrl}
                         alt={p.name}
                         fill

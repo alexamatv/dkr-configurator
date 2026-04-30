@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step7Data } from '@/types';
 import { StepHint } from '../StepHint';
 import { boosterPumpPrice } from '@/data/mockData';
@@ -44,7 +44,7 @@ export function Step7Water({ data, onChange, title }: Props) {
             >
               {o.imageUrl && (
                 <div className="relative w-20 h-16 mx-auto mb-2 bg-background/40 rounded">
-                  <Image
+                  <ZoomableImage
                     src={o.imageUrl}
                     alt={o.name}
                     fill

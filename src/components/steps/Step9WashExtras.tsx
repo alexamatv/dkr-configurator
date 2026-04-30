@@ -1,6 +1,6 @@
 'use client';
 
-import Image from 'next/image';
+import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step9Data, VacuumSubOption, WashExtra } from '@/types';
 import { StepHint } from '../StepHint';
 import {
@@ -125,7 +125,7 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
           </div>
           {item.imageUrl && (
             <div className="relative w-12 h-12 shrink-0 bg-background/40 rounded">
-              <Image
+              <ZoomableImage
                 src={item.imageUrl}
                 alt={item.name}
                 fill
@@ -174,7 +174,7 @@ export function Step9WashExtras({ data, onChange, title }: Props) {
             >
               {v.imageUrl && (
                 <div className="relative w-16 h-16 shrink-0 bg-background/40 rounded">
-                  <Image
+                  <ZoomableImage
                     src={v.imageUrl}
                     alt={v.name}
                     fill
