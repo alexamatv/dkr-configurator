@@ -506,6 +506,13 @@ export async function generateXlsx(
   if (photos.length > 0) {
     addSpacer();
     addSectionRow('Фото оборудования');
+
+    // Uniform display box for every photo. We compute draw width/height
+    // per-image to preserve the source aspect ratio so wide and tall
+    // photos all sit centred inside the same box.
+    const BOX_W = 120;
+    const BOX_H = 90;
+
     for (const p of photos) {
       const labelRow = nextRow();
       labelRow.getCell(1).value = p.label;
@@ -517,14 +524,35 @@ export async function generateXlsx(
       labelRow.getCell(3).alignment = { horizontal: 'right' };
 
       const imgRow = nextRow();
-      imgRow.height = 60;
+      imgRow.height = 70; // ~93px — covers BOX_H 90px plus padding
       try {
         const fmtMatch = /^data:image\/(\w+);base64,/.exec(p.data);
         const ext = (fmtMatch?.[1] ?? 'jpeg') as 'jpeg' | 'png' | 'gif';
+
+        // Decode actual pixel dimensions to preserve aspect ratio
+        const dims = await new Promise<{ w: number; h: number } | null>((resolve) => {
+          const img = new globalThis.Image();
+          img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+          img.onerror = () => resolve(null);
+          img.src = p.data;
+        });
+
+        let drawW = BOX_W;
+        let drawH = BOX_H;
+        if (dims && dims.w > 0 && dims.h > 0) {
+          const aspect = dims.w / dims.h;
+          drawW = BOX_W;
+          drawH = BOX_W / aspect;
+          if (drawH > BOX_H) {
+            drawH = BOX_H;
+            drawW = BOX_H * aspect;
+          }
+        }
+
         const imgId = wb.addImage({ base64: p.data, extension: ext });
         ws.addImage(imgId, {
           tl: { col: 0.1, row: rowNum - 1 + 0.1 },
-          ext: { width: 110, height: 75 },
+          ext: { width: drawW, height: drawH },
         });
       } catch {
         // Skip image if ExcelJS rejects the format

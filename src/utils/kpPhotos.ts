@@ -14,6 +14,11 @@ export interface KpPhoto {
   url: string;
   label: string;
   price: number;
+  /** Catalog table the row came from (e.g. 'bum_models', 'profiles'). */
+  table: string;
+  /** Row id inside that table — lets the generator look the photo up
+   * by item to embed it inline (e.g. БУМ photo next to the post block). */
+  id: string;
 }
 
 /**
@@ -26,20 +31,27 @@ export function collectKpPhotos(state: WizardState, data: DataContextValue): KpP
   const photos: KpPhoto[] = [];
   const seen = new Set<string>();
 
-  const add = (url: string | undefined, flag: boolean | undefined, label: string, price: number) => {
+  const add = (
+    url: string | undefined,
+    flag: boolean | undefined,
+    label: string,
+    price: number,
+    table: string,
+    id: string,
+  ) => {
     if (!url || !flag) return;
     if (seen.has(url)) return;
     seen.add(url);
-    photos.push({ url, label, price });
+    photos.push({ url, label, price, table, id });
   };
 
   if (state.step1.objectType === 'truck') {
     // ── Truck branch ─────────────────────────────────────────────────────
     const truck = data.truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
-    if (truck) add(truck.imageUrl, truck.showImageInKp, truck.name, truck.price);
+    if (truck) add(truck.imageUrl, truck.showImageInKp, truck.name, truck.price, 'truck_wash_types', truck.id);
 
     const bur = data.burModels.find((b) => b.id === state.truckBur.burModel);
-    if (bur) add(bur.imageUrl, bur.showImageInKp, bur.name, bur.price);
+    if (bur) add(bur.imageUrl, bur.showImageInKp, bur.name, bur.price, 'bur_models', bur.id);
 
     return photos;
   }
@@ -47,10 +59,10 @@ export function collectKpPhotos(state: WizardState, data: DataContextValue): KpP
   if (state.step1.objectType === 'robotic') {
     // ── Robot branch ─────────────────────────────────────────────────────
     const robot = data.robotModels.find((m) => m.id === state.robotStep2.robotModel);
-    if (robot) add(robot.imageUrl, robot.showImageInKp, robot.name, robot.price);
+    if (robot) add(robot.imageUrl, robot.showImageInKp, robot.name, robot.price, 'robot_models', robot.id);
 
     const bur = data.burModels.find((b) => b.id === state.robotStep3.burModel);
-    if (bur) add(bur.imageUrl, bur.showImageInKp, bur.name, bur.price);
+    if (bur) add(bur.imageUrl, bur.showImageInKp, bur.name, bur.price, 'bur_models', bur.id);
 
     addWaterAndWashExtras(state, data, add);
     return photos;
@@ -79,7 +91,7 @@ export function collectKpPhotos(state: WizardState, data: DataContextValue): KpP
   for (const e of state.step8.extras) {
     if (!e.selected) continue;
     const cat = data.defaultPostExtras.find((p) => p.id === e.id);
-    if (cat) add(cat.imageUrl, cat.showImageInKp, cat.name, cat.price);
+    if (cat) add(cat.imageUrl, cat.showImageInKp, cat.name, cat.price, 'extra_equipment', `post_extra__${cat.id}`);
   }
 
   addWaterAndWashExtras(state, data, add);
@@ -88,27 +100,34 @@ export function collectKpPhotos(state: WizardState, data: DataContextValue): KpP
 
 // ─── Per-section helpers ────────────────────────────────────────────────────
 
-type Adder = (url: string | undefined, flag: boolean | undefined, label: string, price: number) => void;
+type Adder = (
+  url: string | undefined,
+  flag: boolean | undefined,
+  label: string,
+  price: number,
+  table: string,
+  id: string,
+) => void;
 
 function addPostHeadlines(profileId: string, bumId: string, data: DataContextValue, add: Adder) {
   const profile = data.profiles.find((p) => p.id === profileId);
-  if (profile) add(profile.imageUrl, profile.showImageInKp, profile.name, profile.price);
+  if (profile) add(profile.imageUrl, profile.showImageInKp, profile.name, profile.price, 'profiles', profile.id);
 
   const bum = data.bumModels.find((b) => b.id === bumId);
-  if (bum) add(bum.imageUrl, bum.showImageInKp, bum.name, bum.realPrice);
+  if (bum) add(bum.imageUrl, bum.showImageInKp, bum.name, bum.realPrice, 'bum_models', bum.id);
 }
 
 function addAccessories(ids: string[], data: DataContextValue, add: Adder) {
   for (const id of ids) {
     const acc = data.defaultAccessories.find((a) => a.id === id);
-    if (acc) add(acc.imageUrl, acc.showImageInKp, acc.name, acc.price);
+    if (acc) add(acc.imageUrl, acc.showImageInKp, acc.name, acc.price, 'accessories', acc.id);
   }
 }
 
 function addPumps(ids: string[], data: DataContextValue, add: Adder) {
   for (const id of ids) {
     const pump = data.avdKits.find((p) => p.id === id);
-    if (pump) add(pump.imageUrl, pump.showImageInKp, pump.name, pump.price);
+    if (pump) add(pump.imageUrl, pump.showImageInKp, pump.name, pump.price, 'pumps', pump.id);
   }
 }
 
@@ -121,30 +140,32 @@ function addFunctions(
   for (const f of fns) {
     if (!f.option || f.option === 'none') continue;
     const dbFn = allFns.find((d) => d.id === f.id);
-    if (dbFn) add(dbFn.imageUrl, dbFn.showImageInKp, dbFn.name, dbFn.kitPrice);
+    if (dbFn) add(dbFn.imageUrl, dbFn.showImageInKp, dbFn.name, dbFn.kitPrice, 'wash_functions', dbFn.id);
   }
 }
 
 function addWaterAndWashExtras(state: WizardState, data: DataContextValue, add: Adder) {
   // Osmos
   const osmos = data.osmosOptions.find((o) => o.id === state.step7.osmosOption);
-  if (osmos) add(osmos.imageUrl, osmos.showImageInKp, osmos.name, osmos.price);
+  if (osmos) add(osmos.imageUrl, osmos.showImageInKp, osmos.name, osmos.price, 'water_treatment', osmos.id);
 
   // ARAS
   const aras = data.arasModels.find((a) => a.id === state.step7.arasModel);
   if (aras && 'price' in aras && typeof aras.price === 'number') {
-    add(aras.imageUrl, aras.showImageInKp, aras.name, aras.price);
+    add(aras.imageUrl, aras.showImageInKp, aras.name, aras.price, 'water_treatment', aras.id);
   }
 
   // Vacuum
   const vac = data.vacuumOptions.find((v) => v.id === state.step9.vacuumOption);
-  if (vac && vac.id !== 'none') add(vac.imageUrl, vac.showImageInKp, vac.name, vac.price);
+  if (vac && vac.id !== 'none') {
+    add(vac.imageUrl, vac.showImageInKp, vac.name, vac.price, 'extra_equipment', `vacuum__${vac.id}`);
+  }
 
   // Wash extras (Step 9)
   for (const e of state.step9.extras) {
     if (!e.selected) continue;
     const cat = data.defaultWashExtras.find((w) => w.id === e.id);
-    if (cat) add(cat.imageUrl, cat.showImageInKp, cat.name, cat.price);
+    if (cat) add(cat.imageUrl, cat.showImageInKp, cat.name, cat.price, 'extra_equipment', `wash_extra__${cat.id}`);
   }
 }
 

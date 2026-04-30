@@ -8,6 +8,8 @@ export interface KpPhotoEmbed {
   label: string;
   price: number;
   data: string; // base64 data URL
+  table: string;
+  id: string;
 }
 import { robotoRegular } from '../fonts/roboto-regular';
 import { robotoBold } from '../fonts/roboto-bold';
@@ -87,6 +89,19 @@ export function generatePdf(
   const F = 'Roboto';
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
+
+  // Lookup map for inline-photo placement, keyed by `${table}:${id}`.
+  // Items consumed inline (e.g. БУМ next to kit list) are removed from
+  // the appendix to avoid duplication.
+  const photoByKey = new Map<string, KpPhotoEmbed>();
+  for (const p of photos) photoByKey.set(`${p.table}:${p.id}`, p);
+  const consumedKeys = new Set<string>();
+  const consume = (table: string, id: string): KpPhotoEmbed | undefined => {
+    const key = `${table}:${id}`;
+    const photo = photoByKey.get(key);
+    if (photo) consumedKeys.add(key);
+    return photo;
+  };
   const mL = 14;
   const mR = 14;
   const cW = pageW - mL - mR;
@@ -254,13 +269,74 @@ export function generatePdf(
     y += 3;
   }
 
-  /* ─── Included items list ─── */
-  function includedItemsList(items: string[]) {
-    if (items.length === 0) return;
+  /* ─── Aspect-preserving image draw ───
+   * Centres the image inside (boxW × boxH) at (x, y) without stretching. */
+  function drawAspectFit(data: string, x: number, y: number, boxW: number, boxH: number) {
+    try {
+      const formatMatch = /^data:image\/(\w+);base64,/.exec(data);
+      const fmt = (formatMatch?.[1] ?? 'jpeg').toUpperCase();
+      const props = doc.getImageProperties(data);
+      const aspect = props.width / props.height;
+      let drawW = boxW;
+      let drawH = boxW / aspect;
+      if (drawH > boxH) {
+        drawH = boxH;
+        drawW = boxH * aspect;
+      }
+      const xOffset = (boxW - drawW) / 2;
+      const yOffset = (boxH - drawH) / 2;
+      doc.addImage(data, fmt, x + xOffset, y + yOffset, drawW, drawH);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /* ─── Included items list ───
+   * Optionally draws a photo on the right (inline with the kit list) and
+   * wraps the items text to the narrower left column. */
+  function includedItemsList(items: string[], rightPhoto?: KpPhotoEmbed) {
+    if (items.length === 0 && !rightPhoto) return;
+
+    const photoBoxW = rightPhoto ? 60 : 0;
+    const photoBoxH = 45;
+    const photoGap = 6;
+    const captionH = rightPhoto ? 5 : 0;
+    const itemsCol = cW - photoBoxW - (rightPhoto ? photoGap + 4 : 0);
+
     const lineH = 3.5;
-    const estimatedH = 6 + items.length * lineH;
+
+    // Pre-wrap items so we know the actual line count for height estimate
+    doc.setFontSize(8);
+    doc.setFont(F, 'normal');
+    let totalItemLines = 0;
+    const wrappedItems: string[][] = [];
+    for (const item of items) {
+      const w = doc.splitTextToSize('•  ' + item, itemsCol);
+      wrappedItems.push(w);
+      totalItemLines += w.length;
+    }
+
+    let estimatedH = 6 + totalItemLines * lineH;
+    if (rightPhoto) estimatedH = Math.max(estimatedH, photoBoxH + captionH + 4);
     checkPage(estimatedH);
 
+    const startY = y;
+
+    // Photo on the right (absolute position so it doesn't move with the text)
+    if (rightPhoto) {
+      const imgX = pageW - mR - photoBoxW;
+      drawAspectFit(rightPhoto.data, imgX, startY + 2, photoBoxW, photoBoxH);
+      doc.setFontSize(8);
+      doc.setFont(F, 'bold');
+      doc.setTextColor(...DARK);
+      doc.text(rightPhoto.label, imgX + photoBoxW / 2, startY + photoBoxH + 6, {
+        align: 'center',
+        maxWidth: photoBoxW,
+      });
+    }
+
+    // Items list on the left, wrapped to the narrowed column
     y += 3;
     doc.setFontSize(8);
     doc.setFont(F, 'bold');
@@ -271,12 +347,16 @@ export function generatePdf(
     doc.setFont(F, 'normal');
     doc.setFontSize(8);
     doc.setTextColor(...SUBTLE);
-    for (const item of items) {
-      checkPage(lineH + 2);
-      doc.text('\u2022  ' + item, mL + 6, y);
-      y += lineH;
+    for (const lines of wrappedItems) {
+      for (const line of lines) {
+        checkPage(lineH + 2);
+        doc.text(line, mL + 6, y);
+        y += lineH;
+      }
     }
     doc.setTextColor(...DARK);
+    // Push y past the photo+caption if the text was shorter than the image
+    y = Math.max(y, startY + photoBoxH + captionH + 4);
     y += 2;
   }
 
@@ -403,8 +483,9 @@ export function generatePdf(
       }
       priceTable('\u041E\u0441\u043D\u043E\u0432\u043D\u043E\u0435 \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', baseRows);
 
-      // Included items
-      includedItemsList(post.includedItems);
+      // Included items, with the post's BUM photo on the right (if marked "В КП")
+      const bumPhoto = consume('bum_models', post.bumId);
+      includedItemsList(post.includedItems, bumPhoto);
 
       if (post.payments.length > 0) {
         priceTable('\u0421\u0438\u0441\u0442\u0435\u043C\u044B \u043E\u043F\u043B\u0430\u0442\u044B', post.payments);
@@ -590,24 +671,22 @@ export function generatePdf(
   //  EQUIPMENT PHOTOS (optional appendix)
   // ═══════════════════════════════════════════════════════
 
-  if (photos.length > 0) {
+  // Skip photos already embedded inline (e.g. БУМ next to the kit list).
+  const remainingPhotos = photos.filter((p) => !consumedKeys.has(`${p.table}:${p.id}`));
+  if (remainingPhotos.length > 0) {
     sectionTitle('Фото оборудования');
 
-    const imgW = 35;
-    const imgH = 28;
+    const imgW = 40;
+    const imgH = 30;
     const rowGap = 6;
     const textPad = 6;
 
-    for (const p of photos) {
+    for (const p of remainingPhotos) {
       checkPage(imgH + rowGap + 2);
       const startY = y;
-      try {
-        const formatMatch = /^data:image\/(\w+);base64,/.exec(p.data);
-        const imgFormat = (formatMatch?.[1] ?? 'jpeg').toUpperCase();
-        doc.addImage(p.data, imgFormat, mL, startY, imgW, imgH);
-      } catch {
-        // Skip this photo if jsPDF can't decode it
-      }
+      // Aspect-preserving image draw — all photos sit in a uniform 40×30 box,
+      // centred, so wide and tall sources visually match.
+      drawAspectFit(p.data, mL, startY, imgW, imgH);
       const textX = mL + imgW + textPad;
       doc.setFontSize(10);
       doc.setFont(F, 'bold');

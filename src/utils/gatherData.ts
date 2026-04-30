@@ -25,9 +25,11 @@ export interface PostRow {
 
 export interface PostBlock {
   title: string;
+  profileId: string;
   profileName: string;
   basePrice: number;
   includedItems: string[];
+  bumId: string;
   bumName: string;
   bumPrice: number;
   defaultBumName: string;
@@ -246,9 +248,11 @@ function calcPostBlock(data: DataContextValue, post: PostConfig, idx: number, st
 
   return {
     title: getPostName(data, post, idx),
+    profileId: post.profile,
     profileName: profile?.name ?? '—',
     basePrice,
     includedItems: profile?.includedComponents ?? [],
+    bumId: post.bumModel,
     bumName,
     bumPrice,
     defaultBumName,

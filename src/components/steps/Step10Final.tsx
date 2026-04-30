@@ -48,7 +48,13 @@ export function Step10Final({ data, posts, wizardState, onChange, onEditPost, on
     }
     const embeds = candidates
       .filter((c) => base64Map.has(c.url))
-      .map((c) => ({ label: c.label, price: c.price, data: base64Map.get(c.url)! }));
+      .map((c) => ({
+        label: c.label,
+        price: c.price,
+        data: base64Map.get(c.url)!,
+        table: c.table,
+        id: c.id,
+      }));
     // eslint-disable-next-line no-console
     console.info(`[KP photos] embedding ${embeds.length} photo(s) into the document`);
     return embeds;
