@@ -26,6 +26,7 @@ import { EditablePrice } from './EditablePrice';
 import { PhotoCell } from './PhotoCell';
 import { SubOptionsModal, type SubOptionsValue } from './SubOptionsModal';
 import { ItemModal, type FieldConfig } from './ItemModal';
+import { SettingsPanel } from './SettingsPanel';
 
 // Categories of extra_equipment that carry a sub_options jsonb. Used to gate
 // the "Опции / Настроить" button + to seed defaults on new-row creation.
@@ -102,7 +103,7 @@ const BRANCH_LABELS: Record<Branch, string> = {
 const BRANCH_SECTIONS: Record<Branch, (keyof Catalog)[]> = {
   mso: ['profiles', 'bum_models', 'accessories', 'pumps', 'wash_functions', 'water_treatment', 'extra_equipment'],
   robot: ['robot_models', 'bur_models', 'water_treatment', 'extra_equipment'],
-  truck: ['truck_wash_types', 'bur_models'],
+  truck: ['truck_wash_types', 'bur_models', 'extra_equipment'],
 };
 
 const SECTION_TITLES: Record<keyof Catalog, string> = {
@@ -467,6 +468,8 @@ export function PricesEditor() {
         </section>
       ))}
 
+      <SettingsPanel branch={branch} />
+
       {editingSubOptions && (
         <SubOptionsModal
           title={editingSubOptions.row.name}
@@ -483,6 +486,10 @@ export function PricesEditor() {
           table={addModal.table}
           title={SECTION_TITLES[addModal.table]}
           fields={FIELD_CONFIGS[addModal.table]}
+          // Pre-fill the branch field with the currently active tab so a
+          // row created on the Robot tab gets branch='robot' by default.
+          // The user can still override it inside the form.
+          initialValues={{ branch }}
           isNameTaken={(name, formValues) =>
             isNameTaken(addModal.table, name, (formValues.branch as string) ?? null)
           }
