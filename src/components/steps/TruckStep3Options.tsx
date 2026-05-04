@@ -1,7 +1,7 @@
 'use client';
 
 import type { TruckStep3Data } from '@/types';
-import { kompakOptions } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: TruckStep3Data;
@@ -10,6 +10,7 @@ interface Props {
 }
 
 export function TruckStep3Options({ data, selectedType, onChange }: Props) {
+  const { kompakOptions } = useData();
   const isKompak = selectedType === 'kompak';
 
   const toggleOption = (id: string) => {

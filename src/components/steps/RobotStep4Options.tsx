@@ -1,7 +1,7 @@
 'use client';
 
 import type { RobotStep4Data } from '@/types';
-import { robotExtraEquipment } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: RobotStep4Data;
@@ -13,6 +13,7 @@ interface Props {
 const guidesIncludedIn = ['premium_360', 'cosmo_360'];
 
 export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
+  const { robotExtras } = useData();
   const guidesIncluded = guidesIncludedIn.includes(robotModelId);
 
   return (
@@ -109,7 +110,7 @@ export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
       <div>
         <label className="block text-sm font-medium text-muted mb-3">Дополнительное оборудование</label>
         <div className="space-y-3">
-          {robotExtraEquipment.map((item) => {
+          {robotExtras.map((item) => {
             const entry = data.extras?.find((e) => e.id === item.id);
             const selected = entry?.selected ?? false;
             const toggleExtra = () => {

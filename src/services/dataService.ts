@@ -98,6 +98,7 @@ type WaterTreatmentRow = PhotoFields & {
 
 type ExtraEquipmentRow = PhotoFields & {
   id: string;
+  branch: string | null;
   category: string;
   name: string;
   price: number | string;
@@ -362,25 +363,42 @@ export async function getWaterTreatment(): Promise<WaterTreatmentResult> {
   return { osmos, aras };
 }
 
+export interface SimpleEquipmentItem {
+  id: string;
+  name: string;
+  price: number;
+  note?: string;
+  imageUrl?: string;
+  showImageInKp?: boolean;
+}
+
 export interface ExtraEquipmentResult {
   vacuums: VacuumOption[];
   postExtras: PostExtra[];
   washExtras: WashExtra[];
+  /** branch='robot', category='robot_extra' — robotExtraEquipment in mockData */
+  robotExtras: SimpleEquipmentItem[];
+  /** branch='truck', category='kompak_option' — kompakOptions in mockData */
+  kompakOptions: SimpleEquipmentItem[];
 }
 
 const VACUUM_PREFIX = 'vacuum__';
 const POST_EXTRA_PREFIX = 'post_extra__';
 const WASH_EXTRA_PREFIX = 'wash_extra__';
+const ROBOT_EXTRA_PREFIX = 'robot_extra__';
+const KOMPAK_OPTION_PREFIX = 'kompak_option__';
 
 const stripPrefix = (id: string, prefix: string): string =>
   id.startsWith(prefix) ? id.slice(prefix.length) : id;
 
 export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
   const supabase = createClient();
+  // Load every branch in one round-trip — we split client-side. This keeps
+  // the calculator + admin reads symmetric and lets robot/truck branches
+  // pick up their own catalog without a second query.
   const { data, error } = await supabase
     .from('extra_equipment')
     .select('*')
-    .eq('branch', 'mso')
     .eq('is_active', true)
     .order('sort_order');
 
@@ -389,8 +407,33 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
   const vacuums: VacuumOption[] = [];
   const postExtras: PostExtra[] = [];
   const washExtras: WashExtra[] = [];
+  const robotExtras: SimpleEquipmentItem[] = [];
+  const kompakOptions: SimpleEquipmentItem[] = [];
 
   for (const r of data as ExtraEquipmentRow[]) {
+    if (r.branch === 'robot' && r.category === 'robot_extra') {
+      robotExtras.push({
+        id: stripPrefix(r.id, ROBOT_EXTRA_PREFIX),
+        name: r.name,
+        price: num(r.price),
+        ...photo(r),
+      });
+      continue;
+    }
+    if (r.branch === 'truck' && r.category === 'kompak_option') {
+      kompakOptions.push({
+        id: stripPrefix(r.id, KOMPAK_OPTION_PREFIX),
+        name: r.name,
+        price: num(r.price),
+        ...photo(r),
+      });
+      continue;
+    }
+    // Everything else is treated as МСО content (current calculator only
+    // surfaces these on Шаги 8/9). Skip non-mso to avoid leaking truck
+    // rows into МСО dropdowns.
+    if (r.branch !== 'mso') continue;
+
     if (r.category === 'vacuum') {
       vacuums.push({
         id: stripPrefix(r.id, VACUUM_PREFIX),
@@ -425,7 +468,23 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     vacuums.push({ id: 'none', name: 'Нет', price: 0 });
   }
 
-  return { vacuums, postExtras, washExtras };
+  return { vacuums, postExtras, washExtras, robotExtras, kompakOptions };
+}
+
+/**
+ * Reads the app_settings k-v table into a plain Map. Values are JSONB
+ * scalars (numbers); anything that doesn't parse as a number is dropped.
+ */
+export async function getSettings(): Promise<Map<string, number>> {
+  const supabase = createClient();
+  const { data, error } = await supabase.from('app_settings').select('key, value');
+  if (error) throw error;
+  const map = new Map<string, number>();
+  for (const r of (data ?? []) as { key: string; value: unknown }[]) {
+    const n = typeof r.value === 'number' ? r.value : Number(r.value);
+    if (Number.isFinite(n)) map.set(r.key, n);
+  }
+  return map;
 }
 
 export async function getRobotModels(): Promise<RobotModel[]> {

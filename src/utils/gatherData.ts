@@ -8,12 +8,9 @@ import {
   basePaymentSystems,
   paymentSystemRemovalDiscounts,
   boosterPumpPrice,
-  kompakOptions,
   truckManualPostEquipment,
   truckManualPostMontage,
   truckWaterSystems,
-  kompakMontagePrice,
-  robotExtraEquipment,
 } from '@/data/mockData';
 
 // ─── Shared types ───
@@ -393,17 +390,23 @@ function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
 
 // ─── Shared totals ───
 
-function calcSharedTotals(state: WizardState, subtotal: number): TotalsBlock {
+function calcSharedTotals(state: WizardState, data: DataContextValue, subtotal: number): TotalsBlock {
   const discountPct = state.step10.discount;
   const discountAmount = subtotal * (discountPct / 100);
   const afterDiscount = subtotal - discountAmount;
 
   const montage = state.step10.montage;
-  const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
+  const fullPct = data.getSetting('montage_full_pct', 0.10);
+  const commPct = data.getSetting('montage_commissioning_pct', 0.05);
+  const montageRate = montage === 'commissioning' ? commPct : montage === 'full' ? fullPct : 0;
   const montageFromSubtotal = subtotal * montageRate;
   const montageExtra = montage === 'full' ? (state.step10.montageExtra || 0) : 0;
   const montageAmount = montageFromSubtotal + montageExtra;
-  const montageTypeLabel = montage === 'full' ? 'Монтаж 10%' : montage === 'commissioning' ? 'Шеф-монтаж 5%' : 'Нет';
+  const montageTypeLabel = montage === 'full'
+    ? `Монтаж ${(fullPct * 100).toFixed(fullPct * 100 % 1 === 0 ? 0 : 1)}%`
+    : montage === 'commissioning'
+      ? `Шеф-монтаж ${(commPct * 100).toFixed(commPct * 100 % 1 === 0 ? 0 : 1)}%`
+      : 'Нет';
 
   const vatEnabled = state.step10.vatEnabled;
   const vatPct = state.step10.vat;
@@ -483,7 +486,7 @@ function gatherRobotDocData(data: DataContextValue, state: WizardState, header: 
   const extras: PostRow[] = (state.robotStep4.extras ?? [])
     .filter((e) => e.selected)
     .map((e) => {
-      const item = robotExtraEquipment.find((r) => r.id === e.id);
+      const item = data.robotExtras.find((r) => r.id === e.id);
       return { name: item?.name ?? e.id, price: item?.price ?? 0 };
     });
   const extrasTotal = extras.reduce((s, r) => s + r.price, 0);
@@ -507,7 +510,7 @@ function gatherRobotDocData(data: DataContextValue, state: WizardState, header: 
 
   const subtotal = robotTotal + wash.washTotal;
   // Robot: fixed montage 370k instead of percentage-based
-  const robotMontagePrice = 370_000;
+  const robotMontagePrice = data.getSetting('montage_robot_fixed', 370000);
   const totals = calcRobotTotals(state, subtotal, robotMontagePrice);
 
   return {
@@ -541,7 +544,7 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
   const options: PostRow[] = [];
   let optionsTotal = 0;
   state.truckStep3.selectedOptions.forEach((optId) => {
-    const opt = kompakOptions.find((o) => o.id === optId);
+    const opt = data.kompakOptions.find((o) => o.id === optId);
     if (opt) {
       options.push({ name: opt.name, price: opt.price });
       optionsTotal += opt.price;
@@ -602,6 +605,7 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
 
   // Totals — КОМПАК has fixed montage
   const subtotal = truckTotal;
+  const kompakMontagePrice = data.getSetting('montage_kompak_fixed', 1080000);
   let totals: TotalsBlock;
   if (isKompak) {
     const discountPct = state.step10.discount;
@@ -631,7 +635,7 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
       total,
     };
   } else {
-    totals = calcSharedTotals(state, subtotal);
+    totals = calcSharedTotals(state, data, subtotal);
   }
 
   // Empty wash block for truck
@@ -743,7 +747,7 @@ export function gatherDocData(state: WizardState, data: DataContextValue): DocDa
     + (wash.pipelines.air + wash.pipelines.water + wash.pipelines.chem);
   const subtotal = cpEquipmentTotal + cpWashTotal;
 
-  const totals = calcSharedTotals(state, subtotal);
+  const totals = calcSharedTotals(state, data, subtotal);
 
   return {
     isRobot: false,

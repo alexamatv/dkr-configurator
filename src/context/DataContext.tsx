@@ -40,6 +40,8 @@ import {
   robotModels as mockRobotModels,
   burModels as mockBurModels,
   truckWashTypes as mockTruckWashTypes,
+  robotExtraEquipment as mockRobotExtras,
+  kompakOptions as mockKompakOptions,
 } from '@/data/mockData';
 import {
   getProfiles,
@@ -52,9 +54,11 @@ import {
   getRobotModels,
   getBurModels,
   getTruckWashTypes,
+  getSettings,
   type AvdKit,
   type ArasModel,
   type TruckWashType,
+  type SimpleEquipmentItem,
 } from '@/services/dataService';
 
 export interface DataContextValue {
@@ -72,6 +76,14 @@ export interface DataContextValue {
   robotModels: RobotModel[];
   burModels: RobotBurModel[];
   truckWashTypes: TruckWashType[];
+  /** robotExtraEquipment in mockData — extras shown on Robot step 4. */
+  robotExtras: SimpleEquipmentItem[];
+  /** kompakOptions in mockData — checkboxes on Truck step 3. */
+  kompakOptions: SimpleEquipmentItem[];
+  /** Editable montage rates / EUR rate / etc. read from app_settings. */
+  settings: Map<string, number>;
+  /** Reads a numeric setting with a typed fallback. */
+  getSetting: (key: string, fallback: number) => number;
   // Helpers that close over the loaded bumModels + profiles
   calcBumPrice: (bumId: string, profileId: string) => number;
   getDefaultBumForProfile: (profileId: string) => string;
@@ -92,7 +104,7 @@ function safeHost(rawUrl: string): string {
   }
 }
 
-const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcBumPrice' | 'getDefaultBumForProfile' | 'getDefaultBumName'> = {
+const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcBumPrice' | 'getDefaultBumForProfile' | 'getDefaultBumName' | 'getSetting'> = {
   profiles: mockProfiles,
   bumModels: mockBumModels,
   defaultAccessories: mockAccessories,
@@ -101,6 +113,10 @@ const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcB
   defaultExtraFunctions: mockExtraFunctions,
   osmosOptions: mockOsmos,
   arasModels: mockAras as ArasModel[],
+  // Filled below after the mock arrays — see fallback assignments
+  robotExtras: mockRobotExtras as SimpleEquipmentItem[],
+  kompakOptions: mockKompakOptions as SimpleEquipmentItem[],
+  settings: new Map(),
   vacuumOptions: mockVacuums,
   defaultPostExtras: mockPostExtras,
   defaultWashExtras: mockWashExtras,
@@ -136,7 +152,7 @@ function buildHelpers(profiles: ProfileConfig[], bumModels: BumModel[]) {
 }
 
 interface ProviderState {
-  loaded: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcBumPrice' | 'getDefaultBumForProfile' | 'getDefaultBumName'> | null;
+  loaded: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcBumPrice' | 'getDefaultBumForProfile' | 'getDefaultBumName' | 'getSetting'> | null;
   error: Error | null;
   source: 'supabase' | 'mock';
 }
@@ -148,7 +164,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     (async () => {
       try {
-        const [profiles, bumModels, accessories, pumps, wash, water, extra, robots, burs, trucks] =
+        const [profiles, bumModels, accessories, pumps, wash, water, extra, robots, burs, trucks, settings] =
           await Promise.all([
             getProfiles(),
             getBumModels(),
@@ -160,6 +176,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             getRobotModels(),
             getBurModels(),
             getTruckWashTypes(),
+            getSettings(),
           ]);
 
         if (cancelled) return;
@@ -180,6 +197,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
             robotModels: robots,
             burModels: burs,
             truckWashTypes: trucks,
+            robotExtras: extra.robotExtras,
+            kompakOptions: extra.kompakOptions,
+            settings,
           },
           error: null,
           source: 'supabase',
@@ -219,9 +239,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const value = useMemo<DataContextValue | null>(() => {
     if (!state.loaded) return null;
     const helpers = buildHelpers(state.loaded.profiles, state.loaded.bumModels);
+    const settings = state.loaded.settings;
+    const getSetting = (key: string, fallback: number): number => {
+      const v = settings.get(key);
+      return Number.isFinite(v as number) ? (v as number) : fallback;
+    };
     return {
       ...state.loaded,
       ...helpers,
+      getSetting,
       isLoading: false,
       error: state.error,
       source: state.source,

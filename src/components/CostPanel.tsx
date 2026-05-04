@@ -6,12 +6,9 @@ import {
   dosatorOptions,
   calcPaymentCost,
   boosterPumpPrice,
-  kompakOptions,
   truckManualPostEquipment,
   truckManualPostMontage,
   truckWaterSystems,
-  kompakMontagePrice,
-  robotExtraEquipment,
 } from '@/data/mockData';
 import { useData, type DataContextValue } from '@/context/DataContext';
 
@@ -23,8 +20,6 @@ interface CostPanelProps {
 function fmt(n: number): string {
   return n.toLocaleString('ru-RU') + ' ₽';
 }
-
-const ROBOT_MONTAGE_PRICE = 370_000;
 
 interface CalcResult {
   postCount: number;
@@ -156,7 +151,7 @@ function calcMso(state: WizardState, data: DataContextValue): CalcResult {
   const washTotal = waterTotal + postExtrasPrice + vacuumPrice + washExtrasPrice + pipelinesPrice;
   const subtotal = equipmentTotal + washTotal;
 
-  return calcTotals(state, subtotal, postCount, 'пост(ов)', [
+  return calcTotals(state, data, subtotal, postCount, 'пост(ов)', [
     ['Базовая комплектация', basePriceWithBum * postCount],
     ['Оборудование (доплата)', avdDelta * postCount],
     ['Функции и опции', (functionsPrice + paymentDelta) * postCount],
@@ -166,7 +161,8 @@ function calcMso(state: WizardState, data: DataContextValue): CalcResult {
 }
 
 function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
-  const { robotModels, burModels, osmosOptions, arasModels, vacuumOptions } = data;
+  const { robotModels, burModels, osmosOptions, arasModels, vacuumOptions, robotExtras, getSetting } = data;
+  const robotMontagePrice = getSetting('montage_robot_fixed', 370000);
   const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
   const robotPrice = robot?.price ?? 0;
 
@@ -180,7 +176,7 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
   const robotExtrasTotal = (state.robotStep4.extras ?? [])
     .filter((e) => e.selected)
     .reduce((sum, e) => {
-      const item = robotExtraEquipment.find((r) => r.id === e.id);
+      const item = robotExtras.find((r) => r.id === e.id);
       return sum + (item?.price ?? 0);
     }, 0);
   const optionsTotal = sideBlowerCost + guidesCost + robotExtrasTotal;
@@ -234,7 +230,7 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
 
   const subtotal = robotPrice + burPrice + optionsTotal + waterTotal + equipTotal;
 
-  const result = calcTotals(state, subtotal, 1, 'робот', [
+  const result = calcTotals(state, data, subtotal, 1, 'робот', [
     ['Модель робота', robotPrice],
     ['БУР', burPrice],
     ['Опции робота', optionsTotal],
@@ -243,7 +239,7 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
   ]);
 
   // Robot: fixed montage price instead of percentage-based
-  const robotMontageAmount = state.step10.robotMontage ? ROBOT_MONTAGE_PRICE : 0;
+  const robotMontageAmount = state.step10.robotMontage ? robotMontagePrice : 0;
   const beforeVat = result.subtotal - result.discountAmount + robotMontageAmount;
   const vatAmount = result.vatEnabled ? beforeVat * (result.vatPct / 100) : 0;
 
@@ -259,7 +255,8 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
 }
 
 function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
-  const { truckWashTypes, burModels } = data;
+  const { truckWashTypes, burModels, kompakOptions, getSetting } = data;
+  const kompakMontagePrice = getSetting('montage_kompak_fixed', 1080000);
   const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
@@ -335,11 +332,12 @@ function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
     };
   }
 
-  return calcTotals(state, subtotal, 1, 'грузовая мойка', lines);
+  return calcTotals(state, data, subtotal, 1, 'грузовая мойка', lines);
 }
 
 function calcTotals(
   state: WizardState,
+  data: DataContextValue,
   subtotal: number,
   postCount: number,
   unitLabel: string,
@@ -353,7 +351,9 @@ function calcTotals(
   const vatPct = state.step10.vat;
 
   const montage = state.step10.montage;
-  const montageRate = montage === 'commissioning' ? 0.05 : montage === 'full' ? 0.1 : 0;
+  const fullPct = data.getSetting('montage_full_pct', 0.10);
+  const commPct = data.getSetting('montage_commissioning_pct', 0.05);
+  const montageRate = montage === 'commissioning' ? commPct : montage === 'full' ? fullPct : 0;
   const montagePct = subtotal * montageRate;
   const montageExtra = montage === 'full' ? (state.step10.montageExtra || 0) : 0;
   const montageAmount = montagePct + montageExtra;
@@ -392,11 +392,13 @@ function CostContent({
   onUpdateStep10,
   calc,
   isRobot,
+  robotMontagePrice,
 }: {
   state: WizardState;
   onUpdateStep10: (data: Step10Data) => void;
   calc: CalcResult;
   isRobot?: boolean;
+  robotMontagePrice: number;
 }) {
   const {
     postCount, unitLabel, lines, discountPct, discountAmount,
@@ -482,7 +484,7 @@ function CostContent({
                 onChange={(e) => update10({ robotMontage: e.target.checked })}
                 className="w-3.5 h-3.5 accent-accent"
               />
-              <span className="text-[11px] text-muted">Монтаж — {fmt(ROBOT_MONTAGE_PRICE)}</span>
+              <span className="text-[11px] text-muted">Монтаж — {fmt(robotMontagePrice)}</span>
             </label>
           ) : (
             <>
@@ -570,7 +572,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
             {isTruck ? '1 грузовая мойка' : isRobot ? '1 робот' : `${calc.postCount} пост(ов)`}
           </p>
         </div>
-        <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} isRobot={isRobot} />
+        <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} isRobot={isRobot} robotMontagePrice={data.getSetting('montage_robot_fixed', 370000)} />
       </div>
 
       {/* Mobile floating button */}
@@ -605,7 +607,7 @@ export function CostPanel({ state, onUpdateStep10 }: CostPanelProps) {
                 ✕
               </button>
             </div>
-            <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} isRobot={isRobot} />
+            <CostContent state={state} onUpdateStep10={onUpdateStep10} calc={calc} isRobot={isRobot} robotMontagePrice={data.getSetting('montage_robot_fixed', 370000)} />
           </div>
         </div>
       )}
