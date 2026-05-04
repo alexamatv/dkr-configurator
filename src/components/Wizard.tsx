@@ -175,11 +175,12 @@ function createInitialState(data: DataContextValue, initialManager: string): Wiz
         ...data.robotSubOptionsConfig.baseOptions,
         ...data.robotSubOptionsConfig.extraOptions,
       ].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn })),
+      customSelections: {},
     },
     // Truck
     truckStep2: { selectedType: '' },
     truckBur: { burModel: 'bur_2' },
-    truckStep3: { selectedOptions: [], customOptionsPrice: 0 },
+    truckStep3: { selectedOptions: [], customOptionsPrice: 0, customSelections: {} },
     truckStep4: { manualPostEnabled: false, avdCount: 0, hangerCount: 0 },
     truckStep5: { selectedWater: '', customWaterPrice: 0 },
   };

@@ -161,7 +161,7 @@ function calcMso(state: WizardState, data: DataContextValue): CalcResult {
 }
 
 function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
-  const { robotModels, burModels, osmosOptions, arasModels, vacuumOptions, robotExtras, getSetting } = data;
+  const { robotModels, burModels, osmosOptions, arasModels, vacuumOptions, robotExtras, customRobotExtras, getSetting } = data;
   const robotMontagePrice = getSetting('montage_robot_fixed', 370000);
   const boosterPumpPrice = getSetting('booster_pump_price', 53000);
   const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
@@ -185,7 +185,15 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
   const robotSubOptionsTotal = (state.robotStep4.subOptions ?? [])
     .filter((o) => o.selected)
     .reduce((s, o) => s + o.price, 0);
-  const optionsTotal = sideBlowerCost + guidesCost + robotExtrasTotal + robotSubOptionsTotal;
+  // Catch-all selections from admin-added custom categories.
+  const customSelections = state.robotStep4.customSelections ?? {};
+  const customExtrasTotal = Object.values(customSelections)
+    .flat()
+    .reduce((sum, id) => {
+      const item = customRobotExtras.find((c) => c.id === id);
+      return sum + (item?.price ?? 0);
+    }, 0);
+  const optionsTotal = sideBlowerCost + guidesCost + robotExtrasTotal + robotSubOptionsTotal + customExtrasTotal;
 
   // Water (reuses step7)
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);
@@ -261,7 +269,7 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
 }
 
 function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
-  const { truckWashTypes, burModels, kompakOptions, truckManualPost, truckWaterSystems, getSetting } = data;
+  const { truckWashTypes, burModels, kompakOptions, truckManualPost, truckWaterSystems, customTruckExtras, getSetting } = data;
   const kompakMontagePrice = getSetting('montage_kompak_fixed', 1080000);
   const truckManualPostMontage = getSetting('truck_manual_post_montage', 200000);
   const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
@@ -280,6 +288,14 @@ function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
   if (!isKompak) {
     optionsPrice += state.truckStep3.customOptionsPrice || 0;
   }
+  // Catch-all selections from admin-added custom truck categories.
+  const customSelections = state.truckStep3.customSelections ?? {};
+  optionsPrice += Object.values(customSelections)
+    .flat()
+    .reduce((sum, id) => {
+      const item = customTruckExtras.find((c) => c.id === id);
+      return sum + (item?.price ?? 0);
+    }, 0);
 
   // Manual post
   let manualPostPrice = 0;

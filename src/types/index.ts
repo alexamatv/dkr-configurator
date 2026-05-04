@@ -263,6 +263,10 @@ export interface RobotStep4Data {
   extras: { id: string; selected: boolean }[];
   /** Pill selections for the shared robot payment / extra options config. */
   subOptions?: VacuumSubOption[];
+  /** Catch-all selections keyed by category for admin-added robot rows.
+   * Each entry is the array of selected ids in that category. Empty array
+   * = nothing selected (acts as "Нет" for radio categories). */
+  customSelections?: Record<string, string[]>;
 }
 
 // ─── Truck types ───
@@ -274,6 +278,9 @@ export interface TruckStep2Data {
 export interface TruckStep3Data {
   selectedOptions: string[];
   customOptionsPrice: number;
+  /** Catch-all selections keyed by category for admin-added truck rows.
+   * Same shape as RobotStep4Data.customSelections. */
+  customSelections?: Record<string, string[]>;
 }
 
 export interface TruckStep4Data {

@@ -2,6 +2,7 @@
 
 import type { TruckStep3Data } from '@/types';
 import { useData } from '@/context/DataContext';
+import { CustomExtrasSection } from './CustomExtrasSection';
 
 interface Props {
   data: TruckStep3Data;
@@ -10,7 +11,7 @@ interface Props {
 }
 
 export function TruckStep3Options({ data, selectedType, onChange }: Props) {
-  const { kompakOptions } = useData();
+  const { kompakOptions, customTruckExtras } = useData();
   const isKompak = selectedType === 'kompak';
 
   const toggleOption = (id: string) => {
@@ -76,6 +77,13 @@ export function TruckStep3Options({ data, selectedType, onChange }: Props) {
           </div>
         </div>
       )}
+
+      <CustomExtrasSection
+        title="Прочие опции"
+        items={customTruckExtras}
+        value={data.customSelections ?? {}}
+        onChange={(next) => onChange({ ...data, customSelections: next })}
+      />
     </div>
   );
 }

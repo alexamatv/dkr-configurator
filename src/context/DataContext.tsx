@@ -65,6 +65,7 @@ import {
   type VacuumLikeSubOptionsConfig,
   type FoggerSubOptionsConfig,
   type RobotSubOptionsConfig,
+  type CustomExtraItem,
 } from '@/services/dataService';
 import {
   vacuumSubOptionsConfig as mockVacuumSub,
@@ -106,6 +107,12 @@ export interface DataContextValue {
   foggerSubOptionsConfig: FoggerSubOptionsConfig;
   /** Robot wash payment / extra options pill config (Шаг 4 Робота). */
   robotSubOptionsConfig: RobotSubOptionsConfig;
+  /** Catch-all rendering pool for admin-added robot rows outside the
+   * well-known categories. Empty by default. */
+  customRobotExtras: CustomExtraItem[];
+  /** Catch-all rendering pool for admin-added truck rows outside the
+   * well-known categories. Empty by default. */
+  customTruckExtras: CustomExtraItem[];
   /** Editable montage rates / EUR rate / etc. read from app_settings. */
   settings: Map<string, number>;
   /** Reads a numeric setting with a typed fallback. */
@@ -165,6 +172,8 @@ const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcB
     baseOptions: mockRobotSub.baseOptions.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
     extraOptions: mockRobotSub.extraOptions.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
   },
+  customRobotExtras: [],
+  customTruckExtras: [],
   settings: new Map(),
   vacuumOptions: mockVacuums,
   defaultPostExtras: mockPostExtras,
@@ -255,6 +264,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
             dispenserSubOptionsConfig: extra.dispenserSubOptionsConfig ?? FALLBACK.dispenserSubOptionsConfig,
             foggerSubOptionsConfig: extra.foggerSubOptionsConfig ?? FALLBACK.foggerSubOptionsConfig,
             robotSubOptionsConfig: extra.robotSubOptionsConfig ?? FALLBACK.robotSubOptionsConfig,
+            customRobotExtras: extra.customRobotExtras,
+            customTruckExtras: extra.customTruckExtras,
             settings,
           },
           error: null,

@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import type { RobotStep4Data, VacuumSubOption } from '@/types';
 import { useData } from '@/context/DataContext';
+import { CustomExtrasSection } from './CustomExtrasSection';
 
 interface Props {
   data: RobotStep4Data;
@@ -55,7 +56,7 @@ function SubOptionPill({
 }
 
 export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
-  const { robotExtras, robotSubOptionsConfig } = useData();
+  const { robotExtras, robotSubOptionsConfig, customRobotExtras } = useData();
   const guidesIncluded = guidesIncludedIn.includes(robotModelId);
   const update = (patch: Partial<RobotStep4Data>) => onChange({ ...data, ...patch });
 
@@ -301,6 +302,13 @@ export function RobotStep4Options({ data, robotModelId, onChange }: Props) {
           })}
         </div>
       </div>
+
+      <CustomExtrasSection
+        title="Прочие опции"
+        items={customRobotExtras}
+        value={data.customSelections ?? {}}
+        onChange={(next) => update({ customSelections: next })}
+      />
     </div>
   );
 }

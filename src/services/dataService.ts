@@ -372,6 +372,17 @@ export interface SimpleEquipmentItem {
   showImageInKp?: boolean;
 }
 
+/**
+ * Catch-all bucket for admin-created extra_equipment rows that don't fit any
+ * of the well-known categories the calculator already renders dedicated UI
+ * for. We keep `category` and `selectionType` so the catch-all section in
+ * the calculator can group + render them generically.
+ */
+export interface CustomExtraItem extends SimpleEquipmentItem {
+  category: string;
+  selectionType: 'checkbox' | 'radio';
+}
+
 export interface SubOptionConfigItem {
   id: string;
   name: string;
@@ -424,6 +435,14 @@ export interface ExtraEquipmentResult {
   foggerSubOptionsConfig: FoggerSubOptionsConfig | null;
   /** Shared payment / extra options for the robot wash (Шаг 4 Робота). */
   robotSubOptionsConfig: RobotSubOptionsConfig | null;
+  /** Admin-created robot extras outside the well-known categories
+   * (robot_extra / robot_options). Catch-all section in Шаг 4 Робота groups
+   * these by category and renders checkbox / radio based on selection_type. */
+  customRobotExtras: CustomExtraItem[];
+  /** Same as `customRobotExtras` for the truck branch — catch-all in Шаг 3
+   * Грузовика. Excludes kompak_option / truck_manual_post / truck_water
+   * which already have dedicated steps. */
+  customTruckExtras: CustomExtraItem[];
 }
 
 const VACUUM_PREFIX = 'vacuum__';
@@ -459,6 +478,23 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
   const truckManualPost: SimpleEquipmentItem[] = [];
   const truckWaterSystems: SimpleEquipmentItem[] = [];
   const postVacuums: SimpleEquipmentItem[] = [];
+  const customRobotExtras: CustomExtraItem[] = [];
+  const customTruckExtras: CustomExtraItem[] = [];
+
+  // Categories the calculator already renders dedicated UI for. Anything
+  // else with branch=robot|truck falls into the catch-all bucket so admin
+  // can grow the catalog without touching code.
+  const KNOWN_ROBOT_CATEGORIES = new Set(['robot_extra', 'robot_options']);
+  const KNOWN_TRUCK_CATEGORIES = new Set(['kompak_option', 'truck_manual_post', 'truck_water']);
+
+  const toCustom = (r: ExtraEquipmentRow): CustomExtraItem => ({
+    id: r.id,
+    name: r.name,
+    price: num(r.price),
+    category: r.category,
+    selectionType: r.selection_type === 'radio' ? 'radio' : 'checkbox',
+    ...photo(r),
+  });
 
   for (const r of data as ExtraEquipmentRow[]) {
     if (r.branch === 'robot' && r.category === 'robot_extra') {
@@ -468,6 +504,10 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
         price: num(r.price),
         ...photo(r),
       });
+      continue;
+    }
+    if (r.branch === 'robot' && !KNOWN_ROBOT_CATEGORIES.has(r.category)) {
+      customRobotExtras.push(toCustom(r));
       continue;
     }
     if (r.branch === 'truck' && r.category === 'kompak_option') {
@@ -495,6 +535,10 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
         price: num(r.price),
         ...photo(r),
       });
+      continue;
+    }
+    if (r.branch === 'truck' && !KNOWN_TRUCK_CATEGORIES.has(r.category)) {
+      customTruckExtras.push(toCustom(r));
       continue;
     }
     // Everything else is treated as МСО content (current calculator only
@@ -572,6 +616,8 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     dispenserSubOptionsConfig,
     foggerSubOptionsConfig,
     robotSubOptionsConfig,
+    customRobotExtras,
+    customTruckExtras,
   };
 }
 

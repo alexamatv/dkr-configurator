@@ -334,6 +334,9 @@ export async function generateXlsx(
     if (d.truck.waterPrice > 0) {
       priceRows.push(addPriceRow(`Водоочистка: ${d.truck.waterLabel}`, d.truck.waterPrice));
     }
+    if (d.truck.customExtras && d.truck.customExtras.length > 0) {
+      priceRows.push(...addPriceBlock('Прочие опции', d.truck.customExtras));
+    }
 
     equipmentSubtotalRows.push(addFormulaSubtotal('Итого грузовая мойка', priceRows, d.truck.truckTotal));
 
@@ -350,6 +353,9 @@ export async function generateXlsx(
     }
     if (d.robot.extras && d.robot.extras.length > 0) {
       priceRows.push(...addPriceBlock('Доп. оборудование', d.robot.extras));
+    }
+    if (d.robot.customExtras && d.robot.customExtras.length > 0) {
+      priceRows.push(...addPriceBlock('Прочие опции', d.robot.customExtras));
     }
 
     equipmentSubtotalRows.push(addFormulaSubtotal('Итого робот', priceRows, d.robot.robotTotal));

@@ -454,6 +454,9 @@ export function generatePdf(
         { name: d.truck.waterLabel, price: d.truck.waterPrice },
       ]);
     }
+    if (d.truck.customExtras && d.truck.customExtras.length > 0) {
+      priceTable('\u041F\u0440\u043E\u0447\u0438\u0435 \u043E\u043F\u0446\u0438\u0438', d.truck.customExtras);
+    }
     subtotalLine('\u0418\u0442\u043E\u0433\u043E \u0433\u0440\u0443\u0437\u043E\u0432\u0430\u044F \u043C\u043E\u0439\u043A\u0430:', d.truck.truckTotal);
 
   } else if (d.isRobot && d.robot) {
@@ -472,6 +475,9 @@ export function generatePdf(
     }
     if (d.robot.extras && d.robot.extras.length > 0) {
       priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', d.robot.extras);
+    }
+    if (d.robot.customExtras && d.robot.customExtras.length > 0) {
+      priceTable('\u041F\u0440\u043E\u0447\u0438\u0435 \u043E\u043F\u0446\u0438\u0438', d.robot.customExtras);
     }
     subtotalLine('\u0418\u0442\u043E\u0433\u043E \u0440\u043E\u0431\u043E\u0442:', d.robot.robotTotal);
 

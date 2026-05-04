@@ -88,6 +88,10 @@ export interface RobotBlock {
   subOptionsTotal: number;
   extras: PostRow[];
   extrasTotal: number;
+  /** Catch-all: admin-added custom robot rows the calculator rendered in the
+   * dynamic «Прочие опции» block. */
+  customExtras: PostRow[];
+  customExtrasTotal: number;
   robotTotal: number;
 }
 
@@ -104,6 +108,10 @@ export interface TruckBlock {
   manualPostTotal: number;
   waterLabel: string;
   waterPrice: number;
+  /** Catch-all: admin-added custom truck rows from the dynamic
+   * «Прочие опции» block on Шаг 3 Грузовика. */
+  customExtras: PostRow[];
+  customExtrasTotal: number;
   truckTotal: number;
 }
 
@@ -513,7 +521,16 @@ function gatherRobotDocData(data: DataContextValue, state: WizardState, header: 
     .map((o) => ({ name: o.name, price: o.price }));
   const subOptionsTotal = subOptions.reduce((s, r) => s + r.price, 0);
 
-  const robotTotal = robotPrice + burPrice + optionsTotal + extrasTotal + subOptionsTotal;
+  // Catch-all: admin-added custom robot rows (selected via Прочие опции).
+  const customRobotSelections = state.robotStep4.customSelections ?? {};
+  const customRobotIds = Object.values(customRobotSelections).flat();
+  const customExtras: PostRow[] = customRobotIds
+    .map((id) => data.customRobotExtras.find((c) => c.id === id))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .map((item) => ({ name: item.name, price: item.price }));
+  const customExtrasTotal = customExtras.reduce((s, r) => s + r.price, 0);
+
+  const robotTotal = robotPrice + burPrice + optionsTotal + extrasTotal + subOptionsTotal + customExtrasTotal;
 
   const robotBlock: RobotBlock = {
     modelName: robot?.name ?? '—',
@@ -527,6 +544,8 @@ function gatherRobotDocData(data: DataContextValue, state: WizardState, header: 
     subOptionsTotal,
     extras,
     extrasTotal,
+    customExtras,
+    customExtrasTotal,
     robotTotal,
   };
 
@@ -609,7 +628,16 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
     waterLabel = 'Своя стоимость';
   }
 
-  const truckTotal = basePrice + burPrice + optionsTotal + manualPostTotal + waterPrice;
+  // Catch-all: admin-added custom truck rows (Прочие опции на Шаге 3).
+  const customTruckSelections = state.truckStep3.customSelections ?? {};
+  const customTruckIds = Object.values(customTruckSelections).flat();
+  const customExtras: PostRow[] = customTruckIds
+    .map((id) => data.customTruckExtras.find((c) => c.id === id))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .map((item) => ({ name: item.name, price: item.price }));
+  const customExtrasTotal = customExtras.reduce((s, r) => s + r.price, 0);
+
+  const truckTotal = basePrice + burPrice + optionsTotal + manualPostTotal + waterPrice + customExtrasTotal;
 
   const truckBlock: TruckBlock = {
     typeName: truckType?.name ?? '—',
@@ -624,6 +652,8 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
     manualPostTotal,
     waterLabel,
     waterPrice,
+    customExtras,
+    customExtrasTotal,
     truckTotal,
   };
 
