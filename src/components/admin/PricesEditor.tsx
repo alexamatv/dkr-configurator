@@ -32,6 +32,13 @@ import { SettingsPanel } from './SettingsPanel';
 // the "Опции / Настроить" button + to seed defaults on new-row creation.
 const SUBOPT_CATEGORIES = new Set(['vacuum', 'dispenser', 'fogger']);
 
+// Human-readable labels for the SubOptionsModal hint banner.
+const CATEGORY_LABELS: Record<string, string> = {
+  vacuum: 'пылесосов',
+  dispenser: 'розливов',
+  fogger: 'аппаратов сухого тумана',
+};
+
 function defaultSubOptions(category: string): SubOptionsValue {
   if (category === 'vacuum') {
     return {
@@ -479,9 +486,32 @@ export function PricesEditor() {
         <SubOptionsModal
           title={editingSubOptions.row.name}
           initial={editingSubOptions.row.sub_options}
+          hint={
+            SUBOPT_CATEGORIES.has(editingSubOptions.row.category)
+              ? `Эти опции — общие для всех «${CATEGORY_LABELS[editingSubOptions.row.category] ?? editingSubOptions.row.category}». Изменения применятся ко всем активным позициям этой категории.`
+              : undefined
+          }
           onClose={() => setEditingSubOptions(null)}
           onSave={async (next) => {
-            await updateField('extra_equipment', editingSubOptions.row.id, { sub_options: next });
+            // Propagate to every active row in the same category so the
+            // calculator (which renders a single shared pill list per category)
+            // reflects the change regardless of which row was edited.
+            const cat = editingSubOptions.row.category;
+            const branchValue = editingSubOptions.row.branch ?? null;
+            const siblings = (data.extra_equipment ?? []).filter(
+              (r) =>
+                r.category === cat &&
+                r.is_active !== false &&
+                (r.branch ?? null) === branchValue,
+            );
+            const targets = siblings.length > 0
+              ? siblings
+              : [editingSubOptions.row];
+            await Promise.all(
+              targets.map((r) =>
+                updateField('extra_equipment', r.id, { sub_options: next }),
+              ),
+            );
           }}
         />
       )}

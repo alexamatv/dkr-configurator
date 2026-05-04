@@ -1,13 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step9Data, VacuumSubOption, WashExtra } from '@/types';
 import { StepHint } from '../StepHint';
-import {
-  vacuumSubOptionsConfig,
-  dispenserSubOptionsConfig,
-  foggerSubOptionsConfig,
-} from '@/data/mockData';
 import { useData } from '@/context/DataContext';
 import { QuantityInput } from '../ui/QuantityInput';
 
@@ -68,8 +64,69 @@ function SubOptionPill({
 const OUTDOOR_EXTRA_IDS = ['washer_fluid_dispenser', 'dry_fog_machine'];
 
 export function Step9WashExtras({ data, onChange, title }: Props) {
-  const { vacuumOptions } = useData();
+  const {
+    vacuumOptions,
+    vacuumSubOptionsConfig,
+    dispenserSubOptionsConfig,
+    foggerSubOptionsConfig,
+  } = useData();
   const update = (patch: Partial<Step9Data>) => onChange({ ...data, ...patch });
+
+  // Whenever the admin adds new sub-options in the DB, merge them into the
+  // user's selection state so cost calc (which iterates state) sees them.
+  // Items already in state keep their `selected` value; missing items are
+  // appended with `selected = defaultOn` and the latest config price.
+  useEffect(() => {
+    const mergeInto = (
+      list: VacuumSubOption[] | undefined,
+      configItems: { id: string; name: string; price: number; defaultOn: boolean }[],
+    ): VacuumSubOption[] | null => {
+      const current = list ?? [];
+      const knownIds = new Set(current.map((o) => o.id));
+      const additions = configItems
+        .filter((cfg) => !knownIds.has(cfg.id))
+        .map((cfg) => ({ id: cfg.id, name: cfg.name, price: cfg.price, selected: cfg.defaultOn }));
+      // Also refresh prices for items that exist in state but whose config
+      // price changed (admin edited the price without renaming).
+      const refreshed = current.map((o) => {
+        const cfg = configItems.find((c) => c.id === o.id);
+        if (cfg && cfg.price !== o.price) return { ...o, price: cfg.price };
+        return o;
+      });
+      if (additions.length === 0 && refreshed.every((o, i) => o === current[i])) return null;
+      return [...refreshed, ...additions];
+    };
+
+    const flatVac = [
+      ...vacuumSubOptionsConfig.payment,
+      ...vacuumSubOptionsConfig.baseButtons,
+      ...vacuumSubOptionsConfig.extraButtons,
+    ];
+    const flatDisp = [
+      ...dispenserSubOptionsConfig.payment,
+      ...dispenserSubOptionsConfig.baseButtons,
+      ...dispenserSubOptionsConfig.extraButtons,
+    ];
+    const flatFog = [
+      ...foggerSubOptionsConfig.payment,
+      ...foggerSubOptionsConfig.baseScents,
+      ...foggerSubOptionsConfig.extraScents,
+    ];
+
+    const nextVac = mergeInto(data.vacuumSubOptions, flatVac);
+    const nextDisp = mergeInto(data.dispenserSubOptions, flatDisp);
+    const nextFog = mergeInto(data.foggerSubOptions, flatFog);
+    if (!nextVac && !nextDisp && !nextFog) return;
+    update({
+      ...(nextVac ? { vacuumSubOptions: nextVac } : {}),
+      ...(nextDisp ? { dispenserSubOptions: nextDisp } : {}),
+      ...(nextFog ? { foggerSubOptions: nextFog } : {}),
+    });
+    // We intentionally only react to config identity changes; toggling pills
+    // mutates state but doesn't add/remove ids, so we don't need to re-run on
+    // every selection change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vacuumSubOptionsConfig, dispenserSubOptionsConfig, foggerSubOptionsConfig]);
 
   const toggleExtra = (id: string) => {
     update({

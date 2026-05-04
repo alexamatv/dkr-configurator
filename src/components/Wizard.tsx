@@ -22,11 +22,6 @@ import type {
   TruckStep4Data,
   TruckStep5Data,
 } from '@/types';
-import {
-  defaultVacuumSubOptions,
-  defaultDispenserSubOptions,
-  defaultFoggerSubOptions,
-} from '@/data/mockData';
 import { useData, type DataContextValue } from '@/context/DataContext';
 import { HintsProvider } from '@/context/HintsContext';
 import { StepNavigation } from './StepNavigation';
@@ -129,9 +124,24 @@ function createInitialState(data: DataContextValue, initialManager: string): Wiz
     step9: {
       vacuumOption: 'none',
       vacuumQuantity: 0,
-      vacuumSubOptions: defaultVacuumSubOptions.map((o) => ({ ...o })),
-      dispenserSubOptions: defaultDispenserSubOptions.map((o) => ({ ...o })),
-      foggerSubOptions: defaultFoggerSubOptions.map((o) => ({ ...o })),
+      // Seed from the DB-driven sub-option configs so admin-created options
+      // are present in state from the start. Step9 also re-merges on render
+      // in case the configs change after first mount.
+      vacuumSubOptions: [
+        ...data.vacuumSubOptionsConfig.payment,
+        ...data.vacuumSubOptionsConfig.baseButtons,
+        ...data.vacuumSubOptionsConfig.extraButtons,
+      ].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn })),
+      dispenserSubOptions: [
+        ...data.dispenserSubOptionsConfig.payment,
+        ...data.dispenserSubOptionsConfig.baseButtons,
+        ...data.dispenserSubOptionsConfig.extraButtons,
+      ].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn })),
+      foggerSubOptions: [
+        ...data.foggerSubOptionsConfig.payment,
+        ...data.foggerSubOptionsConfig.baseScents,
+        ...data.foggerSubOptionsConfig.extraScents,
+      ].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn })),
       extras: data.defaultWashExtras.map((e) => ({ ...e })),
       pipelinesAirPrice: 0,
       pipelinesWaterPrice: 0,

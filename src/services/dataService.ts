@@ -372,6 +372,26 @@ export interface SimpleEquipmentItem {
   showImageInKp?: boolean;
 }
 
+export interface SubOptionConfigItem {
+  id: string;
+  name: string;
+  price: number;
+  defaultOn: boolean;
+  locked?: boolean;
+}
+
+export interface VacuumLikeSubOptionsConfig {
+  payment: SubOptionConfigItem[];
+  baseButtons: SubOptionConfigItem[];
+  extraButtons: SubOptionConfigItem[];
+}
+
+export interface FoggerSubOptionsConfig {
+  payment: SubOptionConfigItem[];
+  baseScents: SubOptionConfigItem[];
+  extraScents: SubOptionConfigItem[];
+}
+
 export interface ExtraEquipmentResult {
   vacuums: VacuumOption[];
   postExtras: PostExtra[];
@@ -386,6 +406,16 @@ export interface ExtraEquipmentResult {
   truckWaterSystems: SimpleEquipmentItem[];
   /** branch='mso', category='post_vacuum' — terminal-mounted vacuums on Шаг 8 */
   postVacuums: SimpleEquipmentItem[];
+  /**
+   * Sub-option configs derived from the FIRST active row of each category that
+   * carries a non-empty `sub_options` jsonb. The calculator renders ONE shared
+   * pill list per category, so we expose a single canonical config rather than
+   * per-row data. Admin's "save" propagates to every sibling row in the same
+   * category, so picking the first row is safe.
+   */
+  vacuumSubOptionsConfig: VacuumLikeSubOptionsConfig | null;
+  dispenserSubOptionsConfig: VacuumLikeSubOptionsConfig | null;
+  foggerSubOptionsConfig: FoggerSubOptionsConfig | null;
 }
 
 const VACUUM_PREFIX = 'vacuum__';
@@ -508,7 +538,88 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     vacuums.push({ id: 'none', name: 'Нет', price: 0 });
   }
 
-  return { vacuums, postExtras, washExtras, robotExtras, kompakOptions, truckManualPost, truckWaterSystems, postVacuums };
+  // Pick the first row in each sub-option-bearing category that actually has
+  // a populated jsonb. Admin propagates saves across siblings, so any active
+  // row of the category should hold the same config — taking the first is
+  // sufficient and predictable.
+  const rowsByCategory = (cat: string) =>
+    (data as ExtraEquipmentRow[]).filter(
+      (r) => r.branch === 'mso' && r.category === cat,
+    );
+  const vacuumSubOptionsConfig = pickVacuumLikeConfig(rowsByCategory('vacuum'));
+  const dispenserSubOptionsConfig = pickVacuumLikeConfig(rowsByCategory('dispenser'));
+  const foggerSubOptionsConfig = pickFoggerConfig(rowsByCategory('fogger'));
+
+  return {
+    vacuums,
+    postExtras,
+    washExtras,
+    robotExtras,
+    kompakOptions,
+    truckManualPost,
+    truckWaterSystems,
+    postVacuums,
+    vacuumSubOptionsConfig,
+    dispenserSubOptionsConfig,
+    foggerSubOptionsConfig,
+  };
+}
+
+// ─── sub_options jsonb → config helpers ─────────────────────────────────────
+
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  v !== null && typeof v === 'object' && !Array.isArray(v);
+
+const arrayOfSubOptions = (v: unknown): SubOptionConfigItem[] => {
+  if (!Array.isArray(v)) return [];
+  return v
+    .filter(isObj)
+    .map((raw) => {
+      const r = raw as Record<string, unknown>;
+      const id = typeof r.id === 'string' ? r.id : '';
+      const name = typeof r.name === 'string' ? r.name : '';
+      const priceN = typeof r.price === 'number' ? r.price : Number(r.price ?? 0);
+      const item: SubOptionConfigItem = {
+        id,
+        name,
+        price: Number.isFinite(priceN) ? priceN : 0,
+        defaultOn: Boolean(r.defaultOn),
+      };
+      if (r.locked) item.locked = true;
+      return item;
+    })
+    .filter((item) => item.id && item.name);
+};
+
+const isEmptySub = (v: unknown): boolean => {
+  if (v == null) return true;
+  if (Array.isArray(v)) return v.length === 0;
+  if (isObj(v)) return Object.values(v).every((g) => !Array.isArray(g) || g.length === 0);
+  return true;
+};
+
+function pickVacuumLikeConfig(rows: ExtraEquipmentRow[]): VacuumLikeSubOptionsConfig | null {
+  for (const r of rows) {
+    if (isEmptySub(r.sub_options) || !isObj(r.sub_options)) continue;
+    return {
+      payment: arrayOfSubOptions(r.sub_options.payment),
+      baseButtons: arrayOfSubOptions(r.sub_options.baseButtons),
+      extraButtons: arrayOfSubOptions(r.sub_options.extraButtons),
+    };
+  }
+  return null;
+}
+
+function pickFoggerConfig(rows: ExtraEquipmentRow[]): FoggerSubOptionsConfig | null {
+  for (const r of rows) {
+    if (isEmptySub(r.sub_options) || !isObj(r.sub_options)) continue;
+    return {
+      payment: arrayOfSubOptions(r.sub_options.payment),
+      baseScents: arrayOfSubOptions(r.sub_options.baseScents),
+      extraScents: arrayOfSubOptions(r.sub_options.extraScents),
+    };
+  }
+  return null;
 }
 
 /**
