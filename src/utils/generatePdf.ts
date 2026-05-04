@@ -92,13 +92,19 @@ export function generatePdf(
 
   // Lookup map for inline-photo placement, keyed by `${table}:${id}`.
   // Items consumed inline (e.g. БУМ next to kit list) are removed from
-  // the appendix to avoid duplication.
+  // the appendix to avoid duplication. consume() never removes — multiple
+  // post blocks can claim the same photo (two posts with the same BUM
+  // both get the inline photo, the appendix is told it's already used).
   const photoByKey = new Map<string, KpPhotoEmbed>();
   for (const p of photos) photoByKey.set(`${p.table}:${p.id}`, p);
   const consumedKeys = new Set<string>();
+  // eslint-disable-next-line no-console
+  console.info(`[KP photos PDF] received ${photos.length} photo(s):`, photos.map((p) => `${p.table}:${p.id} → ${p.label}`));
   const consume = (table: string, id: string): KpPhotoEmbed | undefined => {
     const key = `${table}:${id}`;
     const photo = photoByKey.get(key);
+    // eslint-disable-next-line no-console
+    console.info(`[KP photos PDF] consume(${key}) → ${photo ? 'HIT (' + photo.label + ')' : 'MISS'}`);
     if (photo) consumedKeys.add(key);
     return photo;
   };
