@@ -561,6 +561,30 @@ export const truckManualPostMontage = 200000;
 
 export const kompakMontagePrice = 1080000;
 
+// Robot wash sub-options (Шаг 4 Робота). Same architecture as МСО:
+// `payment` group is ON by default (managers usually keep them); `baseOptions`
+// holds the lone Индивидуальный дизайн, OFF by default; `extraOptions` is empty
+// today — admin can grow it.
+export const robotSubOptionsConfig = {
+  payment: [
+    { id: 'robot_bill_acceptor', name: 'Купюроприёмник', price: 1, defaultOn: true },
+    { id: 'robot_coin_acceptor', name: 'Монетоприёмник', price: 1, defaultOn: true },
+    { id: 'robot_loyalty_reader', name: 'Считыватель карт лояльности', price: 1, defaultOn: true },
+    { id: 'robot_acquiring', name: 'Эквайринг', price: 1, defaultOn: true },
+    { id: 'robot_qr_payment', name: 'QR', price: 1, defaultOn: true },
+  ],
+  baseOptions: [
+    { id: 'robot_individual_design', name: 'Индивидуальный дизайн', price: 1, defaultOn: false },
+  ],
+  extraOptions: [] as { id: string; name: string; price: number; defaultOn: boolean }[],
+} as const;
+
+export const defaultRobotSubOptions = [
+  ...robotSubOptionsConfig.payment,
+  ...robotSubOptionsConfig.baseOptions,
+  ...robotSubOptionsConfig.extraOptions,
+].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn }));
+
 export const robotExtraEquipment = [
   { id: 'foam_lava', name: 'Пена лава', price: 220000, note: '1 и 2 комплектация' },
   { id: 'extra_chem', name: 'Доп. вид химии', price: 50000, note: 'бюджетный' },

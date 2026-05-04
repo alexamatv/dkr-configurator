@@ -83,6 +83,9 @@ export interface RobotBlock {
   burPrice: number;
   options: PostRow[];
   optionsTotal: number;
+  /** Pill-style sub-options (Купюроприёмник / QR / Индивидуальный дизайн / …). */
+  subOptions: PostRow[];
+  subOptionsTotal: number;
   extras: PostRow[];
   extrasTotal: number;
   robotTotal: number;
@@ -502,7 +505,15 @@ function gatherRobotDocData(data: DataContextValue, state: WizardState, header: 
     });
   const extrasTotal = extras.reduce((s, r) => s + r.price, 0);
 
-  const robotTotal = robotPrice + burPrice + optionsTotal + extrasTotal;
+  // Pill-style robot sub-options (payment + base + extra). We feed them into
+  // the KP just like vacuum sub-options on МСО — the "≤ 1 ₽" filter at the
+  // PDF/Excel layer turns placeholder rows into «В комплекте».
+  const subOptions: PostRow[] = (state.robotStep4.subOptions ?? [])
+    .filter((o) => o.selected)
+    .map((o) => ({ name: o.name, price: o.price }));
+  const subOptionsTotal = subOptions.reduce((s, r) => s + r.price, 0);
+
+  const robotTotal = robotPrice + burPrice + optionsTotal + extrasTotal + subOptionsTotal;
 
   const robotBlock: RobotBlock = {
     modelName: robot?.name ?? '—',
@@ -512,6 +523,8 @@ function gatherRobotDocData(data: DataContextValue, state: WizardState, header: 
     burPrice,
     options,
     optionsTotal,
+    subOptions,
+    subOptionsTotal,
     extras,
     extrasTotal,
     robotTotal,

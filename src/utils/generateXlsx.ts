@@ -345,6 +345,9 @@ export async function generateXlsx(
     addIncludedItems(d.robot.includedComponents);
     priceRows.push(addPriceRow(`БУР: ${d.robot.burName}`, d.robot.burPrice));
     priceRows.push(...addPriceBlock('Опции робота', d.robot.options));
+    if (d.robot.subOptions && d.robot.subOptions.length > 0) {
+      priceRows.push(...addPriceBlock('Опции терминала', d.robot.subOptions));
+    }
     if (d.robot.extras && d.robot.extras.length > 0) {
       priceRows.push(...addPriceBlock('Доп. оборудование', d.robot.extras));
     }

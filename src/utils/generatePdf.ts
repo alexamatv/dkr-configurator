@@ -466,6 +466,10 @@ export function generatePdf(
     if (d.robot.options.length > 0) {
       priceTable('\u041E\u043F\u0446\u0438\u0438 \u0440\u043E\u0431\u043E\u0442\u0430', d.robot.options);
     }
+    if (d.robot.subOptions && d.robot.subOptions.length > 0) {
+      // \u041E\u043F\u0446\u0438\u0438 \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u0430 = "\u041E\u043F\u0446\u0438\u0438 \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u0430"
+      priceTable('\u041E\u043F\u0446\u0438\u0438 \u0442\u0435\u0440\u043C\u0438\u043D\u0430\u043B\u0430', d.robot.subOptions);
+    }
     if (d.robot.extras && d.robot.extras.length > 0) {
       priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435', d.robot.extras);
     }

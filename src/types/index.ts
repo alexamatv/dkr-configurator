@@ -261,6 +261,8 @@ export interface RobotStep4Data {
   guidesEnabled: boolean;
   guidesPrice: number;
   extras: { id: string; selected: boolean }[];
+  /** Pill selections for the shared robot payment / extra options config. */
+  subOptions?: VacuumSubOption[];
 }
 
 // ─── Truck types ───

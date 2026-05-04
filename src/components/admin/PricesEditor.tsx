@@ -21,6 +21,7 @@ import {
   vacuumSubOptionsConfig,
   dispenserSubOptionsConfig,
   foggerSubOptionsConfig,
+  robotSubOptionsConfig,
 } from '@/data/mockData';
 import { EditablePrice } from './EditablePrice';
 import { PhotoCell } from './PhotoCell';
@@ -30,13 +31,14 @@ import { SettingsPanel } from './SettingsPanel';
 
 // Categories of extra_equipment that carry a sub_options jsonb. Used to gate
 // the "Опции / Настроить" button + to seed defaults on new-row creation.
-const SUBOPT_CATEGORIES = new Set(['vacuum', 'dispenser', 'fogger']);
+const SUBOPT_CATEGORIES = new Set(['vacuum', 'dispenser', 'fogger', 'robot_options']);
 
 // Human-readable labels for the SubOptionsModal hint banner.
 const CATEGORY_LABELS: Record<string, string> = {
   vacuum: 'пылесосов',
   dispenser: 'розливов',
   fogger: 'аппаратов сухого тумана',
+  robot_options: 'опций робота',
 };
 
 function defaultSubOptions(category: string): SubOptionsValue {
@@ -59,6 +61,13 @@ function defaultSubOptions(category: string): SubOptionsValue {
       payment: foggerSubOptionsConfig.payment as unknown as never[],
       baseScents: foggerSubOptionsConfig.baseScents as unknown as never[],
       extraScents: foggerSubOptionsConfig.extraScents as unknown as never[],
+    } as unknown as SubOptionsValue;
+  }
+  if (category === 'robot_options') {
+    return {
+      payment: robotSubOptionsConfig.payment as unknown as never[],
+      baseOptions: robotSubOptionsConfig.baseOptions as unknown as never[],
+      extraOptions: robotSubOptionsConfig.extraOptions as unknown as never[],
     } as unknown as SubOptionsValue;
   }
   return [];
@@ -200,6 +209,7 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
       { label: 'Сухой туман', value: 'fogger' },
       { label: 'Доп. на мойку', value: 'wash_extra' },
       { label: 'Доп. к посту', value: 'post_extra' },
+      { label: 'Робот (опции терминала)', value: 'robot_options' },
       { label: 'Робот (доп.)', value: 'robot_extra' },
       { label: 'КОМПАК (опции)', value: 'kompak_option' },
       { label: 'Грузовик (ручной пост)', value: 'truck_manual_post' },

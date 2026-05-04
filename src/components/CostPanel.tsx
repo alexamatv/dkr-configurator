@@ -180,7 +180,12 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
       const item = robotExtras.find((r) => r.id === e.id);
       return sum + (item?.price ?? 0);
     }, 0);
-  const optionsTotal = sideBlowerCost + guidesCost + robotExtrasTotal;
+  // Pill selections (Купюроприёмник / QR / Индивидуальный дизайн / …) live in
+  // robotStep4.subOptions. Same "≤ 1 ₽ is just a placeholder" rule as МСО.
+  const robotSubOptionsTotal = (state.robotStep4.subOptions ?? [])
+    .filter((o) => o.selected)
+    .reduce((s, o) => s + o.price, 0);
+  const optionsTotal = sideBlowerCost + guidesCost + robotExtrasTotal + robotSubOptionsTotal;
 
   // Water (reuses step7)
   const osmos = osmosOptions.find((o) => o.id === state.step7.osmosOption);

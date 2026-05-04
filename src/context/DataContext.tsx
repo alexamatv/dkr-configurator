@@ -64,11 +64,13 @@ import {
   type SimpleEquipmentItem,
   type VacuumLikeSubOptionsConfig,
   type FoggerSubOptionsConfig,
+  type RobotSubOptionsConfig,
 } from '@/services/dataService';
 import {
   vacuumSubOptionsConfig as mockVacuumSub,
   dispenserSubOptionsConfig as mockDispenserSub,
   foggerSubOptionsConfig as mockFoggerSub,
+  robotSubOptionsConfig as mockRobotSub,
 } from '@/data/mockData';
 
 export interface DataContextValue {
@@ -102,6 +104,8 @@ export interface DataContextValue {
   dispenserSubOptionsConfig: VacuumLikeSubOptionsConfig;
   /** Sub-option pill config shared by every fogger row. Mock fallback when null. */
   foggerSubOptionsConfig: FoggerSubOptionsConfig;
+  /** Robot wash payment / extra options pill config (Шаг 4 Робота). */
+  robotSubOptionsConfig: RobotSubOptionsConfig;
   /** Editable montage rates / EUR rate / etc. read from app_settings. */
   settings: Map<string, number>;
   /** Reads a numeric setting with a typed fallback. */
@@ -155,6 +159,11 @@ const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcB
     payment: mockFoggerSub.payment.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
     baseScents: mockFoggerSub.baseScents.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn, locked: true })),
     extraScents: mockFoggerSub.extraScents.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
+  },
+  robotSubOptionsConfig: {
+    payment: mockRobotSub.payment.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
+    baseOptions: mockRobotSub.baseOptions.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
+    extraOptions: mockRobotSub.extraOptions.map((o) => ({ id: o.id, name: o.name, price: o.price, defaultOn: o.defaultOn })),
   },
   settings: new Map(),
   vacuumOptions: mockVacuums,
@@ -245,6 +254,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             vacuumSubOptionsConfig: extra.vacuumSubOptionsConfig ?? FALLBACK.vacuumSubOptionsConfig,
             dispenserSubOptionsConfig: extra.dispenserSubOptionsConfig ?? FALLBACK.dispenserSubOptionsConfig,
             foggerSubOptionsConfig: extra.foggerSubOptionsConfig ?? FALLBACK.foggerSubOptionsConfig,
+            robotSubOptionsConfig: extra.robotSubOptionsConfig ?? FALLBACK.robotSubOptionsConfig,
             settings,
           },
           error: null,

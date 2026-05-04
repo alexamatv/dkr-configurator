@@ -164,7 +164,18 @@ function createInitialState(data: DataContextValue, initialManager: string): Wiz
     // Robot
     robotStep2: { robotModel: '' },
     robotStep3: { burModel: '' },
-    robotStep4: { sideBlowerEnabled: false, sideBlowerPrice: 0, guidesEnabled: false, guidesPrice: 0, extras: data.robotExtras.map((e) => ({ id: e.id, selected: false })) },
+    robotStep4: {
+      sideBlowerEnabled: false,
+      sideBlowerPrice: 0,
+      guidesEnabled: false,
+      guidesPrice: 0,
+      extras: data.robotExtras.map((e) => ({ id: e.id, selected: false })),
+      subOptions: [
+        ...data.robotSubOptionsConfig.payment,
+        ...data.robotSubOptionsConfig.baseOptions,
+        ...data.robotSubOptionsConfig.extraOptions,
+      ].map((o) => ({ id: o.id, name: o.name, price: o.price, selected: o.defaultOn })),
+    },
     // Truck
     truckStep2: { selectedType: '' },
     truckBur: { burModel: 'bur_2' },

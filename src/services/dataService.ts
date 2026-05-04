@@ -392,6 +392,12 @@ export interface FoggerSubOptionsConfig {
   extraScents: SubOptionConfigItem[];
 }
 
+export interface RobotSubOptionsConfig {
+  payment: SubOptionConfigItem[];
+  baseOptions: SubOptionConfigItem[];
+  extraOptions: SubOptionConfigItem[];
+}
+
 export interface ExtraEquipmentResult {
   vacuums: VacuumOption[];
   postExtras: PostExtra[];
@@ -416,6 +422,8 @@ export interface ExtraEquipmentResult {
   vacuumSubOptionsConfig: VacuumLikeSubOptionsConfig | null;
   dispenserSubOptionsConfig: VacuumLikeSubOptionsConfig | null;
   foggerSubOptionsConfig: FoggerSubOptionsConfig | null;
+  /** Shared payment / extra options for the robot wash (Шаг 4 Робота). */
+  robotSubOptionsConfig: RobotSubOptionsConfig | null;
 }
 
 const VACUUM_PREFIX = 'vacuum__';
@@ -542,13 +550,14 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
   // a populated jsonb. Admin propagates saves across siblings, so any active
   // row of the category should hold the same config — taking the first is
   // sufficient and predictable.
-  const rowsByCategory = (cat: string) =>
+  const rowsByCategoryBranch = (cat: string, branch: 'mso' | 'robot') =>
     (data as ExtraEquipmentRow[]).filter(
-      (r) => r.branch === 'mso' && r.category === cat,
+      (r) => r.branch === branch && r.category === cat,
     );
-  const vacuumSubOptionsConfig = pickVacuumLikeConfig(rowsByCategory('vacuum'));
-  const dispenserSubOptionsConfig = pickVacuumLikeConfig(rowsByCategory('dispenser'));
-  const foggerSubOptionsConfig = pickFoggerConfig(rowsByCategory('fogger'));
+  const vacuumSubOptionsConfig = pickVacuumLikeConfig(rowsByCategoryBranch('vacuum', 'mso'));
+  const dispenserSubOptionsConfig = pickVacuumLikeConfig(rowsByCategoryBranch('dispenser', 'mso'));
+  const foggerSubOptionsConfig = pickFoggerConfig(rowsByCategoryBranch('fogger', 'mso'));
+  const robotSubOptionsConfig = pickRobotConfig(rowsByCategoryBranch('robot_options', 'robot'));
 
   return {
     vacuums,
@@ -562,6 +571,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     vacuumSubOptionsConfig,
     dispenserSubOptionsConfig,
     foggerSubOptionsConfig,
+    robotSubOptionsConfig,
   };
 }
 
@@ -617,6 +627,18 @@ function pickFoggerConfig(rows: ExtraEquipmentRow[]): FoggerSubOptionsConfig | n
       payment: arrayOfSubOptions(r.sub_options.payment),
       baseScents: arrayOfSubOptions(r.sub_options.baseScents),
       extraScents: arrayOfSubOptions(r.sub_options.extraScents),
+    };
+  }
+  return null;
+}
+
+function pickRobotConfig(rows: ExtraEquipmentRow[]): RobotSubOptionsConfig | null {
+  for (const r of rows) {
+    if (isEmptySub(r.sub_options) || !isObj(r.sub_options)) continue;
+    return {
+      payment: arrayOfSubOptions(r.sub_options.payment),
+      baseOptions: arrayOfSubOptions(r.sub_options.baseOptions),
+      extraOptions: arrayOfSubOptions(r.sub_options.extraOptions),
     };
   }
   return null;

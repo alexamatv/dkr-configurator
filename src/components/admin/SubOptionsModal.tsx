@@ -34,6 +34,8 @@ const GROUP_LABELS: Record<string, string> = {
   extraButtons: 'Доп. кнопки',
   baseScents: 'Базовые запахи',
   extraScents: 'Доп. запахи',
+  baseOptions: 'Базовые опции',
+  extraOptions: 'Доп. опции',
 };
 
 const newId = () => `custom_${Date.now().toString(36)}_${Math.floor(Math.random() * 1000)}`;
