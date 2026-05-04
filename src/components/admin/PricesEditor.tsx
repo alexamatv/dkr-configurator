@@ -187,11 +187,16 @@ const FIELD_CONFIGS: Record<keyof Catalog, FieldConfig[]> = {
   extra_equipment: [
     { name: 'branch', label: 'Ветка', type: 'select', required: true, options: BRANCH_OPTS, defaultValue: 'mso' },
     { name: 'category', label: 'Категория', type: 'select', required: true, options: [
-      { label: 'Пылесос', value: 'vacuum' },
+      { label: 'Пылесос (на мойку)', value: 'vacuum' },
+      { label: 'Пылесос на терминал (на пост)', value: 'post_vacuum' },
       { label: 'Розлив омывайки', value: 'dispenser' },
       { label: 'Сухой туман', value: 'fogger' },
       { label: 'Доп. на мойку', value: 'wash_extra' },
       { label: 'Доп. к посту', value: 'post_extra' },
+      { label: 'Робот (доп.)', value: 'robot_extra' },
+      { label: 'КОМПАК (опции)', value: 'kompak_option' },
+      { label: 'Грузовик (ручной пост)', value: 'truck_manual_post' },
+      { label: 'Грузовик (вода)', value: 'truck_water' },
     ] },
     { name: 'name', label: 'Название', type: 'text', required: true },
     { name: 'price', label: 'Цена, ₽', type: 'number', required: true },
