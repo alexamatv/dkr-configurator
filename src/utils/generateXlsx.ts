@@ -144,9 +144,17 @@ export async function generateXlsx(
     const row = nextRow();
     row.getCell(2).value = name;
     row.getCell(2).font = dataFont;
-    row.getCell(3).value = price;
+    // 0 → "В комплекте", 0 < price ≤ 1 → placeholder ("Цена по запросу"),
+    // anything else → numeric with the standard currency format.
+    if (price === 0) {
+      row.getCell(3).value = 'В комплекте';
+    } else if (price > 0 && price <= 1) {
+      row.getCell(3).value = 'Цена по запросу';
+    } else {
+      row.getCell(3).value = price;
+      row.getCell(3).numFmt = priceFormat;
+    }
     row.getCell(3).font = priceFont;
-    row.getCell(3).numFmt = priceFormat;
     row.getCell(3).alignment = { horizontal: 'right' };
     row.getCell(1).border = { bottom: lightBorder };
     row.getCell(2).border = { bottom: lightBorder };

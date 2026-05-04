@@ -324,9 +324,12 @@ function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
     .filter((e) => e.selected)
     .map((e) => ({ name: e.name + (e.quantity > 1 ? ` x${e.quantity}` : ''), price: e.price * e.quantity }));
 
+  // Sub-options with placeholder unit price (≤ 1 ₽) are bundled defaults
+  // — built into the equipment, not extra line items. Drop them from the
+  // KP entirely so we don't get noise rows like "Монетоприёмник — 1 ₽".
   if (vac && vac.id !== 'none') {
     (state.step9.vacuumSubOptions ?? [])
-      .filter((o) => o.selected)
+      .filter((o) => o.selected && o.price > 1)
       .forEach((o) => {
         const qty = state.step9.vacuumQuantity;
         washExtras.push({
@@ -341,7 +344,7 @@ function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
   if (dispenserItem?.selected) {
     const qty = dispenserItem.quantity || 1;
     (state.step9.dispenserSubOptions ?? [])
-      .filter((o) => o.selected)
+      .filter((o) => o.selected && o.price > 1)
       .forEach((o) => {
         washExtras.push({
           name: `${o.name}${qty > 1 ? ` x${qty}` : ''} (розлив)`,
@@ -355,7 +358,7 @@ function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
   if (foggerItem?.selected) {
     const qty = foggerItem.quantity || 1;
     (state.step9.foggerSubOptions ?? [])
-      .filter((o) => o.selected)
+      .filter((o) => o.selected && o.price > 1)
       .forEach((o) => {
         washExtras.push({
           name: `${o.name}${qty > 1 ? ` x${qty}` : ''} (сухой туман)`,

@@ -67,6 +67,10 @@ function fmt(n: number): string {
 
 function fmtPrice(n: number): string {
   if (n === 0) return 'В комплекте';
+  // Anything ≤ 1 ₽ is a placeholder for "real price not yet set" (e.g. the
+  // 2-постовой vacuum priced at 1). Show "Цена по запросу" so the КП
+  // doesn't display a literal "1 ₽".
+  if (n > 0 && n <= 1) return 'Цена по запросу';
   return fmt(n);
 }
 
