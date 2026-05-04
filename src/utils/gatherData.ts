@@ -34,6 +34,8 @@ export interface PostBlock {
   pumps: PostRow[];
   postExtras: PostRow[];
   secondPump: PostRow | null;
+  /** Terminal-mounted vacuum picked on Шаг 8, or null if "Нет" / not chosen. */
+  postVacuum: PostRow | null;
   postTotal: number;
 }
 
@@ -229,15 +231,24 @@ function calcPostBlock(data: DataContextValue, post: PostConfig, idx: number, st
     secondPump = { name: `Вторая помпа — ${spName}`, price: spPrice };
   }
 
+  // Post-mounted vacuum (Шаг 8 radio) — applied per post
+  let postVacuum: PostRow | null = null;
+  const pvId = state.step8.selectedPostVacuumId;
+  if (pvId) {
+    const pv = data.postVacuums.find((v) => v.id === pvId);
+    if (pv) postVacuum = { name: `Пылесос на терминал — ${pv.name}`, price: pv.price };
+  }
+
   const accTotal = accessories.reduce((s, r) => s + r.price, 0);
   const payTotal = payments.reduce((s, r) => s + r.price, 0);
   const funTotal = functions.reduce((s, r) => s + r.price, 0);
   const pmpTotal = pumps.reduce((s, r) => s + r.price, 0);
   const extTotal = postExtras.reduce((s, r) => s + r.price, 0);
   const spTotal = secondPump?.price ?? 0;
+  const pvTotal = postVacuum?.price ?? 0;
   // basePrice is the bundle (no BUM swap baked in). bumPrice is the swap
   // delta — surfaced as its own line in the KP so the total is transparent.
-  const postTotal = basePrice + bumPrice + accTotal + payTotal + funTotal + pmpTotal + extTotal + spTotal;
+  const postTotal = basePrice + bumPrice + accTotal + payTotal + funTotal + pmpTotal + extTotal + spTotal + pvTotal;
 
   return {
     title: getPostName(data, post, idx),
@@ -257,6 +268,7 @@ function calcPostBlock(data: DataContextValue, post: PostConfig, idx: number, st
     pumps,
     postExtras,
     secondPump,
+    postVacuum,
     postTotal,
   };
 }
@@ -738,8 +750,12 @@ export function gatherDocData(state: WizardState, data: DataContextValue): DocDa
     return s + p * e.quantity;
   }, 0) + cpSecondPumpPrice;
 
+  // Per-post terminal-mounted vacuum (Шаг 8 radio) — multiplied by postCount
+  const cpPostVacuum = data.postVacuums.find((v) => v.id === state.step8.selectedPostVacuumId);
+  const cpPostVacuumPrice = cpPostVacuum?.price ?? 0;
+
   const cpBasePriceWithBum = cpProfilePrice + cpExtraAccPrice + cpBumUpgrade;
-  const cpUpgradesPerPost = cpPaymentDelta + cpFuncPrice + cpAvdDelta;
+  const cpUpgradesPerPost = cpPaymentDelta + cpFuncPrice + cpAvdDelta + cpPostVacuumPrice;
   const cpEquipmentTotal = (cpBasePriceWithBum + cpUpgradesPerPost) * postCount;
   const cpWashTotal = wash.waterTotal + cpPostExtras + wash.vacuumPrice
     + wash.extras.reduce((s, r) => s + r.price, 0)

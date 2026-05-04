@@ -47,6 +47,7 @@ function postFingerprint(p: PostBlock): string {
     p.pumps.map((r) => r.name + ':' + r.price).join('|'),
     p.postExtras.map((r) => r.name + ':' + r.price).join('|'),
     p.secondPump ? p.secondPump.name + ':' + p.secondPump.price : '',
+    p.postVacuum ? p.postVacuum.name + ':' + p.postVacuum.price : '',
   ];
   return parts.join('//');
 }
@@ -519,6 +520,7 @@ export function generatePdf(
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
+      if (post.postVacuum) extrasWithPump.push(post.postVacuum);
       if (extrasWithPump.length > 0) {
         priceTable('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043A \u043F\u043E\u0441\u0442\u0443', extrasWithPump);
       }

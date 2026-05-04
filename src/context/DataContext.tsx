@@ -44,6 +44,7 @@ import {
   kompakOptions as mockKompakOptions,
   truckManualPostEquipment as mockTruckManualPost,
   truckWaterSystems as mockTruckWaterSystems,
+  vacuumTerminalOptions as mockPostVacuums,
 } from '@/data/mockData';
 import {
   getProfiles,
@@ -86,6 +87,8 @@ export interface DataContextValue {
   truckManualPost: SimpleEquipmentItem[];
   /** truckWaterSystems in mockData — Truck step 5 water-treatment radios. */
   truckWaterSystems: SimpleEquipmentItem[];
+  /** Terminal-mounted vacuums for МСО Шаг 8 (one per post). */
+  postVacuums: SimpleEquipmentItem[];
   /** Editable montage rates / EUR rate / etc. read from app_settings. */
   settings: Map<string, number>;
   /** Reads a numeric setting with a typed fallback. */
@@ -124,6 +127,7 @@ const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcB
   kompakOptions: mockKompakOptions as SimpleEquipmentItem[],
   truckManualPost: mockTruckManualPost as SimpleEquipmentItem[],
   truckWaterSystems: mockTruckWaterSystems as SimpleEquipmentItem[],
+  postVacuums: mockPostVacuums as SimpleEquipmentItem[],
   settings: new Map(),
   vacuumOptions: mockVacuums,
   defaultPostExtras: mockPostExtras,
@@ -209,6 +213,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             kompakOptions: extra.kompakOptions,
             truckManualPost: extra.truckManualPost,
             truckWaterSystems: extra.truckWaterSystems,
+            postVacuums: extra.postVacuums,
             settings,
           },
           error: null,

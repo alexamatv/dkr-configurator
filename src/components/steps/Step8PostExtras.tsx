@@ -15,7 +15,7 @@ interface Props {
 const premiumIncludedExtras = ['freq_converter'];
 
 export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Props) {
-  const { avdKits } = useData();
+  const { avdKits, postVacuums } = useData();
   const isPremium = profileId === 'premium';
   // Основная помпа — первая default-строка из Step 5
   const defaultSel = avdSelections.find((s) => s.isDefault);
@@ -41,6 +41,10 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
     onChange({ ...data, secondPumpEnabled: !data.secondPumpEnabled });
   };
 
+  const setPostVacuum = (id: string) => {
+    onChange({ ...data, selectedPostVacuumId: id });
+  };
+
   // Цена второй помпы = цена профиля помпы (profile price, т.е. цена из каталога avdKits)
   // Для default помпы price=0 означает "входит в комплект", но вторая стоит полную цену.
   // Берём реальную цену из профиля: basePrice помпы. Для HAWK 15-20 = 85000 ₽.
@@ -54,6 +58,36 @@ export function Step8PostExtras({ data, avdSelections, profileId, onChange }: Pr
       <StepHint>
         Здесь можно добавить дополнительное оборудование к каждому посту: частотный преобразователь, вторая помпа и т.д. Количество и состав зависят от выбранного профиля.
       </StepHint>
+
+      {/* Пылесос на терминал — radio, по одному на пост */}
+      {postVacuums.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-muted mb-3">Пылесос на терминал</label>
+          <div className="text-xs text-muted mb-2">
+            Один на каждый пост — стоимость умножается на количество постов.
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button
+              onClick={() => setPostVacuum('')}
+              className={`radio-card text-left ${!data.selectedPostVacuumId ? 'selected' : ''}`}
+            >
+              <div className="text-sm font-medium">Нет</div>
+            </button>
+            {postVacuums.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setPostVacuum(v.id)}
+                className={`radio-card text-left ${data.selectedPostVacuumId === v.id ? 'selected' : ''}`}
+              >
+                <div className="text-sm font-medium">{v.name}</div>
+                <div className="text-xs text-accent font-bold mt-1">
+                  {v.price.toLocaleString('ru-RU')} ₽
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2">
         {/* Вторая помпа */}

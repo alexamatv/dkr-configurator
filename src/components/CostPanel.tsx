@@ -35,8 +35,9 @@ interface CalcResult {
 }
 
 function calcMso(state: WizardState, data: DataContextValue): CalcResult {
-  const { profiles, avdKits, osmosOptions, arasModels, vacuumOptions, calcBumPrice, getSetting } = data;
+  const { profiles, avdKits, osmosOptions, arasModels, vacuumOptions, postVacuums, calcBumPrice, getSetting } = data;
   const boosterPumpPrice = getSetting('booster_pump_price', 53000);
+  const postVacuumPrice = postVacuums.find((v) => v.id === state.step8.selectedPostVacuumId)?.price ?? 0;
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
@@ -136,7 +137,9 @@ function calcMso(state: WizardState, data: DataContextValue): CalcResult {
     (state.step9.pipelinesChemPrice || 0);
 
   const basePriceWithBum = profilePrice + extraAccessoriesPrice + bumUpgrade;
-  const upgradesPerPost = paymentDelta + functionsPrice + avdDelta;
+  // Post-mounted vacuum price applies to every post (multiplied by postCount
+  // alongside the other per-post upgrades).
+  const upgradesPerPost = paymentDelta + functionsPrice + avdDelta + postVacuumPrice;
   const equipmentTotal = (basePriceWithBum + upgradesPerPost) * postCount;
   const customWaterPrice = state.step7.customWaterPrice || 0;
   const boosterCost = state.step7.boosterPump

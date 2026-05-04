@@ -124,6 +124,7 @@ function createInitialState(data: DataContextValue, initialManager: string): Wiz
     },
     step8: {
       extras: data.defaultPostExtras.map((e) => ({ ...e })),
+      selectedPostVacuumId: '',
     },
     step9: {
       vacuumOption: 'none',

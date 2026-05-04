@@ -384,6 +384,8 @@ export interface ExtraEquipmentResult {
   truckManualPost: SimpleEquipmentItem[];
   /** branch='truck', category='truck_water' — Циклон / АРОС / Не нужно / Своя стоимость */
   truckWaterSystems: SimpleEquipmentItem[];
+  /** branch='mso', category='post_vacuum' — terminal-mounted vacuums on Шаг 8 */
+  postVacuums: SimpleEquipmentItem[];
 }
 
 const VACUUM_PREFIX = 'vacuum__';
@@ -393,6 +395,7 @@ const ROBOT_EXTRA_PREFIX = 'robot_extra__';
 const KOMPAK_OPTION_PREFIX = 'kompak_option__';
 const TRUCK_MANUAL_POST_PREFIX = 'truck_manual_post__';
 const TRUCK_WATER_PREFIX = 'truck_water__';
+const POST_VACUUM_PREFIX = 'post_vacuum__';
 
 const stripPrefix = (id: string, prefix: string): string =>
   id.startsWith(prefix) ? id.slice(prefix.length) : id;
@@ -417,6 +420,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
   const kompakOptions: SimpleEquipmentItem[] = [];
   const truckManualPost: SimpleEquipmentItem[] = [];
   const truckWaterSystems: SimpleEquipmentItem[] = [];
+  const postVacuums: SimpleEquipmentItem[] = [];
 
   for (const r of data as ExtraEquipmentRow[]) {
     if (r.branch === 'robot' && r.category === 'robot_extra') {
@@ -460,6 +464,16 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     // rows into МСО dropdowns.
     if (r.branch !== 'mso') continue;
 
+    if (r.category === 'post_vacuum') {
+      postVacuums.push({
+        id: stripPrefix(r.id, POST_VACUUM_PREFIX),
+        name: r.name,
+        price: num(r.price),
+        ...photo(r),
+      });
+      continue;
+    }
+
     if (r.category === 'vacuum') {
       vacuums.push({
         id: stripPrefix(r.id, VACUUM_PREFIX),
@@ -494,7 +508,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     vacuums.push({ id: 'none', name: 'Нет', price: 0 });
   }
 
-  return { vacuums, postExtras, washExtras, robotExtras, kompakOptions, truckManualPost, truckWaterSystems };
+  return { vacuums, postExtras, washExtras, robotExtras, kompakOptions, truckManualPost, truckWaterSystems, postVacuums };
 }
 
 /**

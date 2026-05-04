@@ -180,6 +180,8 @@ export interface Step7Data {
 export interface Step8Data {
   extras: PostExtra[];
   secondPumpEnabled?: boolean;
+  /** Optional terminal-mounted vacuum (one per post). Empty = none. */
+  selectedPostVacuumId?: string;
 }
 
 export interface VacuumSubOption {

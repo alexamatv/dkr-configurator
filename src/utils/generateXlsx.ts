@@ -27,6 +27,7 @@ function postFingerprint(p: PostBlock): string {
     p.pumps.map((r) => r.name + ':' + r.price).join('|'),
     p.postExtras.map((r) => r.name + ':' + r.price).join('|'),
     p.secondPump ? p.secondPump.name + ':' + p.secondPump.price : '',
+    p.postVacuum ? p.postVacuum.name + ':' + p.postVacuum.price : '',
   ].join('//');
 }
 
@@ -380,6 +381,7 @@ export async function generateXlsx(
 
       const extrasWithPump = [...post.postExtras];
       if (post.secondPump) extrasWithPump.push(post.secondPump);
+      if (post.postVacuum) extrasWithPump.push(post.postVacuum);
       priceRows.push(...addPriceBlock('\u0414\u043E\u043F. \u043E\u0431\u043E\u0440\u0443\u0434\u043E\u0432\u0430\u043D\u0438\u0435 \u043A \u043F\u043E\u0441\u0442\u0443', extrasWithPump));
 
       const perPostSubtotalRow = addFormulaSubtotal('\u0421\u0442\u043E\u0438\u043C\u043E\u0441\u0442\u044C 1 \u043F\u043E\u0441\u0442\u0430', priceRows, post.postTotal);
