@@ -321,8 +321,9 @@ export const defaultPostExtras: PostExtra[] = [
 
 export const vacuumOptions: VacuumOption[] = [
   { id: 'single', name: 'Пылесос 1-постовой', price: 235000 },
-  { id: 'double', name: 'Пылесос 2-постовой', price: 1 },
-  { id: 'double_premium', name: 'Пылесос 2-постовой Премиум', price: 1 },
+  { id: 'double', name: 'Пылесос 2-постовой ТОП Elsea (Стандартный)', price: 375000 },
+  { id: 'double_zero', name: 'Пылесос 2-постовой ТОП Zero', price: 349000 },
+  { id: 'double_premium', name: 'Пылесос 2-постовой Премиум Elsea (РОБОКОП)', price: 455000 },
   { id: 'none', name: 'Нет', price: 0 },
 ];
 
