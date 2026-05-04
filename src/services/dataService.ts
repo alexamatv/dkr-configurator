@@ -380,6 +380,10 @@ export interface ExtraEquipmentResult {
   robotExtras: SimpleEquipmentItem[];
   /** branch='truck', category='kompak_option' — kompakOptions in mockData */
   kompakOptions: SimpleEquipmentItem[];
+  /** branch='truck', category='truck_manual_post' — АВД + кабельный подвес */
+  truckManualPost: SimpleEquipmentItem[];
+  /** branch='truck', category='truck_water' — Циклон / АРОС / Не нужно / Своя стоимость */
+  truckWaterSystems: SimpleEquipmentItem[];
 }
 
 const VACUUM_PREFIX = 'vacuum__';
@@ -387,6 +391,8 @@ const POST_EXTRA_PREFIX = 'post_extra__';
 const WASH_EXTRA_PREFIX = 'wash_extra__';
 const ROBOT_EXTRA_PREFIX = 'robot_extra__';
 const KOMPAK_OPTION_PREFIX = 'kompak_option__';
+const TRUCK_MANUAL_POST_PREFIX = 'truck_manual_post__';
+const TRUCK_WATER_PREFIX = 'truck_water__';
 
 const stripPrefix = (id: string, prefix: string): string =>
   id.startsWith(prefix) ? id.slice(prefix.length) : id;
@@ -409,6 +415,8 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
   const washExtras: WashExtra[] = [];
   const robotExtras: SimpleEquipmentItem[] = [];
   const kompakOptions: SimpleEquipmentItem[] = [];
+  const truckManualPost: SimpleEquipmentItem[] = [];
+  const truckWaterSystems: SimpleEquipmentItem[] = [];
 
   for (const r of data as ExtraEquipmentRow[]) {
     if (r.branch === 'robot' && r.category === 'robot_extra') {
@@ -423,6 +431,24 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     if (r.branch === 'truck' && r.category === 'kompak_option') {
       kompakOptions.push({
         id: stripPrefix(r.id, KOMPAK_OPTION_PREFIX),
+        name: r.name,
+        price: num(r.price),
+        ...photo(r),
+      });
+      continue;
+    }
+    if (r.branch === 'truck' && r.category === 'truck_manual_post') {
+      truckManualPost.push({
+        id: stripPrefix(r.id, TRUCK_MANUAL_POST_PREFIX),
+        name: r.name,
+        price: num(r.price),
+        ...photo(r),
+      });
+      continue;
+    }
+    if (r.branch === 'truck' && r.category === 'truck_water') {
+      truckWaterSystems.push({
+        id: stripPrefix(r.id, TRUCK_WATER_PREFIX),
         name: r.name,
         price: num(r.price),
         ...photo(r),
@@ -468,7 +494,7 @@ export async function getExtraEquipment(): Promise<ExtraEquipmentResult> {
     vacuums.push({ id: 'none', name: 'Нет', price: 0 });
   }
 
-  return { vacuums, postExtras, washExtras, robotExtras, kompakOptions };
+  return { vacuums, postExtras, washExtras, robotExtras, kompakOptions, truckManualPost, truckWaterSystems };
 }
 
 /**

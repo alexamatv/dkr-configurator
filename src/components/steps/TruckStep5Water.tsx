@@ -1,7 +1,7 @@
 'use client';
 
 import type { TruckStep5Data } from '@/types';
-import { truckWaterSystems } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: TruckStep5Data;
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export function TruckStep5Water({ data, onChange }: Props) {
+  const { truckWaterSystems } = useData();
   const update = (patch: Partial<TruckStep5Data>) => onChange({ ...data, ...patch });
   const isCustom = data.selectedWater === 'custom';
 

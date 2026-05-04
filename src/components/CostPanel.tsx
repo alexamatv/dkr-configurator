@@ -5,10 +5,6 @@ import type { WizardState, Step10Data, MontageType } from '@/types';
 import {
   dosatorOptions,
   calcPaymentCost,
-  boosterPumpPrice,
-  truckManualPostEquipment,
-  truckManualPostMontage,
-  truckWaterSystems,
 } from '@/data/mockData';
 import { useData, type DataContextValue } from '@/context/DataContext';
 
@@ -39,7 +35,8 @@ interface CalcResult {
 }
 
 function calcMso(state: WizardState, data: DataContextValue): CalcResult {
-  const { profiles, avdKits, osmosOptions, arasModels, vacuumOptions, calcBumPrice } = data;
+  const { profiles, avdKits, osmosOptions, arasModels, vacuumOptions, calcBumPrice, getSetting } = data;
+  const boosterPumpPrice = getSetting('booster_pump_price', 53000);
   const posts = state.posts.length > 0 ? state.posts : [];
   const postCount = Math.max(posts.length, 1);
 
@@ -163,6 +160,7 @@ function calcMso(state: WizardState, data: DataContextValue): CalcResult {
 function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
   const { robotModels, burModels, osmosOptions, arasModels, vacuumOptions, robotExtras, getSetting } = data;
   const robotMontagePrice = getSetting('montage_robot_fixed', 370000);
+  const boosterPumpPrice = getSetting('booster_pump_price', 53000);
   const robot = robotModels.find((m) => m.id === state.robotStep2.robotModel);
   const robotPrice = robot?.price ?? 0;
 
@@ -255,8 +253,9 @@ function calcRobot(state: WizardState, data: DataContextValue): CalcResult {
 }
 
 function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
-  const { truckWashTypes, burModels, kompakOptions, getSetting } = data;
+  const { truckWashTypes, burModels, kompakOptions, truckManualPost, truckWaterSystems, getSetting } = data;
   const kompakMontagePrice = getSetting('montage_kompak_fixed', 1080000);
+  const truckManualPostMontage = getSetting('truck_manual_post_montage', 200000);
   const truckType = truckWashTypes.find((t) => t.id === state.truckStep2.selectedType);
   const basePrice = truckType?.price ?? 0;
   const isKompak = state.truckStep2.selectedType === 'kompak';
@@ -277,8 +276,8 @@ function calcTruck(state: WizardState, data: DataContextValue): CalcResult {
   // Manual post
   let manualPostPrice = 0;
   if (state.truckStep4.manualPostEnabled) {
-    const avdItem = truckManualPostEquipment.find((e) => e.id === 'avd');
-    const hangerItem = truckManualPostEquipment.find((e) => e.id === 'cable_hanger');
+    const avdItem = truckManualPost.find((e) => e.id === 'avd');
+    const hangerItem = truckManualPost.find((e) => e.id === 'cable_hanger');
     manualPostPrice = (avdItem?.price ?? 0) * state.truckStep4.avdCount
       + (hangerItem?.price ?? 0) * state.truckStep4.hangerCount
       + truckManualPostMontage;

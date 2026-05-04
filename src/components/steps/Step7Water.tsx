@@ -3,7 +3,6 @@
 import { ZoomableImage } from '@/components/ui/ZoomableImage';
 import type { Step7Data } from '@/types';
 import { StepHint } from '../StepHint';
-import { boosterPumpPrice } from '@/data/mockData';
 import { useData } from '@/context/DataContext';
 import { QuantityInput } from '../ui/QuantityInput';
 
@@ -14,7 +13,8 @@ interface Props {
 }
 
 export function Step7Water({ data, onChange, title }: Props) {
-  const { osmosOptions, arasModels } = useData();
+  const { osmosOptions, arasModels, getSetting } = useData();
+  const boosterPumpPrice = getSetting('booster_pump_price', 53000);
   const update = (patch: Partial<Step7Data>) => onChange({ ...data, ...patch });
   const notReady = (data.osmosOption === '' || data.arasModel === '') && !(data.customWaterPrice > 0);
 

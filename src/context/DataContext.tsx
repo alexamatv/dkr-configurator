@@ -42,6 +42,8 @@ import {
   truckWashTypes as mockTruckWashTypes,
   robotExtraEquipment as mockRobotExtras,
   kompakOptions as mockKompakOptions,
+  truckManualPostEquipment as mockTruckManualPost,
+  truckWaterSystems as mockTruckWaterSystems,
 } from '@/data/mockData';
 import {
   getProfiles,
@@ -80,6 +82,10 @@ export interface DataContextValue {
   robotExtras: SimpleEquipmentItem[];
   /** kompakOptions in mockData — checkboxes on Truck step 3. */
   kompakOptions: SimpleEquipmentItem[];
+  /** truckManualPostEquipment in mockData — Truck step 4 manual-post equipment. */
+  truckManualPost: SimpleEquipmentItem[];
+  /** truckWaterSystems in mockData — Truck step 5 water-treatment radios. */
+  truckWaterSystems: SimpleEquipmentItem[];
   /** Editable montage rates / EUR rate / etc. read from app_settings. */
   settings: Map<string, number>;
   /** Reads a numeric setting with a typed fallback. */
@@ -116,6 +122,8 @@ const FALLBACK: Omit<DataContextValue, 'isLoading' | 'error' | 'source' | 'calcB
   // Filled below after the mock arrays — see fallback assignments
   robotExtras: mockRobotExtras as SimpleEquipmentItem[],
   kompakOptions: mockKompakOptions as SimpleEquipmentItem[],
+  truckManualPost: mockTruckManualPost as SimpleEquipmentItem[],
+  truckWaterSystems: mockTruckWaterSystems as SimpleEquipmentItem[],
   settings: new Map(),
   vacuumOptions: mockVacuums,
   defaultPostExtras: mockPostExtras,
@@ -199,6 +207,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
             truckWashTypes: trucks,
             robotExtras: extra.robotExtras,
             kompakOptions: extra.kompakOptions,
+            truckManualPost: extra.truckManualPost,
+            truckWaterSystems: extra.truckWaterSystems,
             settings,
           },
           error: null,

@@ -1,7 +1,7 @@
 'use client';
 
 import type { TruckStep4Data } from '@/types';
-import { truckManualPostEquipment, truckManualPostMontage } from '@/data/mockData';
+import { useData } from '@/context/DataContext';
 
 interface Props {
   data: TruckStep4Data;
@@ -9,11 +9,13 @@ interface Props {
 }
 
 export function TruckStep4ManualPost({ data, onChange }: Props) {
+  const { truckManualPost, getSetting } = useData();
+  const truckManualPostMontage = getSetting('truck_manual_post_montage', 200000);
   const update = (patch: Partial<TruckStep4Data>) => onChange({ ...data, ...patch });
 
-  const avdItem = truckManualPostEquipment.find((e) => e.id === 'avd')!;
-  const hangerItem = truckManualPostEquipment.find((e) => e.id === 'cable_hanger')!;
-  const totalEquip = (avdItem.price * data.avdCount) + (hangerItem.price * data.hangerCount);
+  const avdItem = truckManualPost.find((e) => e.id === 'avd');
+  const hangerItem = truckManualPost.find((e) => e.id === 'cable_hanger');
+  const totalEquip = ((avdItem?.price ?? 0) * data.avdCount) + ((hangerItem?.price ?? 0) * data.hangerCount);
   const totalMontage = data.manualPostEnabled ? truckManualPostMontage : 0;
 
   return (
@@ -48,7 +50,7 @@ export function TruckStep4ManualPost({ data, onChange }: Props) {
         <div className="space-y-4 p-4 bg-surface rounded-lg border border-border">
           <div>
             <label className="block text-sm font-medium text-muted mb-2">
-              {avdItem.name} — {avdItem.price.toLocaleString('ru-RU')} ₽/шт
+              {avdItem?.name ?? 'АВД'} — {(avdItem?.price ?? 0).toLocaleString('ru-RU')} ₽/шт
             </label>
             <input
               type="number"
@@ -62,7 +64,7 @@ export function TruckStep4ManualPost({ data, onChange }: Props) {
 
           <div>
             <label className="block text-sm font-medium text-muted mb-2">
-              {hangerItem.name} — {hangerItem.price.toLocaleString('ru-RU')} ₽/шт
+              {hangerItem?.name ?? 'Кабельный подвес'} — {(hangerItem?.price ?? 0).toLocaleString('ru-RU')} ₽/шт
             </label>
             <input
               type="number"

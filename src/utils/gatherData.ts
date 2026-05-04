@@ -7,10 +7,6 @@ import {
   paymentSystemPrices,
   basePaymentSystems,
   paymentSystemRemovalDiscounts,
-  boosterPumpPrice,
-  truckManualPostEquipment,
-  truckManualPostMontage,
-  truckWaterSystems,
 } from '@/data/mockData';
 
 // ─── Shared types ───
@@ -298,7 +294,7 @@ function calcWashBlock(data: DataContextValue, state: WizardState): WashBlock {
 
   if (state.step7.boosterPump) {
     const qty = Math.max(1, state.step7.boosterPumpQuantity || 1);
-    const cost = boosterPumpPrice * qty;
+    const cost = data.getSetting('booster_pump_price', 53000) * qty;
     waterRows.push({
       name: qty > 1 ? `Станция повышающая давление × ${qty}` : 'Станция повышающая давление',
       price: cost,
@@ -560,8 +556,8 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
   let manualPostTotal = 0;
   let manualPostMontage = 0;
   if (state.truckStep4.manualPostEnabled) {
-    const avdItem = truckManualPostEquipment.find((e) => e.id === 'avd');
-    const hangerItem = truckManualPostEquipment.find((e) => e.id === 'cable_hanger');
+    const avdItem = data.truckManualPost.find((e) => e.id === 'avd');
+    const hangerItem = data.truckManualPost.find((e) => e.id === 'cable_hanger');
     if (avdItem && state.truckStep4.avdCount > 0) {
       const p = avdItem.price * state.truckStep4.avdCount;
       manualPost.push({ name: `${avdItem.name} x${state.truckStep4.avdCount}`, price: p });
@@ -572,12 +568,12 @@ function gatherTruckDocData(data: DataContextValue, state: WizardState, header: 
       manualPost.push({ name: `${hangerItem.name} x${state.truckStep4.hangerCount}`, price: p });
       manualPostTotal += p;
     }
-    manualPostMontage = truckManualPostMontage;
+    manualPostMontage = data.getSetting('truck_manual_post_montage', 200000);
     manualPostTotal += manualPostMontage;
   }
 
   // Water
-  const waterSys = truckWaterSystems.find((w) => w.id === state.truckStep5.selectedWater);
+  const waterSys = data.truckWaterSystems.find((w) => w.id === state.truckStep5.selectedWater);
   let waterLabel = waterSys?.name ?? '—';
   let waterPrice = waterSys?.price ?? 0;
   if (state.truckStep5.selectedWater === 'custom') {
