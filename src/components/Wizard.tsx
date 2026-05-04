@@ -149,7 +149,7 @@ function createInitialState(data: DataContextValue, initialManager: string): Wiz
       montageExtra: 0,
       robotMontage: false,
       language: 'ru',
-      includePhotos: false,
+      includePhotos: true,
     },
     // Robot
     robotStep2: { robotModel: '' },
