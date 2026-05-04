@@ -20,6 +20,7 @@ const SETTINGS_BY_BRANCH: Record<Branch, SettingDef[]> = {
     { key: 'montage_commissioning_pct', label: 'Шеф-пусконаладка',       unit: '%', isPct: true },
     { key: 'default_discount',          label: 'Скидка по умолчанию',    unit: '%' },
     { key: 'default_vat',               label: 'НДС по умолчанию',       unit: '%' },
+    { key: 'booster_pump_price',        label: 'Станция повышения давления (за шт.)', unit: '₽' },
   ],
   robot: [
     { key: 'montage_robot_fixed', label: 'Монтаж робота (фикс)', unit: '₽' },
